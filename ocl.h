@@ -78,9 +78,30 @@ namespace ocl {
 				return clRetainCommandQueue(i); 
 			}
 			static cl_int release(cl_command_queue i) { 
-				return ::clReleaseCommandQueue(i); 
+				return clReleaseCommandQueue(i); 
 			}
 		};
+
+		template <>
+		struct ref_cnt<cl_program> {
+			static cl_int retain(cl_program program) { 
+				return clRetainProgram(program); 
+			}
+			static cl_int release(cl_program program) { 
+				return clReleaseProgram(program); 
+			}
+		};
+
+		template <>
+		struct ref_cnt<cl_kernel> {
+			static cl_int retain(cl_kernel kernel) { 
+				return clRetainKernel(kernel); 
+			}
+			static cl_int release(cl_kernel kernel) { 
+				return clReleaseKernel(kernel); 
+			}
+		};
+		
 
 		template <class _T>
 		class handle : protected ref_cnt<_T> {
@@ -123,7 +144,6 @@ namespace ocl {
 			void h( _T v) { _h = v; }
 		};
 
-		
 		class device : public handle<cl_device_id> {
 			typedef handle<cl_device_id> base_type;
 		public:
@@ -182,7 +202,7 @@ namespace ocl {
 			typedef memory base_type;
 		public:
 			buffer() : base_type() {}
-			buffer(cl_mem m) : base_type(m);
+			buffer(cl_mem m) : base_type(m) {};
 			buffer(const context& ctx,
 			       cl_mem_flags flags,
 			       std::size_t size,
@@ -197,6 +217,19 @@ namespace ocl {
 			queue(const context& ctx,
 			      const device& device,
 			      cl_command_queue_properties props = 0);
+		};
+
+		class program : public handle<cl_program> {
+			typedef handle<cl_program> base_type;
+		public:
+			program() : base_type(nullptr) {}
+			program(cl_program p) : base_type(p) {}
+			program(const context& ctx,
+				const std::string& src,
+				bool build = false);
+			program(const context& ctx,
+				const std::vector<std::string>& src,
+				bool build = false);
 		};
 
 	}

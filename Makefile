@@ -14,7 +14,7 @@ ARCH+=#-mpopcnt -mfma
 CXXFLAGS+=-I.. -I../stlex -I../thread  -I../sysio -march=native
 CXXFLAGS+=-fstrict-aliasing -Wstrict-aliasing=1
 
-CSRCS=platform.cc device.cc context.cc queue.cc 
+CSRCS=platform.cc device.cc context.cc buffer.cc queue.cc program.cc
 
 all: lib tests
 
