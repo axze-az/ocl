@@ -13,6 +13,7 @@ SLDFLAGS:= $(SLDFLAGS)
 ARCH+=#-mpopcnt -mfma
 CXXFLAGS+=-I.. -I../stlex -I../thread  -I../sysio -march=native
 CXXFLAGS+=-fstrict-aliasing -Wstrict-aliasing=1
+CXXFLAGS+=-Wno-error
 
 CSRCS=platform.cc device.cc context.cc buffer.cc queue.cc program.cc
 
