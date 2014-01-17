@@ -1,7 +1,205 @@
+#include <iostream>
+#include <atomic>
 #include <CL/opencl.h>
 #include <CL/cl.hpp>
 
+namespace ocl {
+
+
+	namespace impl {
+		extern std::atomic<unsigned> arg_num;
+	}
+	
+
+	template <class _T>
+	struct expr_traits {
+		typedef const _T type;
+	};
+
+	template <class _OP, class _L, class _R>
+	struct expr_kernel;
+
+	template <class _OP, class _L, class _R> 
+	struct expr {
+		typename expr_traits<_L>::type _l;
+		typename expr_traits<_R>::type _r;
+		constexpr expr(const _L& l, const _R& r) :
+			_l(l), _r(r) {}
+		static expr_kernel<_OP, _L, _R> _k;
+	};
+
+	template <class _OP, class _L, class _R>
+	std::string eval_body(const expr<_OP, _L, _R>& r) {
+		return _OP::body(eval_body(r._l), eval_body(r._r));
+	}
+
+	template <class _OP, class _L, class _R>
+	std::string eval_args(const expr<_OP, _L, _R>& r) {
+		return _OP::args(eval_args(r._l), eval_args(r._r));
+	}
+
+	template <class _OP, class _L, class _R>
+	void bind_args(const expr<_OP, _L, _R>& r) {
+	}
+	
+	template <class _OP, class _L, class _R> 
+	expr_kernel<_OP, _L, _R>
+	expr<_OP, _L, _R>::_k;
+	
+	template <class _OP, class _L, class _R>
+	struct expr_kernel {
+		expr_kernel();
+		void execute(const expr<_OP, _L, _R>& r);
+	};
+
+	template <class _T>
+	class vec {
+	public:
+		vec() {}
+		vec(std::size_t n, const _T* s);
+		vec(std::size_t n, const _T& i);
+		vec(std::size_t n);
+                template <template <class _V> class _OP, 
+			  class _L, class _R>
+		vec(const expr<_OP<vec<_T> >, _L, _R>& r);
+	};
+
+	template <class _T>
+	struct expr_traits<vec<_T> > {
+		typedef const vec<_T> type;
+	};
+
+	template <class _T>
+	std::string eval_body(const vec<_T>& r) {
+		return "v[i]";
+	}
+
+#if 0
+	template <class _OP, class _L, class _R>
+	std::string eval_args(const expr<_OP, _L, _R>& r) {
+		return _OP::args(eval_args(r._l), eval_args(r._r));
+	}
+#endif
+	
+	namespace ops {
+
+		template <class _T>
+		struct add {
+			static 
+			std::string body(const std::string& l,
+					 const std::string& r) {
+				std::string res(l);
+				res += " + ";
+				res += r;
+				return res;
+			}
+		};
+	}
+
+#define DEFINE_OCLVEC_FP_OPERATOR(vx, op, eq_op, op_name)		\
+        /* operator op(V, V) */                                         \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, vx>                                 \
+        operator op (const vx& a, const vx& b) {			\
+                return expr<ops:: op_name<vx>, vx, vx>(a,b);		\
+        }                                                               \
+        /* operator op(V, expr) */                                      \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, expr<_OP<vx>, _L, _R> >             \
+        operator op (const vx& a, const expr<_OP<vx>, _L, _R>& b) {	\
+                return expr<ops:: op_name<vx>,				\
+                            vx, expr<_OP<vx>, _L, _R> >(a, b);          \
+	}								\
+        /* operator op(expr, V) */                                      \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, vx>              \
+        operator op (const expr<_OP<vx>, _L, _R>& a, const vx& b) {	\
+                return expr<ops:: op_name<vx>,				\
+                            expr<_OP<vx>, _L, _R>, vx>(a, b);           \
+	}								\
+	/* operator op(expr, expr)  */					\
+	template <template <class _V> class _OP1, class _L1, class _R1,	\
+		  template <class _V> class _OP2, class _L2, class _R2>	\
+	inline								\
+	expr<ops:: op_name<vx>,						\
+	     expr<_OP1<vx>, _L1, _R1>, expr<_OP2<vx>, _L2, _R2> >	\
+	operator op(const expr<_OP1<vx>, _L1, _R1>& a,			\
+		    const expr<_OP2<vx>, _L2, _R2>& b) {		\
+		return expr<ops:: op_name<vx>,				\
+			    expr<_OP1<vx>, _L1, _R1>,			\
+			    expr<_OP2<vx>, _L2, _R2> > (a, b);		\
+	}								\
+        /* operator eq_op V */                                          \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const vx& r) {			\
+                a = a op r;                                             \
+                return a;                                               \
+        }                                                               \
+        /* operator eq_op expr */                                       \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const expr<_OP<vx>, _L, _R>& r) {	\
+                a = a op r;                                             \
+                return a;                                               \
+        }
+
+#define DEFINE_OCLVEC_FP_OPERATORS(vx)			\
+	DEFINE_OCLVEC_FP_OPERATOR(vx, +, +=, add)	\
+	DEFINE_OCLVEC_FP_OPERATOR(vx, -, -=, sub)	\
+	DEFINE_OCLVEC_FP_OPERATOR(vx, *, *=, mul)	\
+	DEFINE_OCLVEC_FP_OPERATOR(vx, /, /=, div) 
+
+
+	DEFINE_OCLVEC_FP_OPERATOR(vec<float>, +, +=, add);
+}
+
+std::atomic<unsigned> 
+ocl::impl::arg_num;
+
+template <class _OP, class _L, class _R>
+ocl::expr_kernel<_OP, _L, _R>::expr_kernel()
+{
+	
+}
+
+template <class _OP, class _L, class _R>
+void 
+ocl::expr_kernel<_OP, _L, _R>::
+execute(const expr<_OP, _L, _R>& r)
+{
+	std::cout << eval_body(r) << std::endl;
+}
+
+
+template <class _T>
+template <template <class _V> class _OP, class _L, class _R>
+inline
+ocl::vec<_T>::vec(const expr<_OP<vec<_T> >, _L, _R>& r)
+{
+	typedef expr<_OP<vec<_T> >, _L, _R> expr_t;
+	// typedef expr_kernel<_OP<vec<_T> >, _L, _R> kernel_t;
+	expr_t::_k.execute(r);
+}
+
+using namespace ocl;
+
+vec<float>
+test_func(const vec<float>& a, const vec<float>& b)
+{
+	return vec<float>(a + b);
+}
+
+
 int main()
 {
+	vec<float> a, b;
+	vec<float> c= test_func(a, b);
+
+	std::cout << ++ocl::impl::arg_num << std::endl
+		  << ocl::impl::arg_num++ << std::endl; 
+
+	static_cast<void>(&c);
 	return 0;
 }
