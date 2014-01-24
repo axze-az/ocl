@@ -10,6 +10,59 @@
 // #include <CL/cl.hpp>
 
 namespace ocl {
+
+	namespace impl {
+
+		template <typename _T>
+		struct type_2_name {
+		};
+
+		template <>
+		struct type_2_name<float> {
+			static 
+			constexpr const char* v() {
+				return "float";
+			}
+		};
+
+		template <>
+		struct type_2_name<int> {
+			static
+			constexpr const char* v() {
+				return "int32_t";
+			}
+		};
+
+		template <>
+		struct type_2_name<unsigned> {
+			static
+			constexpr const char* v() {
+				return "uint32_t";
+			}
+		};
+
+		template <>
+		struct type_2_name<std::int64_t> {
+			static
+			constexpr const char* v() {
+				return "int64_t";
+			}
+		};
+
+		template <>
+		struct type_2_name<std::uint64_t> {
+			static
+			constexpr const char* v() {
+				return "uint64_t";
+			}
+		};
+		
+	}
+
+	template <class _T>
+	class vec {
+	};
+
 	
 
 	class error : public std::runtime_error {

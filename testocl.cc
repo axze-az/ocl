@@ -94,6 +94,43 @@ namespace ocl {
 				return res;
 			}
 		};
+
+		template <class _T>
+		struct sub {
+			static 
+			std::string body(const std::string& l,
+					 const std::string& r) {
+				std::string res(l);
+				res += " - ";
+				res += r;
+				return res;
+			}
+		};
+
+		template <class _T>
+		struct mul {
+			static 
+			std::string body(const std::string& l,
+					const std::string& r) {
+				std::string res(l);
+				res += " * ";
+				res += r;
+				return res;
+			}
+		};
+
+		template <class _T>
+		struct div {
+			static 
+			std::string body(const std::string& l,
+					const std::string& r) {
+				std::string res(l);
+				res += " / ";
+				res += r;
+				return res;
+			}
+		};
+
 	}
 
 #define DEFINE_OCLVEC_FP_OPERATOR(vx, op, eq_op, op_name)		\
@@ -152,7 +189,7 @@ namespace ocl {
 	DEFINE_OCLVEC_FP_OPERATOR(vx, /, /=, div) 
 
 
-	DEFINE_OCLVEC_FP_OPERATOR(vec<float>, +, +=, add);
+	DEFINE_OCLVEC_FP_OPERATORS(vec<float>);
 }
 
 std::atomic<unsigned> 
@@ -188,7 +225,7 @@ using namespace ocl;
 vec<float>
 test_func(const vec<float>& a, const vec<float>& b)
 {
-	return vec<float>(a + b);
+	return vec<float>( (a + b) / (a * b) );
 }
 
 
