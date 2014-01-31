@@ -1,15 +1,12 @@
+#include "ocl.h"
 #include <iostream>
+#include <sstream>
 #include <atomic>
 #include <CL/opencl.h>
 #include <CL/cl.hpp>
 
 namespace ocl {
 
-
-	namespace impl {
-		extern std::atomic<unsigned> arg_num;
-	}
-	
 
 	template <class _T>
 	struct expr_traits {
@@ -29,13 +26,29 @@ namespace ocl {
 	};
 
 	template <class _OP, class _L, class _R>
-	std::string eval_body(const expr<_OP, _L, _R>& r) {
-		return _OP::body(eval_body(r._l), eval_body(r._r));
+	std::string 
+	eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num) {
+		auto l=eval_vars(a._l, arg_num);
+		auto r=eval_vars(a._r, arg_num);
+		return std::string(l + '\n' + r);
 	}
 
 	template <class _OP, class _L, class _R>
-	std::string eval_args(const expr<_OP, _L, _R>& r) {
-		return _OP::args(eval_args(r._l), eval_args(r._r));
+	std::string 
+	eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num) {
+		auto l=eval_ops(a._l, arg_num);
+		auto r=eval_ops(a._r, arg_num);
+		std::string t(_OP::body(l, r));
+		return std::string("(") + t + std::string(")");
+	}
+
+	template <class _OP, class _L, class _R>
+	std::string 
+	eval_args(const std::string& p, 
+		  const expr<_OP, _L, _R>& r,
+		  unsigned& arg_num) {
+		std::string left(eval_args(p, r._l, arg_num));
+		return eval_args(left, r._r, arg_num);
 	}
 
 	template <class _OP, class _L, class _R>
@@ -70,16 +83,39 @@ namespace ocl {
 	};
 
 	template <class _T>
-	std::string eval_body(const vec<_T>& r) {
-		return "v[i]";
+	std::string eval_ops(const vec<_T>& r, unsigned& arg_num) {
+		std::ostringstream s;
+		s << "v" << arg_num;
+		std::string a(s.str());
+		++arg_num;
+		return a;
 	}
 
-#if 0
-	template <class _OP, class _L, class _R>
-	std::string eval_args(const expr<_OP, _L, _R>& r) {
-		return _OP::args(eval_args(r._l), eval_args(r._r));
+	template <class _T>
+	std::string eval_vars(const vec<_T>& r, unsigned& arg_num) {
+		std::ostringstream s;
+		s << '\t' << impl::type_2_name<_T>::v() 
+		  << " v" << arg_num 
+		  << " = arg" 
+		  << arg_num << "[tid];";
+		std::string a(s.str());
+		++arg_num;
+		return a;
 	}
-#endif
+
+	template <class _T>
+	std::string eval_args(const std::string& p, 
+			      const vec<_T>& r,
+			      unsigned& arg_num) {
+		std::ostringstream s;
+		if (!p.empty()) {
+			s << p << ",\n";
+		}
+		s << "\t__global const " << impl::type_2_name<_T>::v() 
+		  << "* arg"  << arg_num;
+		++arg_num;
+		return s.str();
+	}
 	
 	namespace ops {
 
@@ -192,13 +228,10 @@ namespace ocl {
 	DEFINE_OCLVEC_FP_OPERATORS(vec<float>);
 }
 
-std::atomic<unsigned> 
-ocl::impl::arg_num;
-
+ 
 template <class _OP, class _L, class _R>
 ocl::expr_kernel<_OP, _L, _R>::expr_kernel()
 {
-	
 }
 
 template <class _OP, class _L, class _R>
@@ -206,7 +239,12 @@ void
 ocl::expr_kernel<_OP, _L, _R>::
 execute(const expr<_OP, _L, _R>& r)
 {
-	std::cout << eval_body(r) << std::endl;
+	unsigned arg_num{0};
+	std::cout << eval_args("", r, arg_num) << std::endl;
+	unsigned var_num{0    };
+	std::cout << eval_vars(r, var_num) << std::endl;
+	unsigned body_num{0};
+	std::cout << eval_ops(r, body_num) << std::endl;
 }
 
 
@@ -225,7 +263,7 @@ using namespace ocl;
 vec<float>
 test_func(const vec<float>& a, const vec<float>& b)
 {
-	return vec<float>( (a + b) / (a * b) );
+	return vec<float>( (a + b) / (a * b)  + (a + a * b ));
 }
 
 
@@ -233,9 +271,6 @@ int main()
 {
 	vec<float> a, b;
 	vec<float> c= test_func(a, b);
-
-	std::cout << ++ocl::impl::arg_num << std::endl
-		  << ocl::impl::arg_num++ << std::endl; 
 
 	static_cast<void>(&c);
 	return 0;

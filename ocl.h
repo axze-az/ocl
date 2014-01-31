@@ -59,10 +59,6 @@ namespace ocl {
 		
 	}
 
-	template <class _T>
-	class vec {
-	};
-
 	
 
 	class error : public std::runtime_error {
