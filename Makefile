@@ -8,14 +8,15 @@ LIBNAME=ocl
 MAJOR=0#
 MINOR=1#
 
-SLDFLAGS:= $(SLDFLAGS) 
+SLDFLAGS:= $(SLDFLAGS) -lOpenCL
 #ARCH=#-march=bdver1 -mxop #-march=bdver1 #-mdispatch-scheduler
 ARCH+=#-mpopcnt -mfma
 CXXFLAGS+=-I.. -I../stlex -I../thread  -I../sysio -march=native
 CXXFLAGS+=-fstrict-aliasing -Wstrict-aliasing=1
 CXXFLAGS+=-Wno-error
 
-CSRCS=platform.cc device.cc context.cc buffer.cc queue.cc program.cc
+CSRCS=ocl_devices.cc platform.cc device.cc context.cc buffer.cc	\
+queue.cc program.cc
 
 all: lib tests
 
@@ -72,12 +73,15 @@ ln -sf lib$(LIBNAME).so.$(MAJOR).$(MINOR) lib$(LIBNAME).so.$(MAJOR)
 	cd $(INSTALLDIR)/lib && \
 ln -sf lib$(LIBNAME).so.$(MAJOR) lib$(LIBNAME).so
 
-TESTPROGS=testocl
+TESTPROGS=testocl testocl_g
 
 tests: $(TESTPROGS)
 
 testocl: testocl.ol
-	$(LD) -o $@ $< $(LDFLAGS) -lOpenCL -lstdc++
+	$(LD) -o $@ $< $(LDFLAGS) -L. -locl -lOpenCL -lstdc++ -ldl
+
+testocl_g: testocl.od
+	$(LD) -o $@ $< -g $(LDFLAGS) -L. -locl-g -lOpenCL -lstdc++ -ldl
 
 
 #################################################################

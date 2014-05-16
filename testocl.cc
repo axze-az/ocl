@@ -1,11 +1,36 @@
 #include "ocl.h"
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <atomic>
-#include <CL/opencl.h>
-#include <CL/cl.hpp>
 
 namespace ocl {
+
+        class be_data {
+        public:
+                cl::Device& device() {
+                        return _d;
+                }
+                cl::CommandQueue& queue() {
+                        return _q;
+                }
+                static
+                be_data* instance() {
+                        if (_instance == nullptr) {
+                                _instance = new be_data();
+                        }
+                        return _instance;
+                }
+        private:
+                cl::Device _d;
+                cl::CommandQueue _q;
+
+                be_data() {
+                        
+                }
+                static be_data* _instance;
+        };
+
 
 
         template <class _T>
@@ -27,9 +52,10 @@ namespace ocl {
 
         template <class _OP, class _L, class _R>
         std::string 
-        eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num) {
-                auto l=eval_vars(a._l, arg_num);
-                auto r=eval_vars(a._r, arg_num);
+        eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
+                  bool read) {
+                auto l=eval_vars(a._l, arg_num, read);
+                auto r=eval_vars(a._r, arg_num, read);
                 return std::string(l + '\n' + r);
         }
 
@@ -46,13 +72,18 @@ namespace ocl {
         std::string 
         eval_args(const std::string& p, 
                   const expr<_OP, _L, _R>& r,
-                  unsigned& arg_num) {
-                std::string left(eval_args(p, r._l, arg_num));
-                return eval_args(left, r._r, arg_num);
+                  unsigned& arg_num,
+                  bool ro) {
+                std::string left(eval_args(p, r._l, arg_num, ro));
+                return eval_args(left, r._r, arg_num, ro);
         }
 
         template <class _OP, class _L, class _R>
-        void bind_args(const expr<_OP, _L, _R>& r) {
+        void bind_args(cl::Kernel& k, 
+                       const expr<_OP, _L, _R>& r,
+                       unsigned& arg_num) {
+                bind_args(k, r._l, arg_num);
+                bind_args(k, r._r, arg_num);
         }
         
         template <class _OP, class _L, class _R> 
@@ -60,14 +91,27 @@ namespace ocl {
         expr<_OP, _L, _R>::_k;
         
         template <class _OP, class _L, class _R>
-        struct expr_kernel {
+        class expr_kernel {
+        public:
                 expr_kernel();
-                void execute(const expr<_OP, _L, _R>& r);
+                template <class _RES>
+                void execute(_RES& res, 
+                             const expr<_OP, _L, _R>& r,
+                             const std::string& name);
+                cl::Kernel _k;
         };
 
+        template <class _OP, class _L, class _R, class _RES>
+        void execute(_RES& res,
+                     const expr<_OP, _L, _R>& r);
+        
         template <class _T>
         class vec {
+                cl::Buffer _b;
         public:
+                cl::Buffer buffer() const  {
+                        return _b; 
+                }
                 vec() {}
                 vec(std::size_t n, const _T* s);
                 vec(std::size_t n, const _T& i);
@@ -92,12 +136,15 @@ namespace ocl {
         }
 
         template <class _T>
-        std::string eval_vars(const vec<_T>& r, unsigned& arg_num) {
+        std::string eval_vars(const vec<_T>& r, unsigned& arg_num, 
+                              bool read) {
                 std::ostringstream s;
                 s << '\t' << impl::type_2_name<_T>::v() 
-                  << " v" << arg_num 
-                  << " = arg" 
-                  << arg_num << "[tid];";
+                  << " v" << arg_num;
+                if (read== true) {
+                        s << " = arg" 
+                          << arg_num << "[gid];";
+                }
                 std::string a(s.str());
                 ++arg_num;
                 return a;
@@ -106,15 +153,41 @@ namespace ocl {
         template <class _T>
         std::string eval_args(const std::string& p, 
                               const vec<_T>& r,
-                              unsigned& arg_num) {
+                              unsigned& arg_num,
+                              bool ro) {
                 std::ostringstream s;
                 if (!p.empty()) {
                         s << p << ",\n";
                 }
-                s << "\t__global const " << impl::type_2_name<_T>::v() 
+                s << "\t__global " ;
+                if (ro) {
+                        s<< "const "; 
+                }
+                s << impl::type_2_name<_T>::v() 
                   << "* arg"  << arg_num;
                 ++arg_num;
                 return s.str();
+        }
+
+        template <class _T>
+        std::string eval_results(vec<_T>& r, 
+                                 unsigned& res_num) {
+                std::ostringstream s;
+                s << "\targ" << res_num << "[gid]=" 
+                  << " v" << res_num << ';';
+                ++res_num;
+                return s.str();
+        }
+
+        template <class _T>
+        void bind_args(cl::Kernel& k, 
+                       const vec<_T>& r, 
+                       unsigned&  arg_num)
+        {
+                std::cout << "binding to arg " << arg_num 
+                          << std::endl;
+                k.setArg(arg_num, r.buffer());
+                ++arg_num;
         }
         
         namespace ops {
@@ -147,7 +220,7 @@ namespace ocl {
                 struct mul {
                         static 
                         std::string body(const std::string& l,
-                                        const std::string& r) {
+                                         const std::string& r) {
                                 std::string res(l);
                                 res += " * ";
                                 res += r;
@@ -159,7 +232,7 @@ namespace ocl {
                 struct div {
                         static 
                         std::string body(const std::string& l,
-                                        const std::string& r) {
+                                         const std::string& r) {
                                 std::string res(l);
                                 res += " / ";
                                 res += r;
@@ -235,16 +308,71 @@ ocl::expr_kernel<_OP, _L, _R>::expr_kernel()
 }
 
 template <class _OP, class _L, class _R>
+template <class _RES>
 void 
 ocl::expr_kernel<_OP, _L, _R>::
-execute(const expr<_OP, _L, _R>& r)
+execute(_RES& res, const expr<_OP, _L, _R>& r, 
+        const std::string& name)
 {
+        std::cout << "__kernel void " 
+                  << name
+                  << std::endl
+                  << "(\n";
+        
+        // argument generation
         unsigned arg_num{0};
-        std::cout << eval_args("", r, arg_num) << std::endl;
-        unsigned var_num{0    };
-        std::cout << eval_vars(r, var_num) << std::endl;
-        unsigned body_num{0};
-        std::cout << eval_ops(r, body_num) << std::endl;
+        std::cout << eval_args("", res, arg_num, false) 
+                  << ','
+                  << std::endl;
+        std::cout << eval_args("", r, arg_num, true) << std::endl;
+        
+        std::cout << ")" << std::endl;
+
+        // begin body
+        std::cout << "{" << std::endl;
+
+        // global id
+        std::cout << "\tsize_t gid = get_global_id(0);" << std::endl;
+ 
+        // temporary variables
+        unsigned var_num{1};
+        std::cout << eval_vars(r, var_num, true) 
+                  << std::endl;
+
+        // result variable
+        unsigned res_num{0};
+        std::cout << eval_vars(res, res_num, false) << "= " 
+                  << std::endl;
+         // the operations
+        unsigned body_num{1};
+        std::cout << "\t\t" << eval_ops(r, body_num) << ';'
+                  << std::endl;
+        // write back
+        res_num = 0;
+        std::cout << eval_results(res, res_num)
+                  << std::endl;
+
+        // end body
+        std::cout << "}" << std::endl;
+
+
+        // bind args
+        arg_num = 0;
+        bind_args(_k, res, arg_num);
+        bind_args(_k, r, arg_num);
+}
+
+template <class _OP, class _L, class _R, class _RES>
+void 
+ocl::execute(_RES& res, const expr<_OP, _L, _R>& r)
+{
+        auto pf=ocl::execute<_OP, _L, _R, _RES>;
+        const void* pv=reinterpret_cast<const void*>(pf);
+        std::ostringstream s;
+        s << __func__ 
+          << std::hex 
+          << reinterpret_cast<unsigned long>(pv);
+        return r._k.execute(res, r, s.str());
 }
 
 
@@ -253,9 +381,9 @@ template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::vec<_T>::vec(const expr<_OP<vec<_T> >, _L, _R>& r)
 {
-        typedef expr<_OP<vec<_T> >, _L, _R> expr_t;
         // typedef expr_kernel<_OP<vec<_T> >, _L, _R> kernel_t;
-        expr_t::_k.execute(r);
+        // expr_t::_k.execute(*this, r);
+        execute(*this, r);
 }
 
 using namespace ocl;
@@ -263,15 +391,29 @@ using namespace ocl;
 vec<float>
 test_func(const vec<float>& a, const vec<float>& b)
 {
-        return vec<float>( (a + b) / (a * b)  + (a + a * b ));
+        // vec<float> n(2.0f);
+        return vec<float>( (a + b) / (a * b)  + (a + a * b ) - a);
 }
+
+vec<float>
+test_func(const vec<float>& a, const vec<float>& b,
+          const vec<float>& c)
+{
+        return (a+b *c ) *c;
+}
+
 
 
 int main()
 {
         vec<float> a, b;
         vec<float> c= test_func(a, b);
+        vec<float> d= test_func(a, b, c);
 
-        static_cast<void>(&c);
+        static_cast<void>(&d);
+
+        std::vector<cl::Device> v(ocl::impl::devices());
+        std::cout << v.size() << std::endl;
+
         return 0;
 }

@@ -2,7 +2,8 @@
 #define __OCL_H__ 1
 
 #include <ocl/config.h>
-#include <CL/cl.h>
+// #include <CL/cl.h>
+#define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 #include <stdexcept>
 #include <string>
@@ -11,6 +12,70 @@
 // #include <CL/cl.hpp>
 
 namespace ocl {
+
+
+        namespace impl {
+                
+                typedef cl::Error error;
+
+                const char* err2str(const error& e);
+                const char* err2str(int e);
+
+                typedef std::vector<cl_context_properties> ctx_prop_vec_type;
+
+                typedef cl::Context context;
+                typedef cl::Device device;
+
+                struct data {
+                        context _ctx;
+                        device _dev;
+                        data(const context& c, const device& d) : _ctx(c), _dev(d) {}
+                };
+
+
+                struct device_type {
+                        enum type {
+                                cpu = CL_DEVICE_TYPE_CPU,
+                                gpu = CL_DEVICE_TYPE_GPU,
+                                accel = CL_DEVICE_TYPE_ACCELERATOR,
+#if defined (CL_DEVICE_TYPE_CUSTOM)
+                                custom = CL_DEVICE_TYPE_CUSTOM,
+#endif
+                                all = CL_DEVICE_TYPE_ALL
+                        };  
+                };
+
+                std::vector<device>
+                filter_devices(const std::vector<device>& devs,
+                               device_type::type t );
+
+                // filter all gpu devices
+                std::vector<device>
+                gpu_devices(const std::vector<device>& devs);
+
+                // filter all cpu devices
+                std::vector<device>
+                cpu_devices(const std::vector<device>& devs);
+
+                // get all devices from all contexts
+                std::vector<device>
+                devices();
+                // get all gpu devices from all contexts
+                std::vector<device>
+                gpu_devices();
+                // get all cpu devices from all contexts
+                std::vector<device>
+                cpu_devices();
+
+                // get the most? powerful gpu device 
+                device
+                default_gpu_device();
+                // get a cpu device
+                device
+                default_cpu_device();
+                
+        }
+
 
         namespace impl {
 
@@ -96,10 +161,10 @@ namespace ocl {
                 template <>
                 struct ref_cnt<cl_device_id> {
                         static cl_int inc(cl_device_id i) {
-                                return clRetainDevice(i);
+                                return 0; // clRetainDevice(i);
                         }
                         static cl_int dec(cl_device_id i) {
-                                return clReleaseDevice(i);
+                                return 0; // clReleaseDevice(i);
                         }
                 };
 
@@ -215,7 +280,7 @@ namespace ocl {
                         static std::vector<platform> get();
                         std::vector<device> devices(cl_device_type t);
                         cl_int unload_compiler() {
-                                return clUnloadPlatformCompiler(h());
+                                return 0; //return clUnloadPlatformCompiler(h());
                         }
                 };
 
