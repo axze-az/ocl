@@ -406,11 +406,11 @@ test_func(const vec<float>& a, const vec<float>& b,
 
 int main()
 {
-        vec<float> a, b;
-        vec<float> c= test_func(a, b);
-        vec<float> d= test_func(a, b, c);
+        // vec<float> a, b;
+        // vec<float> c= test_func(a, b);
+        // vec<float> d= test_func(a, b, c);
 
-        static_cast<void>(&d);
+        // static_cast<void>(&d);
 
         std::vector<cl::Device> v(ocl::impl::devices());
         std::cout << v.size() << std::endl;

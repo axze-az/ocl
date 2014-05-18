@@ -78,7 +78,7 @@ TESTPROGS=testocl testocl_g
 tests: $(TESTPROGS)
 
 testocl: testocl.ol
-	$(LD) -o $@ $< $(LDFLAGS) -L. -locl -lOpenCL -lstdc++ -ldl
+	$(LD) -o $@ $< $(LDFLAGS) -Wl,-rpath=. -L. -locl -lOpenCL -lstdc++ -ldl
 
 testocl_g: testocl.od
 	$(LD) -o $@ $< -g $(LDFLAGS) -L. -locl-g -lOpenCL -lstdc++ -ldl
