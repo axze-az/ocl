@@ -125,24 +125,14 @@ namespace ocl {
                 
         }
 
-        
-
-        class error : public std::runtime_error {
-                static
-                std::string fmt_msg(cl_uint rc,
-                                    const std::string& msg);
-        public:
-                error(const std::string& msg);
-                error(cl_uint rc, const std::string& msg="");
-                virtual ~error() noexcept;
-        };
+  
 
         namespace ll {
                 
                 inline void 
                 check_err(cl_uint rc, const std::string& msg="") {
                         if (rc != CL_SUCCESS) 
-                                throw error(rc, msg);
+                                throw impl::error(rc, msg.c_str());
                 }
 
                 template <class _T>
