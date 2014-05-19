@@ -6,25 +6,25 @@
 
 namespace ocl {
 
-	namespace impl {
-		class be_data {
-		public:
-			cl::Device& d() {
-				return _d;
-			}
-			cl::CommandQueue& q() {
-				return _q;
-			}
-			static
-			be_data* instance();
-		private:
-			cl::Device _d;
-			cl::CommandQueue _q;
+        namespace impl {
+                class be_data {
+                public:
+                        cl::Device& d() {
+                                return _d;
+                        }
+                        cl::CommandQueue& q() {
+                                return _q;
+                        }
+                        static
+                        be_data* instance();
+                private:
+                        cl::Device _d;
+                        cl::CommandQueue _q;
 
-			be_data();
-			static be_data* _instance;
-		};
-	}
+                        be_data();
+                        static be_data* _instance;
+                };
+        }
 
 
         template <class _T>
@@ -386,15 +386,15 @@ ocl::impl::be_data::_instance= nullptr;
 ocl::impl::be_data*
 ocl::impl::be_data::instance()
  {
-	if (_instance == nullptr) {
-		_instance = new be_data();
-	}
-	return _instance;
+        if (_instance == nullptr) {
+                _instance = new be_data();
+        }
+        return _instance;
 }
-			
+                        
 ocl::impl::be_data::be_data()
 {
-	std::vector<cl::Device> vd(devices());
+        std::vector<cl::Device> vd(devices());
 }
 
 using namespace ocl;
@@ -424,9 +424,12 @@ int main()
 
         std::vector<cl::Device> v(ocl::impl::devices());
         std::cout << v.size() << std::endl;
-	for (std::size_t i = 0; i< v.size(); ++i) {
-		std::cout << ocl::impl::device_info(v[i]);
-	}
-	
+        for (std::size_t i = 0; i< v.size(); ++i) {
+                std::cout << ocl::impl::device_info(v[i]);
+        }
+        ocl::impl::device dd(ocl::impl::default_device());
+        std::cout << "selected device: \n";
+        std::cout << ocl::impl::device_info(dd);
+
         return 0;
 }

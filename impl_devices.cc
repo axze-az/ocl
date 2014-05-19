@@ -116,8 +116,9 @@ ocl::impl::operator<<(std::ostream& s, const device_info& dd)
         std::string n(d.getInfo<CL_DEVICE_NAME>());
         s << "device name: " << n << '\n';
         n = d.getInfo<CL_DEVICE_VENDOR>();
-        s << "device vendeor: " << n << '\n';
-        
+        s << "device vendor: " << n << '\n';
+        n = d.getInfo<CL_DRIVER_VERSION>();
+        s << "driver version: " << n << '\n';
         cl_device_type dt(d.getInfo<CL_DEVICE_TYPE>());
         s << "device type: ";
         switch (dt) {
@@ -133,7 +134,31 @@ ocl::impl::operator<<(std::ostream& s, const device_info& dd)
         }
         cl_uint t(d.getInfo<CL_DEVICE_VENDOR_ID>());
         s << "vendor id: " << t << '\n';
-        
+
+        cl_command_queue_properties cqp(
+                d.getInfo<CL_DEVICE_QUEUE_PROPERTIES>());
+        s << "device queue properties:";
+        bool comma(false);
+        if ((cqp & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)==
+            CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+                s << " out of order execution";
+                comma = true;
+        }
+        if ((cqp & CL_QUEUE_PROFILING_ENABLE) ==
+            CL_QUEUE_PROFILING_ENABLE) {
+                if (comma)
+                        s << ',';
+                s << " profiling";
+        }
+        s << '\n';
+        n = d.getInfo<CL_DEVICE_EXTENSIONS>();
+        s << "device extensions: " << n << '\n';
+
+        t=d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
+        s << "max freq: " << t << " MHz\n";
+        t=d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+        s << "max compute units: " << t << '\n';
+
         return s;
 }
 
@@ -160,11 +185,13 @@ ocl::impl::devices()
                         std::copy(dc.begin(), dc.end(), std::back_inserter(r));
                 }
                 catch (const error& ex) {
+#if 0
                         std::cerr << "exception caught: "
                                   << ex.what()
                                   << '\n'
                                   << err2str(ex.err())
                                   << '\n';
+#endif
                 }
                 catch (...) {
                         std::cerr << "oops" << std::endl;
@@ -175,49 +202,102 @@ ocl::impl::devices()
 
 std::vector<ocl::impl::device>
 ocl::impl::filter_devices(const std::vector<device>& v, 
-	                  device_type::type dt)
+                          device_type::type dt)
 {
-	std::vector<device> r;
-	for (std::size_t i=0; i< v.size(); ++i) {
-		const device& d= v[i];
-		cl_device_type t(d.getInfo<CL_DEVICE_TYPE>());
-		if (t == static_cast<cl_device_type>(dt))
-			r.push_back(d);
-	}
-	return r;
+        std::vector<device> r;
+        for (std::size_t i=0; i< v.size(); ++i) {
+                const device& d= v[i];
+                cl_device_type t(d.getInfo<CL_DEVICE_TYPE>());
+                if (t == static_cast<cl_device_type>(dt))
+                        r.push_back(d);
+        }
+        return r;
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::gpu_devices(const std::vector<device>& v)
 {
-	return filter_devices(v, device_type::gpu);
+        return filter_devices(v, device_type::gpu);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::gpu_devices()
 {
         std::vector<device> all_devs(devices());
-	return gpu_devices(all_devs);
+        return gpu_devices(all_devs);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::cpu_devices(const std::vector<device>& v)
 {
-	return filter_devices(v, device_type::cpu);
+        return filter_devices(v, device_type::cpu);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::cpu_devices()
 {
         std::vector<device> all_devs(devices());
-	return cpu_devices(all_devs);
+        return cpu_devices(all_devs);
+}
+
+ocl::impl::device
+ocl::impl::device_with_max_freq_x_units(const std::vector<device>& v)
+{
+        if (v.empty()) {
+                throw error(CL_DEVICE_NOT_FOUND, "no device found");
+        }
+        device r;
+        double p(-1);
+        for (std::size_t i=0; i<v.size(); ++i) {
+                const device& d= v[i];
+                cl_uint t= d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                double pi(t);
+                t= d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
+                pi *= double(t);
+                if (pi> p) {
+                        r=d;
+                        p=pi;
+                }
+        }
+        return r;
 }
 
 ocl::impl::device
 ocl::impl::default_gpu_device()
 {
-	std::vector<device> gpu_devs(gpu_devices());	
+        std::vector<device> gpu_devs(gpu_devices());    
+        if (gpu_devs.empty()) {
+                throw error(CL_DEVICE_NOT_FOUND, "no gpu device found");
+        }
+        return device_with_max_freq_x_units(gpu_devs);
+}
+
+ocl::impl::device
+ocl::impl::default_cpu_device()
+{
+        std::vector<device> cpu_devs(cpu_devices());    
+        if (cpu_devs.empty()) {
+                throw error(CL_DEVICE_NOT_FOUND, "no cpu device found");
+        }
+        return device_with_max_freq_x_units(cpu_devs);
+}
+
+ocl::impl::device
+ocl::impl::default_device()
+{
         device r;
+        try {
+                r= default_gpu_device();
+        } 
+        catch (const error& e) {
+                try {
+                        r= default_cpu_device();
+                }
+                catch (const error& e) {
+                        throw error(CL_DEVICE_NOT_FOUND, "no device found");
+                }
+        }
         return r;
 }
+
 

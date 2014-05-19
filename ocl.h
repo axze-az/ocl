@@ -45,15 +45,15 @@ namespace ocl {
                                 all = CL_DEVICE_TYPE_ALL
                         };  
                 };
-		
-		struct device_info {
-			device _d;
+                
+                struct device_info {
+                        device _d;
                         device_info(const device& d) : _d(d) {}
-		};
-		
-		std::ostream& operator <<(std::ostream& s,
-					  const device_info& d);
-		
+                };
+                
+                std::ostream& operator <<(std::ostream& s,
+                                          const device_info& d);
+                
 
                 std::vector<device>
                 filter_devices(const std::vector<device>& devs,
@@ -77,12 +77,20 @@ namespace ocl {
                 std::vector<device>
                 cpu_devices();
 
+                // return the device with the maximum product
+                // of units and frequency
+                device
+                device_with_max_freq_x_units(const std::vector<device>& v);
+                
                 // get the most? powerful gpu device 
                 device
                 default_gpu_device();
                 // get a cpu device
                 device
                 default_cpu_device();
+                // return a default device.
+                device
+                default_device();
                 
         }
 
