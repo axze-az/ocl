@@ -1,4 +1,5 @@
 #include "ocl.h"
+#include <iostream>
 
 const char* ocl::impl::err2str(const error& e)
 {
@@ -108,6 +109,34 @@ const char* ocl::impl::err2str(int err)
         // return p;
 }
 
+std::ostream&
+ocl::impl::operator<<(std::ostream& s, const device_info& dd)
+{
+        const device& d= dd._d;
+        std::string n(d.getInfo<CL_DEVICE_NAME>());
+        s << "device name: " << n << '\n';
+        n = d.getInfo<CL_DEVICE_VENDOR>();
+        s << "device vendeor: " << n << '\n';
+        
+        cl_device_type dt(d.getInfo<CL_DEVICE_TYPE>());
+        s << "device type: ";
+        switch (dt) {
+        case CL_DEVICE_TYPE_CPU:
+                s << "cpu\n" ;
+                break;
+        case CL_DEVICE_TYPE_GPU:
+                s << "gpu\n";
+                break;
+        default:
+                s << "unknown\n";
+                break;
+        }
+        cl_uint t(d.getInfo<CL_DEVICE_VENDOR_ID>());
+        s << "vendor id: " << t << '\n';
+        
+        return s;
+}
+
 std::vector<ocl::impl::device>
 ocl::impl::devices()
 {
@@ -122,52 +151,72 @@ ocl::impl::devices()
         props.push_back(0);
         props.push_back(0);
         for(i = platforms.begin(); i != pe; ++i) {
+                // std::string n(i->getInfo<CL_PLATFORM_NAME>());
+                // std::cerr << "platform name: " << n << '\n';
                 // cl_platform_id pi((*i)());
                 try {
                         std::vector<device> dc;
                         i->getDevices(CL_DEVICE_TYPE_ALL, &dc);
                         std::copy(dc.begin(), dc.end(), std::back_inserter(r));
                 }
+                catch (const error& ex) {
+                        std::cerr << "exception caught: "
+                                  << ex.what()
+                                  << '\n'
+                                  << err2str(ex.err())
+                                  << '\n';
+                }
                 catch (...) {
+                        std::cerr << "oops" << std::endl;
                 }
         }
         return r;
 }
 
 std::vector<ocl::impl::device>
+ocl::impl::filter_devices(const std::vector<device>& v, 
+	                  device_type::type dt)
+{
+	std::vector<device> r;
+	for (std::size_t i=0; i< v.size(); ++i) {
+		const device& d= v[i];
+		cl_device_type t(d.getInfo<CL_DEVICE_TYPE>());
+		if (t == static_cast<cl_device_type>(dt))
+			r.push_back(d);
+	}
+	return r;
+}
+
+std::vector<ocl::impl::device>
 ocl::impl::gpu_devices(const std::vector<device>& v)
 {
-        std::vector<device> gpu_devs(gpu_devices(v));
-        return gpu_devs;
+	return filter_devices(v, device_type::gpu);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::gpu_devices()
 {
         std::vector<device> all_devs(devices());
-        std::vector<device> gpu_devs;
-        return gpu_devs;
+	return gpu_devices(all_devs);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::cpu_devices(const std::vector<device>& v)
 {
-        std::vector<device> cpu_devs;
-        return cpu_devs;
+	return filter_devices(v, device_type::cpu);
 }
 
 std::vector<ocl::impl::device>
 ocl::impl::cpu_devices()
 {
-        std::vector<ocl::impl::device> all_devs(devices());
-        std::vector<ocl::impl::device> cpu_devs(cpu_devices(all_devs));
-        return cpu_devs;
+        std::vector<device> all_devs(devices());
+	return cpu_devices(all_devs);
 }
-
 
 ocl::impl::device
 ocl::impl::default_gpu_device()
 {
+	std::vector<device> gpu_devs(gpu_devices());	
         device r;
         return r;
 }

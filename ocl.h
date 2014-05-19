@@ -5,6 +5,7 @@
 // #include <CL/cl.h>
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -44,6 +45,15 @@ namespace ocl {
                                 all = CL_DEVICE_TYPE_ALL
                         };  
                 };
+		
+		struct device_info {
+			device _d;
+                        device_info(const device& d) : _d(d) {}
+		};
+		
+		std::ostream& operator <<(std::ostream& s,
+					  const device_info& d);
+		
 
                 std::vector<device>
                 filter_devices(const std::vector<device>& devs,

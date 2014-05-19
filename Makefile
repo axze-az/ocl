@@ -80,7 +80,7 @@ tests: $(TESTPROGS)
 testocl: testocl.ol
 	$(LD) -o $@ $< $(LDFLAGS) -Wl,-rpath=. -L. -locl -lOpenCL -lstdc++ -ldl
 
-testocl_g: testocl.od
+testocl_g: testocl.od lib$(LIBNAME)-g.a
 	$(LD) -o $@ $< -g $(LDFLAGS) -L. -locl-g -lOpenCL -lstdc++ -ldl
 
 

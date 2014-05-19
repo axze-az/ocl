@@ -6,31 +6,25 @@
 
 namespace ocl {
 
-        class be_data {
-        public:
-                cl::Device& device() {
-                        return _d;
-                }
-                cl::CommandQueue& queue() {
-                        return _q;
-                }
-                static
-                be_data* instance() {
-                        if (_instance == nullptr) {
-                                _instance = new be_data();
-                        }
-                        return _instance;
-                }
-        private:
-                cl::Device _d;
-                cl::CommandQueue _q;
+	namespace impl {
+		class be_data {
+		public:
+			cl::Device& d() {
+				return _d;
+			}
+			cl::CommandQueue& q() {
+				return _q;
+			}
+			static
+			be_data* instance();
+		private:
+			cl::Device _d;
+			cl::CommandQueue _q;
 
-                be_data() {
-                        
-                }
-                static be_data* _instance;
-        };
-
+			be_data();
+			static be_data* _instance;
+		};
+	}
 
 
         template <class _T>
@@ -386,6 +380,23 @@ ocl::vec<_T>::vec(const expr<_OP<vec<_T> >, _L, _R>& r)
         execute(*this, r);
 }
 
+ocl::impl::be_data*
+ocl::impl::be_data::_instance= nullptr;
+
+ocl::impl::be_data*
+ocl::impl::be_data::instance()
+ {
+	if (_instance == nullptr) {
+		_instance = new be_data();
+	}
+	return _instance;
+}
+			
+ocl::impl::be_data::be_data()
+{
+	std::vector<cl::Device> vd(devices());
+}
+
 using namespace ocl;
 
 vec<float>
@@ -403,7 +414,6 @@ test_func(const vec<float>& a, const vec<float>& b,
 }
 
 
-
 int main()
 {
         // vec<float> a, b;
@@ -414,6 +424,9 @@ int main()
 
         std::vector<cl::Device> v(ocl::impl::devices());
         std::cout << v.size() << std::endl;
-
+	for (std::size_t i = 0; i< v.size(); ++i) {
+		std::cout << ocl::impl::device_info(v[i]);
+	}
+	
         return 0;
 }
