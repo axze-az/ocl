@@ -9,17 +9,18 @@ namespace ocl {
         namespace impl {
                 class be_data {
                 public:
-                        cl::Device& d() {
+                        device& d() {
                                 return _d;
                         }
-                        cl::CommandQueue& q() {
+                        queue& q() {
                                 return _q;
                         }
                         static
                         be_data* instance();
                 private:
-                        cl::Device _d;
-                        cl::CommandQueue _q;
+                        device _d;
+                        context _c;
+                        queue _q;
 
                         be_data();
                         static be_data* _instance;
@@ -393,8 +394,10 @@ ocl::impl::be_data::instance()
 }
                         
 ocl::impl::be_data::be_data()
+        : _d(default_device()), _c(_d), _q(_c, _d)
 {
-        std::vector<cl::Device> vd(devices());
+        // create context from device, command queue from context and
+        // device
 }
 
 using namespace ocl;
@@ -431,5 +434,17 @@ int main()
         std::cout << "selected device: \n";
         std::cout << ocl::impl::device_info(dd);
 
+        try {
+                const ocl::impl::device& bed = 
+                        ocl::impl::be_data::instance()->d();
+                std::cout << "\nselected backend device: \n";
+                std::cout << ocl::impl::device_info(bed);
+        }
+        catch (const ocl::impl::error& e) {
+                std::cout << "caught exception: " << e.what()
+                          << '\n'
+                          << ocl::impl::err2str(e)
+                          << std::endl;
+        }
         return 0;
 }
