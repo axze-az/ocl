@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <map>
 #include <atomic>
 
 namespace ocl {
@@ -18,12 +19,18 @@ namespace ocl {
                         context& c() {
                                 return _c;
                         }
+                        
+                        typedef std::map<void*, kernel> kernel_map_type;
+                        typedef std::map<void*, kernel>::iterator 
+                        iterator_type;
+
                         static
                         be_data* instance();
                 private:
                         device _d;
                         context _c;
                         queue _q;
+                        kernel_map_type _kmap;
                         
                         be_data();
                         static be_data* _instance;
@@ -43,6 +50,15 @@ namespace ocl {
 
         }
 
+        template <class _T>
+        std::size_t eval_size(const _T& t) {
+                return t;
+        }
+
+        template <class _T>
+        std::size_t eval_size(const std::vector<_T>& v) {
+                return v.size();
+        }
 
         template <class _T>
         struct expr_traits {
@@ -57,6 +73,13 @@ namespace ocl {
                         _l(l), _r(r) {}
         };
 
+        template <class _OP, class _L, class _R>
+        std::size_t eval_size(const expr<_OP, _L, _R>& a) {
+                std::size_t l=eval_size(a._l);
+                std::size_t r=eval_size(a._r);
+                return std::max(l, r);
+        }
+        
         template <class _OP, class _L, class _R>
         std::string 
         eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
@@ -97,8 +120,13 @@ namespace ocl {
         class expr_kernel {
         public:
                 expr_kernel();
-                void execute(_RES& res, const _EXPR& r,
-                             const std::string& name);
+                void 
+                execute(_RES& res, const _EXPR& r, const void* addr)
+                        const;
+        private:
+                impl::kernel 
+                gen_kernel(_RES& res, const _EXPR& r, const void* addr)
+                        const;
         };
 
         template <class _RES, class _EXPR>
@@ -106,14 +134,22 @@ namespace ocl {
         
         template <class _T>
         class vec {
+                std::size_t _size;
                 cl::Buffer _b;
         public:
-                cl::Buffer buffer() const  {
+                std::size_t size() const {
+                        return _size;
+                }
+                cl::Buffer buf() const  {
                         return _b; 
                 }
-                vec() {}
+                vec() : _size(0), _b() {}
                 vec(std::size_t n, const _T* s);
                 vec(std::size_t n, const _T& i);
+                vec(const vec& v);
+                vec& operator=(const vec& v);
+                vec& operator=(const _T& i);
+
                 explicit vec(std::size_t n);
                 template <template <class _V> class _OP, 
                           class _L, class _R>
@@ -122,8 +158,13 @@ namespace ocl {
 
         template <class _T>
         struct expr_traits<vec<_T> > {
-                typedef const vec<_T> type;
+                typedef const vec<_T>& type;
         };
+
+        template <class _T>
+        std::size_t eval_size(const vec<_T>& v) {
+                return v.size();
+        }
 
         template <class _T>
         std::string eval_ops(const _T& r, unsigned& arg_num) {
@@ -174,7 +215,7 @@ namespace ocl {
                 if (!p.empty()) {
                         s << p << ",\n";
                 }
-                s << "\t__global " ;
+                s << "\t" ;
                 s << impl::type_2_name<_T>::v() 
                   << " arg"  << arg_num;
                 ++arg_num;
@@ -350,55 +391,83 @@ ocl::expr_kernel<_RES, _SRC>::expr_kernel()
 template <class _RES, class _SRC>
 void 
 ocl::expr_kernel<_RES, _SRC>::
-execute(_RES& res, const _SRC& r, const std::string& name)
+execute(_RES& res, const _SRC& r, const void* cookie)
+        const
 {
-        std::cout << "__kernel void " 
-                  << name
-                  << std::endl
-                  << "(\n";
+        ocl::impl::kernel k(gen_kernel(res, r, cookie));
+        // bind args
+        // unsigned arg_num{0};
+        // bind_args(k, res, arg_num);
+        // bind_args(k, r, arg_num);
+}
+
+
+template <class _RES, class _SRC>
+ocl::impl::kernel
+ocl::expr_kernel<_RES, _SRC>::
+gen_kernel(_RES& res, const _SRC& r, const void* cookie)
+        const
+{
+        std::ostringstream s;
+        s << "expr_kernel_" << cookie;
+        std::string k_name(s.str());
+        s.str("");
+
+        s << "__kernel void " << k_name
+          << std::endl
+          << "(\n";
         
         // argument generation
         unsigned arg_num{0};
-        std::cout << eval_args("", res, arg_num, false) 
-                  << ','
-                  << std::endl;
-        std::cout << eval_args("", r, arg_num, true) << std::endl;
+        s << eval_args("", res, arg_num, false) 
+          << ','
+          << std::endl;
+        s << eval_args("", r, arg_num, true) << std::endl;
         
-        std::cout << ")" << std::endl;
+        s << ")" << std::endl;
 
         // begin body
-        std::cout << "{" << std::endl;
+        s << "{" << std::endl;
 
         // global id
-        std::cout << "\tsize_t gid = get_global_id(0);" << std::endl;
+        s << "\tsize_t gid = get_global_id(0);" << std::endl;
  
         // temporary variables
         unsigned var_num{1};
-        std::cout << eval_vars(r, var_num, true) 
-                  << std::endl;
+        s << eval_vars(r, var_num, true) 
+          << std::endl;
 
         // result variable
         unsigned res_num{0};
-        std::cout << eval_vars(res, res_num, false) << "= " 
-                  << std::endl;
-         // the operations
+        s << eval_vars(res, res_num, false) << "= " 
+          << std::endl;
+        // the operations
         unsigned body_num{1};
-        std::cout << "\t\t" << eval_ops(r, body_num) << ';'
-                  << std::endl;
+        s << "\t\t" << eval_ops(r, body_num) << ';'
+          << std::endl;
         // write back
         res_num = 0;
-        std::cout << eval_results(res, res_num)
-                  << std::endl;
+        s << eval_results(res, res_num)
+          << std::endl;
 
         // end body
-        std::cout << "}" << std::endl;
+        s << "}" << std::endl;
 
+        std::cout << "--- source code ------------------\n";
+        std::cout << s.str();
 
-        // bind args
-        arg_num = 0;
-        // bind_args(_k, res, arg_num);
-        // bind_args(_k, r, arg_num);
+        cl::Program pgm(impl::be_data::instance()->c(),
+                        s.str(),
+                        false);
+        std::vector<impl::device> vk(1, impl::be_data::instance()->d());
+        pgm.build(vk);
+        impl::kernel k(pgm, k_name.c_str());
+
+        std::cout << "-- compiled with success ---------\n";
+
+        return k;
 }
+
 
 template <class _RES, class _EXPR>
 void 
@@ -406,23 +475,50 @@ ocl::execute(_RES& res, const _EXPR& r)
 {
         auto pf=ocl::execute<_RES, _EXPR>;
         const void* pv=reinterpret_cast<const void*>(pf);
-        std::ostringstream s;
-        s << __func__ 
-          << std::hex 
-          << reinterpret_cast<unsigned long>(pv);
         expr_kernel<_RES, _EXPR> k;
-        k.execute(res, r, s.str());
+        k.execute(res, r, pv);
 }
 
+template <class _T>
+inline
+ocl::vec<_T>::vec(std::size_t s, const _T& i)
+        : _size(s), _b()
+{
+        if (_size) {
+                _b = impl::buffer(impl::be_context(),
+                                  CL_MEM_HOST_READ_ONLY, 
+                                  _size*sizeof(_T));
+                execute(*this, i);
+        }
+}
+
+template <class _T>
+inline
+ocl::vec<_T>::vec(const vec& r)
+        : _size(r._size), _b()
+{
+        if (_size) {
+                _b = impl::buffer(impl::be_context(),
+                                  CL_MEM_HOST_READ_ONLY, 
+                                  _size*sizeof(_T));
+                execute(*this, r);
+        }
+}
 
 template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::vec<_T>::vec(const expr<_OP<vec<_T> >, _L, _R>& r)
+        : _size(eval_size(r)), _b()
 {
         // typedef expr_kernel<_OP<vec<_T> >, _L, _R> kernel_t;
         // expr_t::_k.execute(*this, r);
-        execute(*this, r);
+        if (_size) {
+                _b = impl::buffer(impl::be_context(),
+                                  CL_MEM_HOST_READ_ONLY, 
+                                  _size*sizeof(_T));
+                execute(*this, r);
+        }
 }
 
 ocl::impl::be_data*
@@ -463,12 +559,20 @@ test_func(const vec<float>& a, const vec<float>& b,
 
 int main()
 {
-        vec<float> a, b;
-        vec<float> c= test_func(a, b);
-        vec<float> d= test_func(a, b, c);
-
-        static_cast<void>(&d);
-
+        try {
+                vec<float> v0(1024, 2.0f);
+                vec<float> a(v0), b(1024, 3.0f);
+                vec<float> c= test_func(a, b);
+                vec<float> d= test_func(a, b, c);
+                
+                static_cast<void>(&d);
+        }
+        catch (const ocl::impl::error& e) {
+                std::cout << "caught exception: " << e.what()
+                          << '\n'
+                          << ocl::impl::err2str(e)
+                          << std::endl;
+        }
 #if 0
         std::vector<cl::Device> v(ocl::impl::devices());
         std::cout << v.size() << std::endl;

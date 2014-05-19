@@ -27,6 +27,8 @@ namespace ocl {
                 typedef cl::Context context;
                 typedef cl::Device device;
                 typedef cl::CommandQueue queue;
+                typedef cl::Buffer buffer;
+                typedef cl::Kernel kernel;
 
                 struct data {
                         context _ctx;
