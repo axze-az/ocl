@@ -460,6 +460,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
                                cl::NDRange(s),
                                cl::NullRange,
                                nullptr);
+        std::cout << "excution done" << std::endl;
         q.flush();
 }
 
@@ -697,11 +698,12 @@ test_func(const _T& a, const _T& b, const _T& c)
 int main()
 {
         try {
+                const int SIZE=4096;
                 float a(2.0f), b(3.0f);
 
-                vec<float> v0(256, a);
+                vec<float> v0(SIZE, a);
                 vec<float> va(v0);
-                std::vector<float> vhb(256, 3.0f);
+                std::vector<float> vhb(SIZE, 3.0f);
                 vec<float> vb(vhb);
                 vec<float> vc= test_func(va, vb);
                 vec<float> vd= test_func(va, vb, vc);
