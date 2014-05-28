@@ -4,12 +4,32 @@
 #include <sstream>
 #include <map>
 #include <atomic>
+#include <mutex>
+
+#if !defined (CL_MEM_HOST_READ_ONLY)
+#define CL_MEM_HOST_READ_ONLY CL_MEM_READ_ONLY
+#endif
 
 namespace ocl {
 
         namespace impl {
                 class be_data {
                 public:
+                        be_data(const be_data&) = delete;
+                        be_data& operator=(const be_data&) = delete;
+
+                        void lock() {
+                                _m.lock();
+                        }
+
+                        bool try_lock() {
+                                return _m.try_lock();
+                        }
+
+                        void unlock() {
+                                _m.unlock();
+                        }
+
                         device& d() {
                                 return _d;
                         }
@@ -19,14 +39,24 @@ namespace ocl {
                         context& c() {
                                 return _c;
                         }
-                        
-                        typedef std::map<void*, kernel> kernel_map_type;
-                        typedef std::map<void*, kernel>::iterator 
-                        iterator_type;
 
+                        typedef std::pair<std::mutex, kernel> kernel_type;
+                        typedef std::map<void*, kernel_type> kernel_map_type;
+                        typedef kernel_map_type::iterator iterator_type;
+                        typedef kernel_map_type::const_iterator 
+                        const_iterator_type;
+
+                        const_iterator_type
+                        find(void* cookie)
+                                const;
+
+                        
+                        
+                        
                         static
                         be_data* instance();
                 private:
+                        std::mutex _m;
                         device _d;
                         context _c;
                         queue _q;
@@ -52,7 +82,7 @@ namespace ocl {
 
         template <class _T>
         std::size_t eval_size(const _T& t) {
-                return t;
+                return 1;
         }
 
         template <class _T>
@@ -124,6 +154,10 @@ namespace ocl {
                 execute(_RES& res, const _EXPR& r, const void* addr)
                         const;
         private:
+                std::pair<void*, impl::kernel>&
+                get_kernel(_RES& res, const _EXPR& r, const void* addr)
+                        const;
+
                 impl::kernel 
                 gen_kernel(_RES& res, const _EXPR& r, const void* addr)
                         const;
@@ -147,6 +181,7 @@ namespace ocl {
                 vec(std::size_t n, const _T* s);
                 vec(std::size_t n, const _T& i);
                 vec(const vec& v);
+                vec(const std::vector<_T>& v);
                 vec& operator=(const vec& v);
                 vec& operator=(const _T& i);
 
@@ -154,6 +189,8 @@ namespace ocl {
                 template <template <class _V> class _OP, 
                           class _L, class _R>
                 vec(const expr<_OP<vec<_T> >, _L, _R>& r);
+                
+                operator std::vector<_T> () const;
         };
 
         template <class _T>
@@ -254,12 +291,25 @@ namespace ocl {
 
         template <class _T>
         void bind_args(cl::Kernel& k, 
+                       const _T& r, 
+                       unsigned&  arg_num)
+        {
+                std::cout << "binding to arg " << arg_num 
+                          << std::endl;
+                k.setArg(arg_num, r);
+                ++arg_num;
+        }
+        
+
+
+        template <class _T>
+        void bind_args(cl::Kernel& k, 
                        const vec<_T>& r, 
                        unsigned&  arg_num)
         {
                 std::cout << "binding to arg " << arg_num 
                           << std::endl;
-                k.setArg(arg_num, r.buffer());
+                k.setArg(arg_num, r.buf());
                 ++arg_num;
         }
         
@@ -396,9 +446,21 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 {
         ocl::impl::kernel k(gen_kernel(res, r, cookie));
         // bind args
-        // unsigned arg_num{0};
-        // bind_args(k, res, arg_num);
-        // bind_args(k, r, arg_num);
+        unsigned arg_num{0};
+        bind_args(k, res, arg_num);
+        bind_args(k, r, arg_num);
+        // execute the kernel
+        std::size_t s(eval_size(res));
+
+        impl::queue& q= impl::be_data::instance()->q();
+        // execute
+        std::cout << "executing kernel" << std::endl;
+        q.enqueueNDRangeKernel(k, 
+                               cl::NullRange,
+                               cl::NDRange(s),
+                               cl::NullRange,
+                               nullptr);
+        q.flush();
 }
 
 
@@ -456,9 +518,12 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         std::cout << "--- source code ------------------\n";
         std::cout << s.str();
 
+        std::string ss(s.str());
+        cl::Program::Sources sv;
+        sv.push_back(std::make_pair(ss.c_str(), ss.size()));
+
         cl::Program pgm(impl::be_data::instance()->c(),
-                        s.str(),
-                        false);
+                        sv);
         std::vector<impl::device> vk(1, impl::be_data::instance()->d());
         pgm.build(vk);
         impl::kernel k(pgm, k_name.c_str());
@@ -481,12 +546,32 @@ ocl::execute(_RES& res, const _EXPR& r)
 
 template <class _T>
 inline
+ocl::vec<_T>::vec(std::size_t n, const _T* p)
+        : _size(n), _b()
+{
+        if (_size) {
+                std::size_t s=_size*sizeof(_T);
+                _b = impl::buffer(impl::be_context(),
+                                  CL_MEM_READ_WRITE,
+                                  s);
+                impl::queue& q= impl::be_queue();
+                q.enqueueWriteBuffer(this->buf(),
+                                     true,
+                                     0, s,
+                                     p,
+                                     nullptr,
+                                     nullptr);
+        }
+}
+
+template <class _T>
+inline
 ocl::vec<_T>::vec(std::size_t s, const _T& i)
         : _size(s), _b()
 {
         if (_size) {
                 _b = impl::buffer(impl::be_context(),
-                                  CL_MEM_HOST_READ_ONLY, 
+                                  CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, i);
         }
@@ -499,9 +584,29 @@ ocl::vec<_T>::vec(const vec& r)
 {
         if (_size) {
                 _b = impl::buffer(impl::be_context(),
-                                  CL_MEM_HOST_READ_ONLY, 
+                                  CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, r);
+        }
+}
+
+template <class _T>
+inline
+ocl::vec<_T>::vec(const std::vector<_T>& r)
+        : _size(r.size()), _b()
+{
+        if (_size) {
+                std::size_t s=_size*sizeof(_T);
+                _b = impl::buffer(impl::be_context(),
+                                  CL_MEM_READ_WRITE,
+                                  s);
+                impl::queue& q= impl::be_queue();
+                q.enqueueWriteBuffer(this->buf(),
+                                     true,
+                                     0, s,
+                                     &r[0],
+                                     nullptr,
+                                     nullptr);
         }
 }
 
@@ -515,11 +620,30 @@ ocl::vec<_T>::vec(const expr<_OP<vec<_T> >, _L, _R>& r)
         // expr_t::_k.execute(*this, r);
         if (_size) {
                 _b = impl::buffer(impl::be_context(),
-                                  CL_MEM_HOST_READ_ONLY, 
+                                  CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, r);
         }
 }
+
+template <class _T>
+inline
+ocl::vec<_T>::operator std::vector<_T> ()
+        const
+{
+        std::size_t n(this->size());
+        std::size_t s(n*sizeof(_T));
+        std::vector<_T> v(n);
+        impl::queue& q= impl::be_queue();
+        q.enqueueReadBuffer(this->buf(),
+                            true,
+                            0, s,
+                            &v[0],
+                            nullptr,
+                            nullptr);
+        return v;
+}
+
 
 ocl::impl::be_data*
 ocl::impl::be_data::_instance= nullptr;
@@ -532,40 +656,67 @@ ocl::impl::be_data::instance()
         }
         return _instance;
 }
-                        
+
+#if 0                        
 ocl::impl::be_data::be_data()
         : _d(default_device()), _c(_d), _q(_c, _d)
 {
         // create context from device, command queue from context and
         // device
 }
+#else
+ocl::impl::be_data::be_data()
+        : _d(default_device()), _c(), _q()
+{
+        // create context from device, command queue from context and
+        // device
+        std::vector<cl::Device> vd;
+        vd.push_back(_d);
+        _c= cl::Context(vd);
+        _q= cl::CommandQueue(_c, _d);
+}
+#endif
 
 using namespace ocl;
 
-vec<float>
-test_func(const vec<float>& a, const vec<float>& b)
+template <class _T>
+_T
+test_func(const _T& a, const _T& b)
 {
-        // vec<float> n(2.0f);
-        return vec<float>( (a + b) / (a * b)  + (a + a * b ) - a);
+        return _T( (a + b) / (a * b)  + (a + a * b ) - a);
 }
 
-vec<float>
-test_func(const vec<float>& a, const vec<float>& b,
-          const vec<float>& c)
+template <class _T>
+_T
+test_func(const _T& a, const _T& b, const _T& c)
 {
-        return (a+b *c ) *c;
+        return _T(a+b *c ) *c;
 }
 
 
 int main()
 {
         try {
-                vec<float> v0(1024, 2.0f);
-                vec<float> a(v0), b(1024, 3.0f);
-                vec<float> c= test_func(a, b);
-                vec<float> d= test_func(a, b, c);
+                float a(2.0f), b(3.0f);
+
+                vec<float> v0(256, a);
+                vec<float> va(v0);
+                std::vector<float> vhb(256, 3.0f);
+                vec<float> vb(vhb);
+                vec<float> vc= test_func(va, vb);
+                vec<float> vd= test_func(va, vb, vc);
+
+                float c= test_func(a, b);
+                float d= test_func(a, b, c);
                 
-                static_cast<void>(&d);
+                std::vector<float> res(vd);
+
+                for (std::size_t i=0; i< res.size(); ++i) {
+                        std::cout << i << ' ' << res[i] << std::endl;
+                }
+
+                std::cout << "scalar " << d << std::endl;
+
         }
         catch (const ocl::impl::error& e) {
                 std::cout << "caught exception: " << e.what()
