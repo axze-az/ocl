@@ -80,6 +80,7 @@ namespace ocl {
 
         }
 
+
         template <class _T>
         std::size_t eval_size(const _T& t) {
                 return 1;
@@ -88,6 +89,59 @@ namespace ocl {
         template <class _T>
         std::size_t eval_size(const std::vector<_T>& v) {
                 return v.size();
+        }
+
+
+        template <class _T>
+        std::string eval_ops(const _T& r, unsigned& arg_num) {
+                std::ostringstream s;
+                s << "v" << arg_num;
+                std::string a(s.str());
+                ++arg_num;
+                return a;
+        }
+
+        template <class _T>
+        std::string eval_vars(const _T& r, unsigned& arg_num, 
+                              bool read) {
+                std::ostringstream s;
+                s << '\t' << impl::type_2_name<_T>::v() 
+                  << " v" << arg_num;
+                if (read== true) {
+                        s << " = arg" 
+                          << arg_num << ";";
+                }
+                std::string a(s.str());
+                ++arg_num;
+                return a;
+        }
+
+        template <class _T>
+        std::string eval_args(const std::string& p,
+                              const _T& r,
+                              unsigned& arg_num,
+                              bool ro) {
+                static_cast<void>(ro);
+                std::ostringstream s;
+                if (!p.empty()) {
+                        s << p << ",\n";
+                }
+                s << "\t" ;
+                s << impl::type_2_name<_T>::v() 
+                  << " arg"  << arg_num;
+                ++arg_num;
+                return s.str();
+        }
+
+        template <class _T>
+        void bind_args(cl::Kernel& k, 
+                       const _T& r, 
+                       unsigned& arg_num)
+        {
+                std::cout << "binding to arg " << arg_num 
+                          << std::endl;
+                k.setArg(arg_num, r);
+                ++arg_num;
         }
 
         template <class _T>
@@ -104,7 +158,8 @@ namespace ocl {
         };
 
         template <class _OP, class _L, class _R>
-        std::size_t eval_size(const expr<_OP, _L, _R>& a) {
+        std::size_t eval_size(const expr<_OP, _L, _R>& a) 
+        {
                 std::size_t l=eval_size(a._l);
                 std::size_t r=eval_size(a._r);
                 return std::max(l, r);
@@ -113,7 +168,8 @@ namespace ocl {
         template <class _OP, class _L, class _R>
         std::string 
         eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
-                  bool read) {
+                  bool read) 
+        {
                 auto l=eval_vars(a._l, arg_num, read);
                 auto r=eval_vars(a._r, arg_num, read);
                 return std::string(l + '\n' + r);
@@ -121,7 +177,8 @@ namespace ocl {
 
         template <class _OP, class _L, class _R>
         std::string 
-        eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num) {
+        eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num) 
+        {
                 auto l=eval_ops(a._l, arg_num);
                 auto r=eval_ops(a._r, arg_num);
                 std::string t(_OP::body(l, r));
@@ -133,18 +190,22 @@ namespace ocl {
         eval_args(const std::string& p, 
                   const expr<_OP, _L, _R>& r,
                   unsigned& arg_num,
-                  bool ro) {
+                  bool ro) 
+        {
                 std::string left(eval_args(p, r._l, arg_num, ro));
                 return eval_args(left, r._r, arg_num, ro);
         }
 
+
         template <class _OP, class _L, class _R>
         void bind_args(cl::Kernel& k, 
                        const expr<_OP, _L, _R>& r,
-                       unsigned& arg_num) {
+                       unsigned& arg_num) 
+        {
                 bind_args(k, r._l, arg_num);
                 bind_args(k, r._r, arg_num);
         }
+    
         
         template <class _RES, class _EXPR>
         class expr_kernel {
@@ -165,6 +226,8 @@ namespace ocl {
 
         template <class _RES, class _EXPR>
         void execute(_RES& res, const _EXPR& r);
+
+
         
         template <class _T>
         class vec {
@@ -203,30 +266,7 @@ namespace ocl {
                 return v.size();
         }
 
-        template <class _T>
-        std::string eval_ops(const _T& r, unsigned& arg_num) {
-                std::ostringstream s;
-                s << "v" << arg_num;
-                std::string a(s.str());
-                ++arg_num;
-                return a;
-        }
-
-        template <class _T>
-        std::string eval_vars(const _T& r, unsigned& arg_num, 
-                              bool read) {
-                std::ostringstream s;
-                s << '\t' << impl::type_2_name<_T>::v() 
-                  << " v" << arg_num;
-                if (read== true) {
-                        s << " = arg" 
-                          << arg_num << ";";
-                }
-                std::string a(s.str());
-                ++arg_num;
-                return a;
-        }
-
+       
         template <class _T>
         std::string eval_vars(const vec<_T>& r, unsigned& arg_num, 
                               bool read) {
@@ -241,24 +281,6 @@ namespace ocl {
                 ++arg_num;
                 return a;
         }
-
-        template <class _T>
-        std::string eval_args(const std::string& p,
-                              const _T& r,
-                              unsigned& arg_num,
-                              bool ro) {
-                static_cast<void>(ro);
-                std::ostringstream s;
-                if (!p.empty()) {
-                        s << p << ",\n";
-                }
-                s << "\t" ;
-                s << impl::type_2_name<_T>::v() 
-                  << " arg"  << arg_num;
-                ++arg_num;
-                return s.str();
-        }
-
 
         template <class _T>
         std::string eval_args(const std::string& p, 
@@ -288,18 +310,6 @@ namespace ocl {
                 ++res_num;
                 return s.str();
         }
-
-        template <class _T>
-        void bind_args(cl::Kernel& k, 
-                       const _T& r, 
-                       unsigned&  arg_num)
-        {
-                std::cout << "binding to arg " << arg_num 
-                          << std::endl;
-                k.setArg(arg_num, r);
-                ++arg_num;
-        }
-        
 
 
         template <class _T>
@@ -365,12 +375,24 @@ namespace ocl {
 
         }
 
-#define DEFINE_OCLVEC_FP_OPERATOR(vx, op, eq_op, op_name)               \
+#define DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, op, eq_op, op_name)       \
         /* operator op(V, V) */                                         \
         inline                                                          \
         expr<ops:: op_name<vx>, vx, vx>                                 \
         operator op (const vx& a, const vx& b) {                        \
                 return expr<ops:: op_name<vx>, vx, vx>(a,b);            \
+        }                                                               \
+        /* operator op(V, scalar) */                                    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, scalar>                             \
+        operator op (const vx& a, const scalar& b) {                    \
+                return expr<ops:: op_name<vx>, vx, scalar>(a,b);        \
+        }                                                               \
+        /* operator op(scalar, V) */                                    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, scalar, vx>                             \
+        operator op (const scalar& a, const vx& b) {                    \
+                return expr<ops:: op_name<vx>, scalar, vx>(a,b);        \
         }                                                               \
         /* operator op(V, expr) */                                      \
         template <template <class _V> class _OP, class _L, class _R>    \
@@ -380,6 +402,14 @@ namespace ocl {
                 return expr<ops:: op_name<vx>,                          \
                             vx, expr<_OP<vx>, _L, _R> >(a, b);          \
         }                                                               \
+        /* operator op(scalar, expr) */                                 \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, scalar, expr<_OP<vx>, _L, _R> >         \
+        operator op (const scalar& a, const expr<_OP<vx>, _L, _R>& b) { \
+                return expr<ops:: op_name<vx>,                          \
+                            scalar, expr<_OP<vx>, _L, _R> >(a, b);      \
+        }                                                               \
         /* operator op(expr, V) */                                      \
         template <template <class _V> class _OP, class _L, class _R>    \
         inline                                                          \
@@ -387,6 +417,14 @@ namespace ocl {
         operator op (const expr<_OP<vx>, _L, _R>& a, const vx& b) {     \
                 return expr<ops:: op_name<vx>,                          \
                             expr<_OP<vx>, _L, _R>, vx>(a, b);           \
+        }                                                               \
+        /* operator op(expr, scalar) */                                 \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, scalar>          \
+        operator op (const expr<_OP<vx>, _L, _R>& a, const scalar& b) { \
+                return expr<ops:: op_name<vx>,                          \
+                            expr<_OP<vx>, _L, _R>, scalar>(a, b);       \
         }                                                               \
         /* operator op(expr, expr)  */                                  \
         template <template <class _V> class _OP1, class _L1, class _R1, \
@@ -406,6 +444,12 @@ namespace ocl {
                 a = a op r;                                             \
                 return a;                                               \
         }                                                               \
+        /* operator eq_op scalar */                                     \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const scalar& r) {                    \
+                a = a op r;                                             \
+                return a;                                               \
+        }                                                               \
         /* operator eq_op expr */                                       \
         template <template <class _V> class _OP, class _L, class _R>    \
         inline                                                          \
@@ -415,11 +459,11 @@ namespace ocl {
         }
 
 
-#define DEFINE_OCLVEC_FP_OPERATORS(vx)                  \
-        DEFINE_OCLVEC_FP_OPERATOR(vx, +, +=, add)       \
-        DEFINE_OCLVEC_FP_OPERATOR(vx, -, -=, sub)       \
-        DEFINE_OCLVEC_FP_OPERATOR(vx, *, *=, mul)       \
-        DEFINE_OCLVEC_FP_OPERATOR(vx, /, /=, div) 
+#define DEFINE_OCLVEC_FP_OPERATORS(vx, scalar)                   \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, +, +=, add)        \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, -, -=, sub)        \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, *, *=, mul)        \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, /, /=, div) 
 
 #define DEFINE_OCLSCALAR_FP_OPERATORS(vx)                  \
         DEFINE_OCLSCALAR_FP_OPERATOR(vx, +, +=, add)       \
@@ -428,7 +472,8 @@ namespace ocl {
         DEFINE_OCLSCALAR_FP_OPERATOR(vx, /, /=, div) 
 
 
-        DEFINE_OCLVEC_FP_OPERATORS(vec<float>);
+        DEFINE_OCLVEC_FP_OPERATORS(vec<float>, float);
+
         
 }
 
@@ -684,14 +729,14 @@ template <class _T>
 _T
 test_func(const _T& a, const _T& b)
 {
-        return _T( (a + b) / (a * b)  + (a + a * b ) - a);
+        return _T( (2.0f *a + b) / (a * b)  + (a + a * b ) - a);
 }
 
 template <class _T>
 _T
 test_func(const _T& a, const _T& b, const _T& c)
 {
-        return _T(a+b *c ) *c;
+        return _T(a+b *c ) *c + 2.0f;
 }
 
 
@@ -726,7 +771,7 @@ int main()
                           << ocl::impl::err2str(e)
                           << std::endl;
         }
-#if 0
+#if 1
         std::vector<cl::Device> v(ocl::impl::devices());
         std::cout << v.size() << std::endl;
         for (std::size_t i = 0; i< v.size(); ++i) {
