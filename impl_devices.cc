@@ -171,7 +171,7 @@ ocl::impl::devices()
         cl::Platform::get(&platforms);
         std::vector<cl::Platform>::iterator i;
         std::vector<cl::Platform>::iterator pe(platforms.end());
-        ctx_prop_vec_type props;
+        std::vector<cl_context_properties> props;
         props.push_back(CL_CONTEXT_PLATFORM);
         props.push_back(0);
         props.push_back(0);

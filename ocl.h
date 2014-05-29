@@ -2,7 +2,6 @@
 #define __OCL_H__ 1
 
 #include <ocl/config.h>
-// #include <CL/cl.h>
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 #include <iosfwd>
@@ -14,28 +13,18 @@
 
 namespace ocl {
 
-
         namespace impl {
                 
                 typedef cl::Error error;
 
                 const char* err2str(const error& e);
                 const char* err2str(int e);
-
-                typedef std::vector<cl_context_properties> ctx_prop_vec_type;
-
+                
                 typedef cl::Context context;
                 typedef cl::Device device;
                 typedef cl::CommandQueue queue;
                 typedef cl::Buffer buffer;
                 typedef cl::Kernel kernel;
-
-                struct data {
-                        context _ctx;
-                        device _dev;
-                        data(const context& c, const device& d) : _ctx(c), _dev(d) {}
-                };
-
 
                 struct device_type {
                         enum type {
@@ -97,13 +86,62 @@ namespace ocl {
                 
         }
 
-
         namespace impl {
 
                 template <typename _T>
                 struct type_2_name {
+                        static
+                        constexpr const char* v();
                 };
 
+                template <>
+                struct type_2_name<std::int16_t> {
+                        static
+                        constexpr const char* v() {
+                                return "short int";
+                        }
+                };
+
+                template <>
+                struct type_2_name<std::uint16_t> {
+                        static
+                        constexpr const char* v() {
+                                return "unsigned short int";
+                        }
+                };
+
+                template <>
+                struct type_2_name<std::int32_t> {
+                        static
+                        constexpr const char* v() {
+                                return "int";
+                        }
+                };
+
+                template <>
+                struct type_2_name<std::uint32_t> {
+                        static
+                        constexpr const char* v() {
+                                return "unsigned int";
+                        }
+                };
+
+                template <>
+                struct type_2_name<std::int64_t> {
+                        static
+                        constexpr const char* v() {
+                                return "long";
+                        }
+                };
+
+                template <>
+                struct type_2_name<std::uint64_t> {
+                        static
+                        constexpr const char* v() {
+                                return "unsigned long";
+                        }
+                };
+                
                 template <>
                 struct type_2_name<float> {
                         static 
@@ -113,39 +151,13 @@ namespace ocl {
                 };
 
                 template <>
-                struct type_2_name<int> {
-                        static
+                struct type_2_name<double> {
+                        static 
                         constexpr const char* v() {
-                                return "int32_t";
+                                return "double";
                         }
                 };
-
-                template <>
-                struct type_2_name<unsigned> {
-                        static
-                        constexpr const char* v() {
-                                return "uint32_t";
-                        }
-                };
-
-                template <>
-                struct type_2_name<std::int64_t> {
-                        static
-                        constexpr const char* v() {
-                                return "int64_t";
-                        }
-                };
-
-                template <>
-                struct type_2_name<std::uint64_t> {
-                        static
-                        constexpr const char* v() {
-                                return "uint64_t";
-                        }
-                };
-                
         }
-
   
 
         namespace ll {

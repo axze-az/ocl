@@ -524,7 +524,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         s << "__kernel void " << k_name
           << std::endl
           << "(\n";
-        
+
         // argument generation
         unsigned arg_num{0};
         s << eval_args("", res, arg_num, false) 
