@@ -19,7 +19,8 @@ namespace ocl {
 
                 const char* err2str(const error& e);
                 const char* err2str(int e);
-                
+
+                typedef cl::Program program;
                 typedef cl::Context context;
                 typedef cl::Device device;
                 typedef cl::CommandQueue queue;

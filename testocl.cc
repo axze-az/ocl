@@ -5,6 +5,7 @@
 #include <map>
 #include <atomic>
 #include <mutex>
+#include <memory> // for shared_ptr
 
 #if !defined (CL_MEM_HOST_READ_ONLY)
 #define CL_MEM_HOST_READ_ONLY CL_MEM_READ_ONLY
@@ -13,6 +14,18 @@
 namespace ocl {
 
         namespace impl {
+                // for mesa we need the keep the programs
+                struct pgm_kernel_lock {
+                        program _p;
+                        kernel _k;
+                        std::shared_ptr<std::mutex> _m;
+                        pgm_kernel_lock(const program& p, 
+                                        const kernel& k) :
+                                _p(p), _k(k), _m(new std::mutex()) {}
+                        void lock() { _m->lock(); }
+                        void unlock() { _m->unlock(); }
+                };
+                
                 class be_data {
                 public:
                         be_data(const be_data&) = delete;
@@ -39,20 +52,30 @@ namespace ocl {
                         context& c() {
                                 return _c;
                         }
-
-                        typedef std::pair<std::mutex, kernel> kernel_type;
-                        typedef std::map<void*, kernel_type> kernel_map_type;
-                        typedef kernel_map_type::iterator iterator_type;
-                        typedef kernel_map_type::const_iterator 
-                        const_iterator_type;
-
-                        const_iterator_type
-                        find(void* cookie)
-                                const;
-
                         
+                        typedef std::map<const void*, pgm_kernel_lock> 
+                        kernel_map_type;
+                        typedef kernel_map_type::iterator iterator;
+
+                        iterator
+                        find(const void* cookie) {
+                                return _kmap.find(cookie);
+                        }
                         
+                        std::pair<iterator, bool>
+                        insert(const void* cookie, const pgm_kernel_lock& v) {
+                                return _kmap.insert(std::make_pair(cookie,
+                                                                   v));
+                        }
                         
+                        iterator begin() {
+                                return _kmap.begin();
+                        }
+
+                        iterator end() {
+                                return _kmap.end();
+                        }
+
                         static
                         be_data* instance();
                 private:
@@ -215,11 +238,11 @@ namespace ocl {
                 execute(_RES& res, const _EXPR& r, const void* addr)
                         const;
         private:
-                std::pair<void*, impl::kernel>&
+                impl::pgm_kernel_lock&
                 get_kernel(_RES& res, const _EXPR& r, const void* addr)
                         const;
 
-                impl::kernel 
+                impl::pgm_kernel_lock
                 gen_kernel(_RES& res, const _EXPR& r, const void* addr)
                         const;
         };
@@ -315,9 +338,9 @@ namespace ocl {
         template <class _T>
         void bind_args(cl::Kernel& k, 
                        const vec<_T>& r, 
-                       unsigned&  arg_num)
+                       unsigned& arg_num)
         {
-                std::cout << "binding to arg " << arg_num 
+                std::cout << "binding buffer to arg " << arg_num 
                           << std::endl;
                 k.setArg(arg_num, r.buf());
                 ++arg_num;
@@ -489,29 +512,60 @@ ocl::expr_kernel<_RES, _SRC>::
 execute(_RES& res, const _SRC& r, const void* cookie)
         const
 {
-        ocl::impl::kernel k(gen_kernel(res, r, cookie));
+        impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
+
+        std::unique_lock<impl::pgm_kernel_lock> _l(pk);
         // bind args
         unsigned arg_num{0};
-        bind_args(k, res, arg_num);
-        bind_args(k, r, arg_num);
+        bind_args(pk._k, res, arg_num);
+        bind_args(pk._k, r, arg_num);
         // execute the kernel
         std::size_t s(eval_size(res));
 
         impl::queue& q= impl::be_data::instance()->q();
+        impl::device& d= impl::be_data::instance()->d();
         // execute
         std::cout << "executing kernel" << std::endl;
-        q.enqueueNDRangeKernel(k, 
+        std::size_t local_size( 
+                pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d));
+        local_size = std::min(local_size, s);
+        std::cout << "using a local size of " << local_size << std::endl;
+
+        q.enqueueNDRangeKernel(pk._k, 
                                cl::NullRange,
                                cl::NDRange(s),
-                               cl::NullRange,
+                               cl::NDRange(local_size),
                                nullptr);
         std::cout << "excution done" << std::endl;
         q.flush();
 }
 
+template <class _RES, class _SRC>
+ocl::impl::pgm_kernel_lock&
+ocl::expr_kernel<_RES, _SRC>::
+get_kernel(_RES& res, const _SRC& r, const void* cookie)
+        const
+{
+        using namespace impl;
+        be_data* b= be_data::instance();
+
+        std::unique_lock<be_data> _l(*b);
+
+        be_data::iterator f(b->find(cookie));
+        if (f == b->end()) {
+                pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
+                std::pair<be_data::iterator, bool> ir(
+                        b->insert(cookie, pkl));
+                f = ir.first;
+        } else {
+                std::cout << "using cached kernel expr_kernel_" << cookie
+                          << std::endl;
+        }
+        return f->second;
+}
 
 template <class _RES, class _SRC>
-ocl::impl::kernel
+ocl::impl::pgm_kernel_lock
 ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         const
@@ -568,15 +622,18 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         cl::Program::Sources sv;
         sv.push_back(std::make_pair(ss.c_str(), ss.size()));
 
-        cl::Program pgm(impl::be_data::instance()->c(),
-                        sv);
-        std::vector<impl::device> vk(1, impl::be_data::instance()->d());
+        using namespace impl;
+        be_data* bd=be_data::instance();
+
+        cl::Program pgm(bd->c(), sv);
+        std::vector<cl::Device> vk(1, bd->d());
         pgm.build(vk);
-        impl::kernel k(pgm, k_name.c_str());
+        kernel k(pgm, k_name.c_str());
 
         std::cout << "-- compiled with success ---------\n";
 
-        return k;
+        pgm_kernel_lock pkl(pgm, k);
+        return pkl;
 }
 
 
@@ -729,29 +786,31 @@ template <class _T>
 _T
 test_func(const _T& a, const _T& b)
 {
-        return _T( (2.0f *a + b) / (a * b)  + (a + a * b ) - a);
+        return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
 }
 
 template <class _T>
 _T
 test_func(const _T& a, const _T& b, const _T& c)
 {
-        return _T(a+b *c ) *c + 2.0f;
+        return _T((a+b *c) *c + 2.0f);
 }
 
 
 int main()
 {
         try {
-                const int SIZE=4096;
+                const int SIZE=6;
                 float a(2.0f), b(3.0f);
 
                 vec<float> v0(SIZE, a);
+                // std::vector<float> vha(SIZE, a);
                 vec<float> va(v0);
                 std::vector<float> vhb(SIZE, 3.0f);
                 vec<float> vb(vhb);
                 vec<float> vc= test_func(va, vb);
                 vec<float> vd= test_func(va, vb, vc);
+                vec<float> vd2= test_func(va, vb, vc);
 
                 float c= test_func(a, b);
                 float d= test_func(a, b, c);
