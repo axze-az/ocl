@@ -113,13 +113,13 @@ std::ostream&
 ocl::impl::operator<<(std::ostream& s, const device_info& dd)
 {
         const device& d= dd._d;
-        std::string n(d.getInfo<CL_DEVICE_NAME>());
+        std::string n(d.getInfo<CL_DEVICE_NAME>(nullptr));
         s << "device name: " << n << '\n';
-        n = d.getInfo<CL_DEVICE_VENDOR>();
+        n = d.getInfo<CL_DEVICE_VENDOR>(nullptr);
         s << "device vendor: " << n << '\n';
-        n = d.getInfo<CL_DRIVER_VERSION>();
+        n = d.getInfo<CL_DRIVER_VERSION>(nullptr);
         s << "driver version: " << n << '\n';
-        cl_device_type dt(d.getInfo<CL_DEVICE_TYPE>());
+        cl_device_type dt(d.getInfo<CL_DEVICE_TYPE>(nullptr));
         s << "device type: ";
         switch (dt) {
         case CL_DEVICE_TYPE_CPU:
@@ -132,11 +132,11 @@ ocl::impl::operator<<(std::ostream& s, const device_info& dd)
                 s << "unknown\n";
                 break;
         }
-        cl_uint t(d.getInfo<CL_DEVICE_VENDOR_ID>());
+        cl_uint t(d.getInfo<CL_DEVICE_VENDOR_ID>(nullptr));
         s << "vendor id: " << t << '\n';
 
         cl_command_queue_properties cqp(
-                d.getInfo<CL_DEVICE_QUEUE_PROPERTIES>());
+                d.getInfo<CL_DEVICE_QUEUE_PROPERTIES>(nullptr));
         s << "device queue properties:";
         bool comma(false);
         if ((cqp & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)==
@@ -151,12 +151,12 @@ ocl::impl::operator<<(std::ostream& s, const device_info& dd)
                 s << " profiling";
         }
         s << '\n';
-        n = d.getInfo<CL_DEVICE_EXTENSIONS>();
+        n = d.getInfo<CL_DEVICE_EXTENSIONS>(nullptr);
         s << "device extensions: " << n << '\n';
 
-        t=d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
+        t=d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(nullptr);
         s << "max freq: " << t << " MHz\n";
-        t=d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+        t=d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(nullptr);
         s << "max compute units: " << t << '\n';
 
         return s;
@@ -207,7 +207,7 @@ ocl::impl::filter_devices(const std::vector<device>& v,
         std::vector<device> r;
         for (std::size_t i=0; i< v.size(); ++i) {
                 const device& d= v[i];
-                cl_device_type t(d.getInfo<CL_DEVICE_TYPE>());
+                cl_device_type t(d.getInfo<CL_DEVICE_TYPE>(nullptr));
                 if (t == static_cast<cl_device_type>(dt))
                         r.push_back(d);
         }
@@ -250,9 +250,11 @@ ocl::impl::device_with_max_freq_x_units(const std::vector<device>& v)
         double p(-1);
         for (std::size_t i=0; i<v.size(); ++i) {
                 const device& d= v[i];
-                cl_uint t= d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                cl_uint t= d.getInfo<
+                        CL_DEVICE_MAX_COMPUTE_UNITS>(nullptr);
                 double pi(t);
-                t= d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
+                t= d.getInfo<
+                        CL_DEVICE_MAX_CLOCK_FREQUENCY>(nullptr);
                 pi *= double(t);
                 if (pi> p) {
                         r=d;
