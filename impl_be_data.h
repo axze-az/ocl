@@ -73,8 +73,30 @@ namespace ocl {
                                 return _kmap.end();
                         }
 
+                        // shared, default backend data
                         static
-                        be_data* instance();
+                        std::shared_ptr<be_data>
+                        instance();
+                        
+                        static
+                        std::shared_ptr<be_data>
+                        create(const device& d);
+
+                        static
+                        std::shared_ptr<be_data>
+                        create(const device& dev, const context& ctx);
+
+                        static
+                        std::shared_ptr<be_data>
+                        create(const device& dev, const context& ctx,
+                               const queue& qe);
+
+                        be_data();
+                        be_data(const device& dev);
+                        be_data(const device& dev, const context& ctx);
+                        be_data(const device& dev, const context& ctx,
+                                const queue& qe);
+                        
                 private:
                         std::mutex _m;
                         device _d;
@@ -82,23 +104,14 @@ namespace ocl {
                         queue _q;
                         kernel_map_type _kmap;
                         
-                        be_data();
                         
                         static std::mutex _instance_mutex;
-                        static std::atomic<be_data*> _instance;
+                        static std::atomic<bool> _init;
+                        static std::shared_ptr<be_data> _default;
                 };
 
-                inline context& be_context() {
-                        return be_data::instance()->c();
-                }
-                
-                inline device& be_device() {
-                        return be_data::instance()->d();
-                }
+                typedef std::shared_ptr<be_data> be_data_ptr;
 
-                inline queue& be_queue() {
-                        return be_data::instance()->q();
-                }
 
         }
 

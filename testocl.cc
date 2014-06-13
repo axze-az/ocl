@@ -159,6 +159,7 @@ namespace ocl {
         
         template <class _T>
         class vector {
+                std::shared_ptr<impl::be_data> m_bed;
                 std::size_t _size;
                 cl::Buffer _b;
         public:
@@ -168,6 +169,12 @@ namespace ocl {
                 const cl::Buffer& buf() const  {
                         return _b; 
                 }
+
+                std::shared_ptr<impl::be_data>& 
+                backend_data() {
+                        return m_bed;
+                }
+
                 vector() : _size(0), _b() {}
                 vector(std::size_t n, const _T* s);
                 vector(std::size_t n, const _T& i);
@@ -453,7 +460,7 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
         const
 {
         using namespace impl;
-        be_data* b= be_data::instance();
+        impl::be_data_ptr& b= res.backend_data();
 
         std::unique_lock<be_data> _l(*b);
 
@@ -529,7 +536,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         sv.push_back(std::make_pair(ss.c_str(), ss.size()));
 
         using namespace impl;
-        be_data* bd=be_data::instance();
+        be_data_ptr& bd= res.backend_data();
 
         cl::Program pgm(bd->c(), sv);
         std::vector<cl::Device> vk(1, bd->d());
@@ -577,10 +584,10 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::size_t s, const _T& i)
-        : _size(s), _b()
+        : m_bed(impl::be_data::instance()), _size(s), _b()
 {
         if (_size) {
-                _b = impl::buffer(impl::be_context(),
+                _b = impl::buffer(m_bed->c(),
                                   CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, i);
@@ -590,10 +597,10 @@ ocl::vector<_T>::vector(std::size_t s, const _T& i)
 template <class _T>
 inline
 ocl::vector<_T>::vector(const vector& r)
-        : _size(r._size), _b()
+        : m_bed(r.m_bed) , _size(r._size), _b()
 {
         if (_size) {
-                _b = impl::buffer(impl::be_context(),
+                _b = impl::buffer(m_bed->c(),
                                   CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, r);
@@ -603,15 +610,14 @@ ocl::vector<_T>::vector(const vector& r)
 template <class _T>
 inline
 ocl::vector<_T>::vector(const std::vector<_T>& r)
-        : _size(r.size()), _b()
+        : m_bed(impl::be_data::instance()), _size(r.size()), _b()
 {
         if (_size) {
                 std::size_t s=_size*sizeof(_T);
-                impl::be_data* bed= impl::be_data::instance();
-                _b = impl::buffer(bed->c(),
+                _b = impl::buffer(m_bed->c(),
                                   CL_MEM_READ_WRITE,
                                   s);
-                impl::queue& q= bed->q();
+                impl::queue& q= m_bed->q();
                 q.enqueueWriteBuffer(this->buf(),
                                      true,
                                      0, s,
@@ -625,12 +631,12 @@ template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
-        : _size(eval_size(r)), _b()
+        : m_bed(impl::be_data::instance()), _size(eval_size(r)), _b()
 {
         // typedef expr_kernel<_OP<vector<_T> >, _L, _R> kernel_t;
         // expr_t::_k.execute(*this, r);
         if (_size) {
-                _b = impl::buffer(impl::be_context(),
+                _b = impl::buffer(m_bed->c(),
                                   CL_MEM_READ_WRITE, 
                                   _size*sizeof(_T));
                 execute(*this, r);
@@ -645,7 +651,7 @@ ocl::vector<_T>::operator std::vector<_T> ()
         std::size_t n(this->size());
         std::size_t s(n*sizeof(_T));
         std::vector<_T> v(n);
-        impl::queue& q= impl::be_queue();
+        impl::queue& q= m_bed->q();
         q.enqueueReadBuffer(this->buf(),
                             true,
                             0, s,
