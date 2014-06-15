@@ -449,7 +449,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
                                cl::NDRange(s),
                                cl::NDRange(local_size),
                                nullptr);
-        std::cout << "excution done" << std::endl;
+        std::cout << "execution done" << std::endl;
         // q.flush();
 }
 
