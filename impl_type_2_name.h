@@ -2,6 +2,7 @@
 #define __OCL_TYPE_2_NAME_H__ 1
 
 #include <ocl/config.h>
+#include <cftal/vec.h>
 
 namespace ocl {
 
@@ -76,6 +77,23 @@ namespace ocl {
                                 return "double";
                         }
                 };
+
+                template <>
+                struct type_2_name<cftal::vec::v4f32> {
+                        static 
+                        constexpr const char* v() {
+                                return "float4";
+                        }
+                };
+
+                template <>
+                struct type_2_name<cftal::vec::v8f32> {
+                        static 
+                        constexpr const char* v() {
+                                return "float8";
+                        }
+                };
+
         }
 }
 

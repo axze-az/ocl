@@ -156,38 +156,65 @@ namespace ocl {
         template <class _RES, class _EXPR>
         void execute(_RES& res, const _EXPR& r);
 
-        
-        template <class _T>
-        class vector {
+        class vector_base {
+                // shared pointer to the backend data
                 std::shared_ptr<impl::be_data> m_bed;
+                // count of elements
                 std::size_t _size;
+                // backend buffer object
                 cl::Buffer _b;
         public:
+                std::size_t size() const;
+                const cl::Buffer& buf() const;
+                std::shared_ptr<impl::be_data>& backend_data();
+        };
+
+        // vector: representation of data on the acceleration device
+        template <class _T>
+        class vector {
+                // shared pointer to the backend data
+                std::shared_ptr<impl::be_data> m_bed;
+                // count of elements
+                std::size_t _size;
+                // backend buffer object
+                cl::Buffer _b;
+        public:
+                // size of the vector
                 std::size_t size() const {
                         return _size;
                 }
+                // return the underlying opencl buffer
                 const cl::Buffer& buf() const  {
                         return _b; 
                 }
-
+                // return the opencl backend information
                 std::shared_ptr<impl::be_data>& 
                 backend_data() {
                         return m_bed;
                 }
-
+                // default constructor.
                 vector() : _size(0), _b() {}
+                // constructor from memory buffer
                 vector(std::size_t n, const _T* s);
+                // constructor with size and initializer
                 vector(std::size_t n, const _T& i);
+                // copy constructor
                 vector(const vector& v);
+                // construction from std::vector, forces move of data
+                // from host to device
                 vector(const std::vector<_T>& v);
+                // assignment operator from vector
                 vector& operator=(const vector& v);
+                // assignment from scalar
                 vector& operator=(const _T& i);
-
+                // template constructor for evaluation of expression
+                // statements
                 explicit vector(std::size_t n);
                 template <template <class _V> class _OP, 
                           class _L, class _R>
                 vector(const expr<_OP<vector<_T> >, _L, _R>& r);
-                
+                // conversion operator to std::vector, forces move of
+                // data to host
                 operator std::vector<_T> () const;
         };
 
@@ -408,8 +435,7 @@ namespace ocl {
 
 
         DEFINE_OCLVEC_FP_OPERATORS(vector<float>, float);
-
-        
+        DEFINE_OCLVEC_FP_OPERATORS(vector<cftal::vec::v8f32>, cftal::vec::v8f32);
 }
 
  
@@ -704,6 +730,8 @@ int main()
 
                 using namespace ocl;
 
+                using cftal::vec::v8f32;
+
                 const unsigned SIZE=16384;
                 const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
                 std::cout << "using buffers of "
@@ -724,7 +752,12 @@ int main()
                 float d= test_func(a, b, c);
                 
                 std::vector<float> res(vd);
-                
+
+                vector<v8f32> vva(SIZE, a);
+                vector<v8f32> vvb(SIZE, b);
+                vector<v8f32> vvc(SIZE, c);
+                vector<v8f32> vres(test_func(vva, vvb, vvc));
+
                 if (SIZE <= 4096) {
                         for (std::size_t i=0; i< res.size(); ++i) {
                                 std::cout << i << ' ' << res[i] << std::endl;

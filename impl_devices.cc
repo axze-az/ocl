@@ -1,4 +1,4 @@
-#include "ocl.h"
+  #include "ocl.h"
 #include <iostream>
 
 const char* ocl::impl::err2str(const error& e)
@@ -159,6 +159,10 @@ ocl::impl::operator<<(std::ostream& s, const device_info& dd)
         t=d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(nullptr);
         s << "max compute units: " << t << '\n';
 
+#if 0
+        n = d.getInfo<CL_DEVICE_BUILT_IN_KERNELS>(nullptr);
+        s << "builtin kernels: " << n << '\n';
+#endif
         return s;
 }
 
@@ -208,7 +212,8 @@ ocl::impl::filter_devices(const std::vector<device>& v,
         for (std::size_t i=0; i< v.size(); ++i) {
                 const device& d= v[i];
                 cl_device_type t(d.getInfo<CL_DEVICE_TYPE>(nullptr));
-                if (t == static_cast<cl_device_type>(dt))
+                if ((t & static_cast<cl_device_type>(dt)) ==
+                    static_cast<cl_device_type>(dt))
                         r.push_back(d);
         }
         return r;
