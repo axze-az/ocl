@@ -9,14 +9,12 @@ MAJOR=0#
 MINOR=1#
 
 SLDFLAGS:= $(SLDFLAGS) -lOpenCL
-#ARCH=#-march=bdver1 -mxop #-march=bdver1 #-mdispatch-scheduler
 ARCH+=#-mpopcnt -mfma
 CXXFLAGS+=-I.. -I../stlex -I../thread  -I../sysio -march=native
 CXXFLAGS+=-fstrict-aliasing -Wstrict-aliasing=1
 CXXFLAGS+=-Wno-error
 
-CSRCS=impl_devices.cc impl_be_data.cc platform.cc device.cc	\
-context.cc buffer.cc queue.cc program.cc
+CSRCS=impl_devices.cc impl_be_data.cc 
 
 all: lib tests
 

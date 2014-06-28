@@ -1,2 +1,0 @@
-#include "ocl/ocl.h"
-

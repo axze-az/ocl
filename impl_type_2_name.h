@@ -11,7 +11,10 @@ namespace ocl {
                 template <typename _T>
                 struct type_2_name {
                         static
-                        constexpr const char* v();
+                        constexpr const char* v() {
+                                // static_assert(0, "specialization required");
+                                return nullptr;
+                        }
                 };
 
                 template <>
@@ -61,10 +64,10 @@ namespace ocl {
                                 return "unsigned long";
                         }
                 };
-                
+
                 template <>
                 struct type_2_name<float> {
-                        static 
+                        static
                         constexpr const char* v() {
                                 return "float";
                         }
@@ -72,7 +75,7 @@ namespace ocl {
 
                 template <>
                 struct type_2_name<double> {
-                        static 
+                        static
                         constexpr const char* v() {
                                 return "double";
                         }
@@ -80,7 +83,7 @@ namespace ocl {
 
                 template <>
                 struct type_2_name<cftal::vec::v4f32> {
-                        static 
+                        static
                         constexpr const char* v() {
                                 return "float4";
                         }
@@ -88,7 +91,7 @@ namespace ocl {
 
                 template <>
                 struct type_2_name<cftal::vec::v8f32> {
-                        static 
+                        static
                         constexpr const char* v() {
                                 return "float8";
                         }
