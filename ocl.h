@@ -5,6 +5,7 @@
 #include <ocl/impl_devices.h>
 #include <ocl/impl_type_2_name.h>
 #include <ocl/impl_be_data.h>
+#include <ocl/device_vector.h>
 
 namespace ocl {
 
@@ -246,7 +247,6 @@ namespace ocl {
         }
 
         class plattform;
-        class device;
         class queue;
 
         class mem {
