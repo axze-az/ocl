@@ -3,11 +3,75 @@
 
 #include <ocl/config.h>
 #include <ocl/impl_be_data.h>
+#include <sstream>
 
 namespace ocl {
 
         namespace device {
 
+                // default expression traits for simple/unspecialized
+                // types
+                template <class _T>
+                struct expr_traits {
+                        typedef const _T type;
+                };
+
+                // the expression template
+                template <class _OP, class _L, class _R>
+                struct expr {
+                        typename expr_traits<_L>::type _l;
+                        typename expr_traits<_R>::type _r;
+                        constexpr expr(const _L& l, const _R& r) :
+                                _l(l), _r(r) {}
+                };
+
+                // eval_size
+                template <class _T>
+                std::size_t eval_size(const _T& t);
+                // eval_args
+                template <class _T>
+                std::string eval_args(const std::string& p,
+                                      const _T& r,
+                                      unsigned& arg_num,
+                                      bool ro);
+                // eval_vars
+                template <class _T>
+                std::string eval_vars(const _T& r, unsigned& arg_num,
+                                      bool read);
+                // eval_ops
+                template <class _T>
+                std::string eval_ops(const _T& r, unsigned& arg_num);
+                // bind_args
+                template <class _T>
+                void bind_args(cl::Kernel& k,
+                               const _T& r,
+                               unsigned& arg_num);
+                
+                // opencl kernel for expressions
+                template <class _RES, class _EXPR>
+                class expr_kernel {
+                public:
+                        expr_kernel() = default;
+                        void
+                        execute(_RES& res, const _EXPR& r, const void* addr)
+                                const;
+                private:
+                        impl::pgm_kernel_lock&
+                        get_kernel(_RES& res, const _EXPR& r, const void* addr)
+                                const;
+
+                        impl::pgm_kernel_lock
+                        gen_kernel(_RES& res, const _EXPR& r, const void* addr)
+                                const;
+                };
+
+                // generate and execute an opencl kernel for an
+                // expression
+                template <class _RES, class _EXPR>
+                void execute(_RES& res, const _EXPR& r);
+
+                // vector base class wrapping an opencl buffer and a
+                // (shared) pointer to opencl backend data
                 class vector_base {
                         // shared pointer to the backend data
                         std::shared_ptr<impl::be_data> _bed;
@@ -32,9 +96,193 @@ namespace ocl {
                         const std::shared_ptr<impl::be_data>&
                         backend_data() const;
                 };
+
+                // vector: representation of data on the acceleration device
+                template <class _T>
+                class vector : public vector_base {
+                        // count of elements
+                        std::size_t _size;
+                public:
+                        // size of the vector
+                        std::size_t size() const;
+                        // default constructor.
+                        vector() : vector_base() {}
+                        // constructor from memory buffer
+                        vector(std::size_t n, const _T* s);
+                        // constructor with size and initializer
+                        vector(std::size_t n, const _T& i);
+                        // copy constructor
+                        vector(const vector& v);
+                        // construction from std::vector, forces move of data
+                        // from host to device
+                        vector(const std::vector<_T>& v);
+                        // assignment operator from vector
+                        vector& operator=(const vector& v);
+                        // assignment from scalar
+                        vector& operator=(const _T& i);
+                        // template constructor for evaluation of expressions
+                        explicit vector(std::size_t n);
+                        template <template <class _V> class _OP,
+                                  class _L, class _R>
+                        vector(const expr<_OP<vector<_T> >, _L, _R>& r);
+                        // conversion operator to std::vector, forces move of
+                        // data to host
+                        operator std::vector<_T> () const;
+                };
         }
 }
 
+template <class _RES, class _SRC>
+void
+ocl::device::expr_kernel<_RES, _SRC>::
+execute(_RES& res, const _SRC& r, const void* cookie)
+        const
+{
+        impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
+
+        std::unique_lock<impl::pgm_kernel_lock> _l(pk);
+        // bind args
+        unsigned arg_num{0};
+        bind_args(pk._k, res, arg_num);
+        bind_args(pk._k, r, arg_num);
+        // execute the kernel
+        std::size_t s(eval_size(res));
+
+        impl::queue& q= impl::be_data::instance()->q();
+        impl::device& d= impl::be_data::instance()->d();
+        // execute
+        std::cout << "executing kernel" << std::endl;
+        std::size_t local_size(
+                pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d, nullptr));
+        local_size = std::min(local_size, s);
+        std::cout << "kernel: global size: " << s
+                  << " local size: " << local_size << std::endl;
+
+        q.enqueueNDRangeKernel(pk._k,
+                               cl::NullRange,
+                               cl::NDRange(s),
+                               cl::NDRange(local_size),
+                               nullptr);
+        std::cout << "execution done" << std::endl;
+        // q.flush();
+}
+
+template <class _RES, class _SRC>
+ocl::impl::pgm_kernel_lock&
+ocl::device::expr_kernel<_RES, _SRC>::
+get_kernel(_RES& res, const _SRC& r, const void* cookie)
+        const
+{
+        using namespace impl;
+        impl::be_data_ptr& b= res.backend_data();
+
+        std::unique_lock<be_data> _l(*b);
+
+        be_data::iterator f(b->find(cookie));
+        if (f == b->end()) {
+                pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
+                std::pair<be_data::iterator, bool> ir(
+                        b->insert(cookie, pkl));
+                f = ir.first;
+        } else {
+                std::cout << "using cached kernel expr_kernel_" << cookie
+                          << std::endl;
+        }
+        return f->second;
+}
+
+template <class _RES, class _SRC>
+ocl::impl::pgm_kernel_lock
+ocl::device::expr_kernel<_RES, _SRC>::
+gen_kernel(_RES& res, const _SRC& r, const void* cookie)
+        const
+{
+        std::ostringstream s;
+        s << "expr_kernel_" << cookie;
+        std::string k_name(s.str());
+        s.str("");
+
+        s << "__kernel void " << k_name
+          << std::endl
+          << "(\n";
+
+        // argument generation
+        unsigned arg_num{0};
+        s << eval_args("", res, arg_num, false)
+          << ','
+          << std::endl;
+        s << eval_args("", r, arg_num, true) << std::endl;
+
+        s << ")" << std::endl;
+
+        // begin body
+        s << "{" << std::endl;
+
+        // global id
+        s << "\tsize_t gid = get_global_id(0);" << std::endl;
+
+        // temporary variables
+        unsigned var_num{1};
+        s << eval_vars(r, var_num, true)
+          << std::endl;
+
+        // result variable
+        unsigned res_num{0};
+        s << eval_vars(res, res_num, false) << "= "
+          << std::endl;
+        // the operations
+        unsigned body_num{1};
+        s << "\t\t" << eval_ops(r, body_num) << ';'
+          << std::endl;
+        // write back
+        res_num = 0;
+        s << eval_results(res, res_num)
+          << std::endl;
+
+        // end body
+        s << "}" << std::endl;
+
+        std::cout << "--- source code ------------------\n";
+        std::cout << s.str();
+
+        std::string ss(s.str());
+        cl::Program::Sources sv;
+        sv.push_back(std::make_pair(ss.c_str(), ss.size()));
+
+        using namespace impl;
+        be_data_ptr& bd= res.backend_data();
+
+        cl::Program pgm(bd->c(), sv);
+        std::vector<cl::Device> vk(1, bd->d());
+        pgm.build(vk);
+        kernel k(pgm, k_name.c_str());
+
+        std::cout << "-- compiled with success ---------\n";
+
+        pgm_kernel_lock pkl(pgm, k);
+        return pkl;
+}
+
+template <class _T>
+inline
+std::size_t 
+ocl::device::eval_size(const _T& t)
+{
+        static_cast<void>(t);
+        return 1;
+}
+
+
+template <class _RES, class _EXPR>
+void
+ocl::device::execute(_RES& res, const _EXPR& r)
+{
+        // auto pf=execute<_RES, _EXPR>;
+        void (*pf)(_RES&, const _EXPR&) = execute<_RES, _EXPR>  ;
+        const void* pv=reinterpret_cast<const void*>(pf);
+        expr_kernel<_RES, _EXPR> k;
+        k.execute(res, r, pv);
+}
 
 inline
 ocl::device::vector_base::vector_base() 
@@ -95,6 +343,104 @@ ocl::device::vector_base::backend_data()
         const 
 {
         return _bed;
+}
+
+template <class _T>
+inline
+ocl::device::vector<_T>::vector(std::size_t n, const _T* p)
+        : vector_base(n*sizeof(_T)), _size(n)
+{
+        if (_size) {
+                std::size_t s=_size*sizeof(_T);
+                std::shared_ptr<impl::be_data>& bed=
+                        this->backend_data();
+                impl::queue& q= bed->q();
+                q.enqueueWriteBuffer(this->buf(),
+                                     true,
+                                     0, s,
+                                     p,
+                                     nullptr,
+                                     nullptr);
+        }
+}
+
+template <class _T>
+inline
+ocl::device::vector<_T>::vector(std::size_t s, const _T& i)
+        : vector_base(s * sizeof(_T)), _size(s)
+{
+        if (_size) {
+                execute(*this, i);
+        }
+}
+
+template <class _T>
+inline
+ocl::device::vector<_T>::vector(const vector& r)
+        : vector_base(r.size() * sizeof(_T)),
+          _size(r.size())
+{
+        if (_size) {
+                execute(*this, r);
+        }
+}
+
+template <class _T>
+inline
+ocl::device::vector<_T>::vector(const std::vector<_T>& r)
+        : vector_base(sizeof(_T) * r.size()), _size(r.size())
+{
+        if (_size) {
+                std::size_t s=_size*sizeof(_T);
+                impl::queue& q= backend_data()->q();
+                q.enqueueWriteBuffer(this->buf(),
+                                     true,
+                                     0, s,
+                                     &r[0],
+                                     nullptr,
+                                     nullptr);
+        }
+}
+
+template <class _T>
+template <template <class _V> class _OP, class _L, class _R>
+inline
+ocl::device::
+vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
+        : vector_base(eval_size(r)*sizeof(_T)), _size(eval_size(r))
+{
+        if (_size) {
+                execute(*this, r);
+        }
+}
+
+template <class _T>
+inline
+ocl::device::vector<_T>::operator std::vector<_T> ()
+        const
+{
+        std::size_t n(this->size());
+        std::vector<_T> v(n);
+        if (n) {
+                std::size_t s(n*sizeof(_T));
+                std::shared_ptr<impl::be_data> bed(backend_data());
+                impl::queue& q= bed->q();
+                q.enqueueReadBuffer(this->buf(),
+                                    true,
+                                    0, s,
+                                    &v[0],
+                                    nullptr,
+                                    nullptr);
+        }
+        return v;
+}
+
+template <class _T>
+inline
+std::size_t 
+ocl::device::vector<_T>::size() const 
+{
+        return _size;
 }
 
 // Local variables:
