@@ -254,7 +254,23 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
 
         cl::Program pgm(bd->c(), sv);
         std::vector<cl::Device> vk(1, bd->d());
-        pgm.build(vk);
+
+        try {
+                pgm.build(vk, 
+                          // "-v "
+                          "-I /usr/include/clang/3.5/include "
+                          "-I /usr/include/clang/3.4/include "
+                          "-I /usr/include/clang/3.3/include ");
+        }
+        catch (const cl::Error& e) {
+                std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
+                                       bd->d(), nullptr));
+                std::cerr << "build options: " << op << '\n';
+                std::string em(pgm.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
+                                       bd->d(), nullptr));
+                std::cerr << "error info: " << em << '\n';
+                throw;
+        }
         kernel k(pgm, k_name.c_str());
 
         std::cout << "-- compiled with success ---------\n";

@@ -24,7 +24,7 @@ namespace ocl {
                 typedef cl::CommandQueue queue;
                 typedef cl::Buffer buffer;
                 typedef cl::Kernel kernel;
-
+         
                 struct device_type {
                         enum type {
                                 cpu = CL_DEVICE_TYPE_CPU,
@@ -82,7 +82,7 @@ namespace ocl {
                 // return a default device.
                 device
                 default_device();
-                
+
         }
 }
 
