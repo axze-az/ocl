@@ -62,9 +62,8 @@ ocl::impl::be_data::be_data(const device& dev)
 }
 
 ocl::impl::be_data::be_data(const device& dev, const context& ctx)
-        : _d(dev), _c(ctx), _q()
+        : _d(dev), _c(ctx), _q(cl::CommandQueue(_c, _d))
 {
-        _q= cl::CommandQueue(_c, _d);
 }
 
 ocl::impl::be_data::be_data(const device& dev, const context& ctx,
