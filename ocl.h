@@ -5,7 +5,7 @@
 #include <ocl/impl_devices.h>
 #include <ocl/impl_type_2_name.h>
 #include <ocl/impl_be_data.h>
-#include <ocl/device_vector.h>
+#include <ocl/vector.h>
 
 namespace ocl {
 

@@ -1,5 +1,5 @@
-#if !defined (__DEVICE_VECTOR_H__)
-#define __DEVICE_VECTOR_H__ 1
+#if !defined (__OCL_VECTOR_H__)
+#define __OCL_VECTOR_H__ 1
 
 #include <ocl/config.h>
 #include <ocl/impl_be_data.h>
@@ -7,134 +7,132 @@
 
 namespace ocl {
 
-        namespace device {
 
-                // default expression traits for simple/unspecialized
-                // types
-                template <class _T>
-                struct expr_traits {
-                        typedef const _T type;
-                };
+        // default expression traits for simple/unspecialized
+        // types
+        template <class _T>
+        struct expr_traits {
+                typedef const _T type;
+        };
 
-                // the expression template
-                template <class _OP, class _L, class _R>
-                struct expr {
-                        typename expr_traits<_L>::type _l;
-                        typename expr_traits<_R>::type _r;
-                        constexpr expr(const _L& l, const _R& r) :
-                                _l(l), _r(r) {}
-                };
+        // the expression template
+        template <class _OP, class _L, class _R>
+        struct expr {
+                typename expr_traits<_L>::type _l;
+                typename expr_traits<_R>::type _r;
+                constexpr expr(const _L& l, const _R& r) :
+                        _l(l), _r(r) {}
+        };
 
-                // eval_size
-                template <class _T>
-                std::size_t eval_size(const _T& t);
-                // eval_args
-                template <class _T>
-                std::string eval_args(const std::string& p,
-                                      const _T& r,
-                                      unsigned& arg_num,
-                                      bool ro);
-                // eval_vars
-                template <class _T>
-                std::string eval_vars(const _T& r, unsigned& arg_num,
-                                      bool read);
-                // eval_ops
-                template <class _T>
-                std::string eval_ops(const _T& r, unsigned& arg_num);
-                // bind_args
-                template <class _T>
-                void bind_args(cl::Kernel& k,
-                               const _T& r,
-                               unsigned& arg_num);
+        // eval_size
+        template <class _T>
+        std::size_t eval_size(const _T& t);
+        // eval_args
+        template <class _T>
+        std::string eval_args(const std::string& p,
+                              const _T& r,
+                              unsigned& arg_num,
+                              bool ro);
+        // eval_vars
+        template <class _T>
+        std::string eval_vars(const _T& r, unsigned& arg_num,
+                              bool read);
+        // eval_ops
+        template <class _T>
+        std::string eval_ops(const _T& r, unsigned& arg_num);
+        // bind_args
+        template <class _T>
+        void bind_args(cl::Kernel& k,
+                       const _T& r,
+                       unsigned& arg_num);
                 
-                // opencl kernel for expressions
-                template <class _RES, class _EXPR>
-                class expr_kernel {
-                public:
-                        expr_kernel() = default;
-                        void
-                        execute(_RES& res, const _EXPR& r, const void* addr)
-                                const;
-                private:
-                        impl::pgm_kernel_lock&
-                        get_kernel(_RES& res, const _EXPR& r, const void* addr)
-                                const;
+        // opencl kernel for expressions
+        template <class _RES, class _EXPR>
+        class expr_kernel {
+        public:
+                expr_kernel() = default;
+                void
+                execute(_RES& res, const _EXPR& r, const void* addr)
+                        const;
+        private:
+                impl::pgm_kernel_lock&
+                get_kernel(_RES& res, const _EXPR& r, const void* addr)
+                        const;
 
-                        impl::pgm_kernel_lock
-                        gen_kernel(_RES& res, const _EXPR& r, const void* addr)
-                                const;
-                };
+                impl::pgm_kernel_lock
+                gen_kernel(_RES& res, const _EXPR& r, const void* addr)
+                        const;
+        };
 
-                // generate and execute an opencl kernel for an
-                // expression
-                template <class _RES, class _EXPR>
-                void execute(_RES& res, const _EXPR& r);
+        // generate and execute an opencl kernel for an
+        // expression
+        template <class _RES, class _EXPR>
+        void execute(_RES& res, const _EXPR& r);
 
-                // vector base class wrapping an opencl buffer and a
-                // (shared) pointer to opencl backend data
-                class vector_base {
-                        // shared pointer to the backend data
-                        std::shared_ptr<impl::be_data> _bed;
-                        // backend buffer object
-                        cl::Buffer _b;
-                public:
-                        // default constructor
-                        vector_base();
-                        // constructor, with size
-                        vector_base(std::size_t s);
-                        // constructor, copies s bytes from src to
-                        // buffer
-                        vector_base(std::size_t s, const char* src);
-                        // return the size of the vector in bytes
-                        std::size_t buffer_size() const;
-                        // return the underlying opencl buffer
-                        const cl::Buffer& buf() const;
-                        // return the opencl backend information
-                        std::shared_ptr<impl::be_data>& 
-                        backend_data();
-                        // return the opencl backend information
-                        const std::shared_ptr<impl::be_data>&
-                        backend_data() const;
-                };
+        // vector base class wrapping an opencl buffer and a
+        // (shared) pointer to opencl backend data
+        class vector_base {
+                // shared pointer to the backend data
+                std::shared_ptr<impl::be_data> _bed;
+                // backend buffer object
+                cl::Buffer _b;
+        public:
+                // default constructor
+                vector_base();
+                // constructor, with size
+                vector_base(std::size_t s);
+                // constructor, copies s bytes from src to
+                // buffer
+                vector_base(std::size_t s, const char* src);
+                // return the size of the vector in bytes
+                std::size_t buffer_size() const;
+                // return the underlying opencl buffer
+                const cl::Buffer& buf() const;
+                // return the opencl backend information
+                std::shared_ptr<impl::be_data>& 
+                backend_data();
+                // return the opencl backend information
+                const std::shared_ptr<impl::be_data>&
+                backend_data() const;
+        };
 
-                // vector: representation of data on the acceleration device
-                template <class _T>
-                class vector : public vector_base {
-                        // count of elements
-                        std::size_t _size;
-                public:
-                        // size of the vector
-                        std::size_t size() const;
-                        // default constructor.
-                        vector() : vector_base() {}
-                        // constructor from memory buffer
-                        vector(std::size_t n, const _T* s);
-                        // constructor with size and initializer
-                        vector(std::size_t n, const _T& i);
-                        // copy constructor
-                        vector(const vector& v);
-                        // construction from std::vector, forces move of data
-                        // from host to device
-                        vector(const std::vector<_T>& v);
-                        // assignment operator from vector
-                        vector& operator=(const vector& v);
-                        // assignment from scalar
-                        vector& operator=(const _T& i);
-                        // template constructor for evaluation of expressions
-                        explicit vector(std::size_t n);
-                        template <template <class _V> class _OP,
-                                  class _L, class _R>
-                        vector(const expr<_OP<vector<_T> >, _L, _R>& r);
-                        // conversion operator to std::vector, forces move of
-                        // data to host
-                        operator std::vector<_T> () const;
-                };
-        }
+        // vector: representation of data on the acceleration device
+        template <class _T>
+        class vector : public vector_base {
+                // count of elements
+                std::size_t _size;
+        public:
+                // size of the vector
+                std::size_t size() const;
+                // default constructor.
+                vector() : vector_base() {}
+                // constructor from memory buffer
+                vector(std::size_t n, const _T* s);
+                // constructor with size and initializer
+                vector(std::size_t n, const _T& i);
+                // copy constructor
+                vector(const vector& v);
+                // construction from std::vector, forces move of data
+                // from host to device
+                vector(const std::vector<_T>& v);
+                // assignment operator from vector
+                vector& operator=(const vector& v);
+                // assignment from scalar
+                vector& operator=(const _T& i);
+                // template constructor for evaluation of expressions
+                explicit vector(std::size_t n);
+                template <template <class _V> class _OP,
+                          class _L, class _R>
+                vector(const expr<_OP<vector<_T> >, _L, _R>& r);
+                // conversion operator to std::vector, forces move of
+                // data to host
+                operator std::vector<_T> () const;
+        };
 }
 
 template <class _RES, class _SRC>
 void
-ocl::device::expr_kernel<_RES, _SRC>::
+ocl::expr_kernel<_RES, _SRC>::
 execute(_RES& res, const _SRC& r, const void* cookie)
         const
 {
@@ -169,7 +167,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 
 template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock&
-ocl::device::expr_kernel<_RES, _SRC>::
+ocl::expr_kernel<_RES, _SRC>::
 get_kernel(_RES& res, const _SRC& r, const void* cookie)
         const
 {
@@ -193,7 +191,7 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
 
 template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock
-ocl::device::expr_kernel<_RES, _SRC>::
+ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         const
 {
@@ -282,7 +280,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
 template <class _T>
 inline
 std::size_t 
-ocl::device::eval_size(const _T& t)
+ocl::eval_size(const _T& t)
 {
         static_cast<void>(t);
         return 1;
@@ -291,7 +289,7 @@ ocl::device::eval_size(const _T& t)
 
 template <class _RES, class _EXPR>
 void
-ocl::device::execute(_RES& res, const _EXPR& r)
+ocl::execute(_RES& res, const _EXPR& r)
 {
         // auto pf=execute<_RES, _EXPR>;
         void (*pf)(_RES&, const _EXPR&) = execute<_RES, _EXPR>  ;
@@ -301,21 +299,21 @@ ocl::device::execute(_RES& res, const _EXPR& r)
 }
 
 inline
-ocl::device::vector_base::vector_base() 
+ocl::vector_base::vector_base() 
         : _bed(), _b() 
 {
 }
 
 
 inline
-ocl::device::vector_base::vector_base(std::size_t s)
+ocl::vector_base::vector_base(std::size_t s)
         : _bed(impl::be_data::instance()),
           _b(_bed->c(), CL_MEM_READ_WRITE, s) 
 {
 }
 
 inline
-ocl::device::vector_base::vector_base(std::size_t s, const char* src)
+ocl::vector_base::vector_base(std::size_t s, const char* src)
         : _bed(impl::be_data::instance()),
           _b(_bed->c(), CL_MEM_READ_WRITE, s) 
 {
@@ -330,7 +328,7 @@ ocl::device::vector_base::vector_base(std::size_t s, const char* src)
 
 inline
 std::size_t 
-ocl::device::vector_base::buffer_size() 
+ocl::vector_base::buffer_size() 
         const 
 {
         std::size_t r(_b() != nullptr ?
@@ -340,7 +338,7 @@ ocl::device::vector_base::buffer_size()
 
 inline
 const cl::Buffer& 
-ocl::device::vector_base::buf() 
+ocl::vector_base::buf() 
         const 
 {
         return _b;
@@ -348,14 +346,14 @@ ocl::device::vector_base::buf()
 
 inline 
 std::shared_ptr<ocl::impl::be_data>& 
-ocl::device::vector_base::backend_data() 
+ocl::vector_base::backend_data() 
 {
         return _bed;
 }
 
 inline
 const std::shared_ptr<ocl::impl::be_data>&
-ocl::device::vector_base::backend_data() 
+ocl::vector_base::backend_data() 
         const 
 {
         return _bed;
@@ -363,7 +361,7 @@ ocl::device::vector_base::backend_data()
 
 template <class _T>
 inline
-ocl::device::vector<_T>::vector(std::size_t n, const _T* p)
+ocl::vector<_T>::vector(std::size_t n, const _T* p)
         : vector_base(n*sizeof(_T)), _size(n)
 {
         if (_size) {
@@ -382,7 +380,7 @@ ocl::device::vector<_T>::vector(std::size_t n, const _T* p)
 
 template <class _T>
 inline
-ocl::device::vector<_T>::vector(std::size_t s, const _T& i)
+ocl::vector<_T>::vector(std::size_t s, const _T& i)
         : vector_base(s * sizeof(_T)), _size(s)
 {
         if (_size) {
@@ -392,7 +390,7 @@ ocl::device::vector<_T>::vector(std::size_t s, const _T& i)
 
 template <class _T>
 inline
-ocl::device::vector<_T>::vector(const vector& r)
+ocl::vector<_T>::vector(const vector& r)
         : vector_base(r.size() * sizeof(_T)),
           _size(r.size())
 {
@@ -403,7 +401,7 @@ ocl::device::vector<_T>::vector(const vector& r)
 
 template <class _T>
 inline
-ocl::device::vector<_T>::vector(const std::vector<_T>& r)
+ocl::vector<_T>::vector(const std::vector<_T>& r)
         : vector_base(sizeof(_T) * r.size()), _size(r.size())
 {
         if (_size) {
@@ -421,7 +419,7 @@ ocl::device::vector<_T>::vector(const std::vector<_T>& r)
 template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
 inline
-ocl::device::
+ocl::
 vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
         : vector_base(eval_size(r)*sizeof(_T)), _size(eval_size(r))
 {
@@ -432,7 +430,7 @@ vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
 
 template <class _T>
 inline
-ocl::device::vector<_T>::operator std::vector<_T> ()
+ocl::vector<_T>::operator std::vector<_T> ()
         const
 {
         std::size_t n(this->size());
@@ -454,7 +452,7 @@ ocl::device::vector<_T>::operator std::vector<_T> ()
 template <class _T>
 inline
 std::size_t 
-ocl::device::vector<_T>::size() const 
+ocl::vector<_T>::size() const 
 {
         return _size;
 }
@@ -462,4 +460,4 @@ ocl::device::vector<_T>::size() const
 // Local variables:
 // mode: c++
 // end:
-#endif // __DEVICE_VECTOR_H__
+#endif // __OCL_VECTOR_H__
