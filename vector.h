@@ -24,7 +24,7 @@ namespace ocl {
                         _l(l), _r(r) {}
         };
 
-        // eval_size
+        // eval_size2
         template <class _T>
         std::size_t eval_size(const _T& t);
         // eval_args
@@ -128,6 +128,72 @@ namespace ocl {
                 // data to host
                 operator std::vector<_T> () const;
         };
+
+        
+}
+
+template <class _T>
+inline
+std::size_t 
+ocl::eval_size(const _T& t)
+{
+        static_cast<void>(t);
+        return 1;
+}
+
+template <class _T>
+std::string ocl::eval_args(const std::string& p,
+                           const _T& r,
+                           unsigned& arg_num,
+                           bool ro) 
+{
+        static_cast<void>(ro);
+        std::ostringstream s;
+        if (!p.empty()) {
+                s << p << ",\n";
+        }
+        s << "\t" ;
+        s << impl::type_2_name<_T>::v()
+          << " arg"  << arg_num;
+        ++arg_num;
+        return s.str();
+}
+
+template <class _T>
+std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
+                           bool read) 
+{
+        std::ostringstream s;
+        s << '\t' << impl::type_2_name<_T>::v()
+          << " v" << arg_num;
+        if (read== true) {
+                s << " = arg"
+                  << arg_num << ";";
+        }
+        std::string a(s.str());
+        ++arg_num;
+        return a;
+}
+
+template <class _T>
+std::string ocl::eval_ops(const _T& r, unsigned& arg_num) 
+{
+        std::ostringstream s;
+        s << "v" << arg_num;
+        std::string a(s.str());
+        ++arg_num;
+        return a;
+}
+
+template <class _T>
+void ocl::bind_args(cl::Kernel& k,
+                    const _T& r,
+                    unsigned& arg_num)
+{
+        std::cout << "binding to arg " << arg_num
+                  << std::endl;
+        k.setArg(arg_num, r);
+        ++arg_num;
 }
 
 template <class _RES, class _SRC>
@@ -277,14 +343,6 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         return pkl;
 }
 
-template <class _T>
-inline
-std::size_t 
-ocl::eval_size(const _T& t)
-{
-        static_cast<void>(t);
-        return 1;
-}
 
 
 template <class _RES, class _EXPR>

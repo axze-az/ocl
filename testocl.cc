@@ -17,64 +17,7 @@ namespace ocl {
                 return v.size();
         }
 
-        // return an ascii name for r with "vx" with x
-        // describing the argument number, arg_num is increased
-        template <class _T>
-        std::string eval_ops(const _T& r, unsigned& arg_num) {
-                std::ostringstream s;
-                s << "v" << arg_num;
-                std::string a(s.str());
-                ++arg_num;
-                return a;
-        }
 
-        // generate: type vX = argX;
-        // for temporary variables
-        template <class _T>
-        std::string eval_vars(const _T& r, unsigned& arg_num,
-                              bool read) {
-                std::ostringstream s;
-                s << '\t' << impl::type_2_name<_T>::v()
-                  << " v" << arg_num;
-                if (read== true) {
-                        s << " = arg"
-                          << arg_num << ";";
-                }
-                std::string a(s.str());
-                ++arg_num;
-                return a;
-        }
-
-        // generate: (const) type argX
-        // for kernel arguments
-        template <class _T>
-        std::string eval_args(const std::string& p,
-                              const _T& r,
-                              unsigned& arg_num,
-                              bool ro) {
-                static_cast<void>(ro);
-                std::ostringstream s;
-                if (!p.empty()) {
-                        s << p << ",\n";
-                }
-                s << "\t" ;
-                s << impl::type_2_name<_T>::v()
-                  << " arg"  << arg_num;
-                ++arg_num;
-                return s.str();
-        }
-
-        // bind an openCL kernel argument
-        template <class _T>
-        void bind_args(cl::Kernel& k,
-                       const _T& r,
-                       unsigned& arg_num)
-        {
-                std::cout << "binding to arg " << arg_num
-                          << std::endl;
-                k.setArg(arg_num, r);
-                ++arg_num;
-        }
 
 
         // eval_size specialized for expr<>, returns
