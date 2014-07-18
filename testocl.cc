@@ -18,60 +18,6 @@ namespace ocl {
         }
 
 
-
-
-        // eval_size specialized for expr<>, returns
-        // the maximum of all eval_size functions applied
-        // recursivly
-        template <class _OP, class _L, class _R>
-        std::size_t eval_size(const expr<_OP, _L, _R>& a)
-        {
-                std::size_t l=eval_size(a._l);
-                std::size_t r=eval_size(a._r);
-                return std::max(l, r);
-        }
-
-        template <class _OP, class _L, class _R>
-        std::string
-        eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
-                  bool read)
-        {
-                auto l=eval_vars(a._l, arg_num, read);
-                auto r=eval_vars(a._r, arg_num, read);
-                return std::string(l + '\n' + r);
-        }
-
-        template <class _OP, class _L, class _R>
-        std::string
-        eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num)
-        {
-                auto l=eval_ops(a._l, arg_num);
-                auto r=eval_ops(a._r, arg_num);
-                std::string t(_OP::body(l, r));
-                return std::string("(") + t + std::string(")");
-        }
-
-        template <class _OP, class _L, class _R>
-        std::string
-        eval_args(const std::string& p,
-                  const expr<_OP, _L, _R>& r,
-                  unsigned& arg_num,
-                  bool ro)
-        {
-                std::string left(eval_args(p, r._l, arg_num, ro));
-                return eval_args(left, r._r, arg_num, ro);
-        }
-
-
-        template <class _OP, class _L, class _R>
-        void bind_args(cl::Kernel& k,
-                       const expr<_OP, _L, _R>& r,
-                       unsigned& arg_num)
-        {
-                bind_args(k, r._l, arg_num);
-                bind_args(k, r._r, arg_num);
-        }
-
                 
         template <class _T>
         struct expr_traits<vector<_T> > {
