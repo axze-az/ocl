@@ -12,20 +12,23 @@ namespace ocl {
         std::size_t eval_size(const _T& t);
         // eval_args
         template <class _T>
-        std::string eval_args(const std::string& p, const _T& r, 
+        std::string eval_args(const std::string& p, const _T& r,
                               unsigned& arg_num, bool ro);
         // eval_vars
         template <class _T>
         std::string eval_vars(const _T& r, unsigned& arg_num, bool read);
-        
         // eval_ops
         template <class _T>
         std::string eval_ops(const _T& r, unsigned& arg_num);
 
+        // eval_results, unimplemented
+        template <class _T>
+        std::string eval_results(_T& r, unsigned& res_num);
+
         // bind_args
         template <class _T>
         void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
-        
+
         // default expression traits for simple/unspecialized
         // types
         template <class _T>
@@ -79,7 +82,7 @@ namespace ocl {
         void bind_args(cl::Kernel& k,
                        const expr<_OP, _L, _R>& r,
                        unsigned& arg_num);
-        
+
         // opencl kernel for expressions
         template <class _RES, class _EXPR>
         class expr_kernel {
@@ -102,7 +105,7 @@ namespace ocl {
         // expression
         template <class _RES, class _EXPR>
         void execute(_RES& res, const _EXPR& r);
-        
+
 
         // vector base class wrapping an opencl buffer and a
         // (shared) pointer to opencl backend data
@@ -124,7 +127,7 @@ namespace ocl {
                 // return the underlying opencl buffer
                 const cl::Buffer& buf() const;
                 // return the opencl backend information
-                std::shared_ptr<impl::be_data>& 
+                std::shared_ptr<impl::be_data>&
                 backend_data();
                 // return the opencl backend information
                 const std::shared_ptr<impl::be_data>&
@@ -164,12 +167,189 @@ namespace ocl {
                 operator std::vector<_T> () const;
         };
 
+        template <class _T>
+        struct expr_traits<vector<_T> > {
+                typedef const vector<_T>& type;
+        };
+
+        // eval_size specialized for vector
+        template <class _T>
+        std::size_t eval_size(const vector<_T>& t);
+        // eval_args specialized for vector
+        template <class _T>
+        std::string eval_args(const std::string& p,
+                              const vector<_T>& r,
+                              unsigned& arg_num, bool ro);
+        // eval_vars specialized for vector
+        template <class _T>
+        std::string eval_vars(const vector<_T>& r, unsigned& arg_num,
+                              bool read);
+
+        // store the results into a vector
+        template <class _T>
+        std::string eval_results(vector<_T>& r,
+                                 unsigned& res_num);
+
+        // bind_args specialized for vector
+        template <class _T>
+        void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
+
+        namespace ops {
+
+                template <class _T>
+                struct add {
+                        static
+                        std::string body(const std::string& l,
+                                         const std::string& r) {
+                                std::string res(l);
+                                res += " + ";
+                                res += r;
+                                return res;
+                        }
+                };
+
+                template <class _T>
+                struct sub {
+                        static
+                        std::string body(const std::string& l,
+                                         const std::string& r) {
+                                std::string res(l);
+                                res += " - ";
+                                res += r;
+                                return res;
+                        }
+                };
+
+                template <class _T>
+                struct mul {
+                        static
+                        std::string body(const std::string& l,
+                                         const std::string& r) {
+                                std::string res(l);
+                                res += " * ";
+                                res += r;
+                                return res;
+                        }
+                };
+
+                template <class _T>
+                struct div {
+                        static
+                        std::string body(const std::string& l,
+                                         const std::string& r) {
+                                std::string res(l);
+                                res += " / ";
+                                res += r;
+                                return res;
+                        }
+                };
+
+        }
+#define DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, op, eq_op, op_name)       \
+        /* operator op(V, V) */                                         \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, vx>                                 \
+        operator op (const vx& a, const vx& b) {                        \
+                return expr<ops:: op_name<vx>, vx, vx>(a,b);            \
+        }                                                               \
+        /* operator op(V, scalar) */                                    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, scalar>                             \
+        operator op (const vx& a, const scalar& b) {                    \
+                return expr<ops:: op_name<vx>, vx, scalar>(a,b);        \
+        }                                                               \
+        /* operator op(scalar, V) */                                    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, scalar, vx>                             \
+        operator op (const scalar& a, const vx& b) {                    \
+                return expr<ops:: op_name<vx>, scalar, vx>(a,b);        \
+        }                                                               \
+        /* operator op(V, expr) */                                      \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, vx, expr<_OP<vx>, _L, _R> >             \
+        operator op (const vx& a, const expr<_OP<vx>, _L, _R>& b) {     \
+                return expr<ops:: op_name<vx>,                          \
+                            vx, expr<_OP<vx>, _L, _R> >(a, b);          \
+        }                                                               \
+        /* operator op(scalar, expr) */                                 \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, scalar, expr<_OP<vx>, _L, _R> >         \
+        operator op (const scalar& a, const expr<_OP<vx>, _L, _R>& b) { \
+                return expr<ops:: op_name<vx>,                          \
+                            scalar, expr<_OP<vx>, _L, _R> >(a, b);      \
+        }                                                               \
+        /* operator op(expr, V) */                                      \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, vx>              \
+        operator op (const expr<_OP<vx>, _L, _R>& a, const vx& b) {     \
+                return expr<ops:: op_name<vx>,                          \
+                            expr<_OP<vx>, _L, _R>, vx>(a, b);           \
+        }                                                               \
+        /* operator op(expr, scalar) */                                 \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, scalar>          \
+        operator op (const expr<_OP<vx>, _L, _R>& a, const scalar& b) { \
+                return expr<ops:: op_name<vx>,                          \
+                            expr<_OP<vx>, _L, _R>, scalar>(a, b);       \
+        }                                                               \
+        /* operator op(expr, expr)  */                                  \
+        template <template <class _V> class _OP1, class _L1, class _R1, \
+                  template <class _V> class _OP2, class _L2, class _R2> \
+        inline                                                          \
+        expr<ops:: op_name<vx>,                                         \
+             expr<_OP1<vx>, _L1, _R1>, expr<_OP2<vx>, _L2, _R2> >       \
+        operator op(const expr<_OP1<vx>, _L1, _R1>& a,                  \
+                    const expr<_OP2<vx>, _L2, _R2>& b) {                \
+                return expr<ops:: op_name<vx>,                          \
+                            expr<_OP1<vx>, _L1, _R1>,                   \
+                            expr<_OP2<vx>, _L2, _R2> > (a, b);          \
+        }                                                               \
+        /* operator eq_op V */                                          \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const vx& r) {                        \
+                a = a op r;                                             \
+                return a;                                               \
+        }                                                               \
+        /* operator eq_op scalar */                                     \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const scalar& r) {                    \
+                a = a op r;                                             \
+                return a;                                               \
+        }                                                               \
+        /* operator eq_op expr */                                       \
+        template <template <class _V> class _OP, class _L, class _R>    \
+        inline                                                          \
+        vx& operator eq_op(vx& a, const expr<_OP<vx>, _L, _R>& r) {     \
+                a = a op r;                                             \
+                return a;                                               \
+        }
+
+
+#define DEFINE_OCLVEC_FP_OPERATORS(vx, scalar)                  \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, +, +=, add)       \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, -, -=, sub)       \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, *, *=, mul)       \
+        DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, /, /=, div)
+
+#define DEFINE_OCLSCALAR_FP_OPERATORS(vx)               \
+        DEFINE_OCLSCALAR_FP_OPERATOR(vx, +, +=, add)    \
+        DEFINE_OCLSCALAR_FP_OPERATOR(vx, -, -=, sub)    \
+        DEFINE_OCLSCALAR_FP_OPERATOR(vx, *, *=, mul)    \
+        DEFINE_OCLSCALAR_FP_OPERATOR(vx, /, /=, div)
+
+
+        DEFINE_OCLVEC_FP_OPERATORS(vector<float>, float);
+        DEFINE_OCLVEC_FP_OPERATORS(vector<cftal::vec::v8f32>, cftal::vec::v8f32);
         
 }
 
 template <class _T>
 inline
-std::size_t 
+std::size_t
 ocl::eval_size(const _T& t)
 {
         static_cast<void>(t);
@@ -180,7 +360,7 @@ template <class _T>
 std::string ocl::eval_args(const std::string& p,
                            const _T& r,
                            unsigned& arg_num,
-                           bool ro) 
+                           bool ro)
 {
         static_cast<void>(ro);
         std::ostringstream s;
@@ -196,7 +376,7 @@ std::string ocl::eval_args(const std::string& p,
 
 template <class _T>
 std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
-                           bool read) 
+                           bool read)
 {
         std::ostringstream s;
         s << '\t' << impl::type_2_name<_T>::v()
@@ -211,7 +391,7 @@ std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
 }
 
 template <class _T>
-std::string ocl::eval_ops(const _T& r, unsigned& arg_num) 
+std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 {
         std::ostringstream s;
         s << "v" << arg_num;
@@ -233,9 +413,9 @@ void ocl::bind_args(cl::Kernel& k,
 
 template <class _OP, class _L, class _R>
 inline
-constexpr 
-ocl::expr<_OP, _L, _R>::expr(const _L& l, const _R& r) 
-        :  _l(l), _r(r) 
+constexpr
+ocl::expr<_OP, _L, _R>::expr(const _L& l, const _R& r)
+        :  _l(l), _r(r)
 {
 }
 
@@ -407,7 +587,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         std::vector<cl::Device> vk(1, bd->d());
 
         try {
-                pgm.build(vk, 
+                pgm.build(vk,
                           // "-v "
                           "-I /usr/include/clang/3.5/include "
                           "-I /usr/include/clang/3.4/include "
@@ -444,8 +624,8 @@ ocl::execute(_RES& res, const _EXPR& r)
 }
 
 inline
-ocl::vector_base::vector_base() 
-        : _bed(), _b() 
+ocl::vector_base::vector_base()
+        : _bed(), _b()
 {
 }
 
@@ -453,14 +633,14 @@ ocl::vector_base::vector_base()
 inline
 ocl::vector_base::vector_base(std::size_t s)
         : _bed(impl::be_data::instance()),
-          _b(_bed->c(), CL_MEM_READ_WRITE, s) 
+          _b(_bed->c(), CL_MEM_READ_WRITE, s)
 {
 }
 
 inline
 ocl::vector_base::vector_base(std::size_t s, const char* src)
         : _bed(impl::be_data::instance()),
-          _b(_bed->c(), CL_MEM_READ_WRITE, s) 
+          _b(_bed->c(), CL_MEM_READ_WRITE, s)
 {
         impl::queue& q= _bed->q();
         q.enqueueWriteBuffer(_b,
@@ -472,9 +652,9 @@ ocl::vector_base::vector_base(std::size_t s, const char* src)
 }
 
 inline
-std::size_t 
-ocl::vector_base::buffer_size() 
-        const 
+std::size_t
+ocl::vector_base::buffer_size()
+        const
 {
         std::size_t r(_b() != nullptr ?
                       _b.getInfo<CL_MEM_SIZE>(nullptr) : 0);
@@ -482,24 +662,24 @@ ocl::vector_base::buffer_size()
 }
 
 inline
-const cl::Buffer& 
-ocl::vector_base::buf() 
-        const 
+const cl::Buffer&
+ocl::vector_base::buf()
+        const
 {
         return _b;
 }
 
-inline 
-std::shared_ptr<ocl::impl::be_data>& 
-ocl::vector_base::backend_data() 
+inline
+std::shared_ptr<ocl::impl::be_data>&
+ocl::vector_base::backend_data()
 {
         return _bed;
 }
 
 inline
 const std::shared_ptr<ocl::impl::be_data>&
-ocl::vector_base::backend_data() 
-        const 
+ocl::vector_base::backend_data()
+        const
 {
         return _bed;
 }
@@ -596,11 +776,79 @@ ocl::vector<_T>::operator std::vector<_T> ()
 
 template <class _T>
 inline
-std::size_t 
-ocl::vector<_T>::size() const 
+std::size_t
+ocl::vector<_T>::size() const
 {
         return _size;
 }
+
+template <class _T>
+inline
+std::size_t ocl::eval_size(const vector<_T>& v)
+{
+        return v.size();
+}
+
+template <class _T>
+std::string ocl::eval_args(const std::string& p,
+                           const vector<_T>& r,
+                           unsigned& arg_num,
+                           bool ro)
+{
+        std::ostringstream s;
+        if (!p.empty()) {
+                s << p << ",\n";
+        }
+        s << "\t__global " ;
+        if (ro) {
+                s<< "const ";
+        }
+        s << impl::type_2_name<_T>::v()
+          << "* arg"  << arg_num;
+        ++arg_num;
+        return s.str();
+}
+
+template <class _T>
+std::string ocl::eval_vars(const vector<_T>& r, unsigned& arg_num,
+                           bool read)
+{
+        std::ostringstream s;
+        s << '\t' << impl::type_2_name<_T>::v()
+          << " v" << arg_num;
+        if (read== true) {
+                s << " = arg"
+                  << arg_num << "[gid];";
+        }
+        std::string a(s.str());
+        ++arg_num;
+        return a;
+}
+
+
+template <class _T>
+std::string ocl::eval_results(vector<_T>& r,
+                              unsigned& res_num)
+{
+        std::ostringstream s;
+        s << "\targ" << res_num << "[gid]="
+          << " v" << res_num << ';';
+        ++res_num;
+        return s.str();
+}
+
+
+template <class _T>
+void ocl::bind_args(cl::Kernel& k,
+                    const vector<_T>& r,
+                    unsigned& arg_num)
+{
+        std::cout << "binding buffer to arg " << arg_num
+                  << std::endl;
+        k.setArg(arg_num, r.buf());
+        ++arg_num;
+}
+
 
 // Local variables:
 // mode: c++
