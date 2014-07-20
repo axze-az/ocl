@@ -25,7 +25,7 @@ namespace ocl {
         template <class _T>
         std::string eval_results(_T& r, unsigned& res_num);
 
-        // bind_args
+        // bind_args for const arguments
         template <class _T>
         void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
 
@@ -190,9 +190,12 @@ namespace ocl {
         std::string eval_results(vector<_T>& r,
                                  unsigned& res_num);
 
-        // bind_args specialized for vector
+        // bind_args for non const arguments
         template <class _T>
-        void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
+        void bind_args(cl::Kernel& k, vector<_T>& r,  unsigned& arg_num);
+        // bind_args for const arguments
+        template <class _T>
+        void bind_args(cl::Kernel& k, const vector<_T>& r,  unsigned& arg_num);
 
         namespace ops {
 
@@ -402,10 +405,21 @@ std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 
 template <class _T>
 void ocl::bind_args(cl::Kernel& k,
+                    _T& r,
+                    unsigned& arg_num)
+{
+        std::cout << "binding nonconst to arg " << arg_num
+                  << std::endl;
+        k.setArg(arg_num, r);
+        ++arg_num;
+}
+
+template <class _T>
+void ocl::bind_args(cl::Kernel& k,
                     const _T& r,
                     unsigned& arg_num)
 {
-        std::cout << "binding to arg " << arg_num
+        std::cout << "binding const to arg " << arg_num
                   << std::endl;
         k.setArg(arg_num, r);
         ++arg_num;
@@ -825,7 +839,6 @@ std::string ocl::eval_vars(const vector<_T>& r, unsigned& arg_num,
         return a;
 }
 
-
 template <class _T>
 std::string ocl::eval_results(vector<_T>& r,
                               unsigned& res_num)
@@ -840,7 +853,7 @@ std::string ocl::eval_results(vector<_T>& r,
 
 template <class _T>
 void ocl::bind_args(cl::Kernel& k,
-                    const vector<_T>& r,
+                    vector<_T>& r,
                     unsigned& arg_num)
 {
         std::cout << "binding buffer to arg " << arg_num
@@ -849,6 +862,16 @@ void ocl::bind_args(cl::Kernel& k,
         ++arg_num;
 }
 
+template <class _T>
+void ocl::bind_args(cl::Kernel& k,
+                    const vector<_T>& r,
+                    unsigned& arg_num)
+{
+        std::cout << "binding constant buffer to arg " << arg_num
+                  << std::endl;
+        k.setArg(arg_num, r.buf());
+        ++arg_num;
+}
 
 // Local variables:
 // mode: c++

@@ -87,9 +87,9 @@ int main()
 
                 std::vector<float> res(vd);
 
-                vector<v8f32> vva(SIZE, a);
-                vector<v8f32> vvb(SIZE, b);
-                vector<v8f32> vvc(SIZE, c);
+                vector<v8f32> vva(SIZE/8, a);
+                vector<v8f32> vvb(SIZE/8, b);
+                vector<v8f32> vvc(SIZE/8, c);
                 vector<v8f32> vres(test_func(vva, vvb, vvc));
 
                 if (SIZE <= 4096) {
