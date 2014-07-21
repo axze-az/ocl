@@ -123,28 +123,5 @@ int main()
                           << ocl::impl::err2str(e)
                           << std::endl;
         }
-#if 1
-        std::vector<cl::Device> v(ocl::impl::devices());
-        std::cout << v.size() << std::endl;
-        for (std::size_t i = 0; i< v.size(); ++i) {
-                std::cout << ocl::impl::device_info(v[i]);
-        }
-        ocl::impl::device dd(ocl::impl::default_device());
-        std::cout << "selected device: \n";
-        std::cout << ocl::impl::device_info(dd);
-
-        try {
-                const ocl::impl::device& bed =
-                        ocl::impl::be_data::instance()->d();
-                std::cout << "\nselected backend device: \n";
-                std::cout << ocl::impl::device_info(bed);
-        }
-        catch (const ocl::impl::error& e) {
-                std::cout << "caught exception: " << e.what()
-                          << '\n'
-                          << ocl::impl::err2str(e)
-                          << std::endl;
-        }
-#endif
         return 0;
 }

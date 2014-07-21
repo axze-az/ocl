@@ -71,15 +71,18 @@ ln -sf lib$(LIBNAME).so.$(MAJOR).$(MINOR) lib$(LIBNAME).so.$(MAJOR)
 	cd $(INSTALLDIR)/lib && \
 ln -sf lib$(LIBNAME).so.$(MAJOR) lib$(LIBNAME).so
 
-TESTPROGS=testocl testocl_g
+TESTPROGS=testocl testocl_g test_be_data
 
 tests: $(TESTPROGS)
 
-testocl: testocl.ol
+testocl: testocl.o
 	$(LD) -o $@ $< $(LDFLAGS) -Wl,-rpath=. -L. -locl -lOpenCL -lstdc++ -ldl
 
 testocl_g: testocl.od lib$(LIBNAME)-g.a
 	$(LD) -o $@ $< -g $(LDFLAGS) -L. -locl-g -lOpenCL -lstdc++ -ldl
+
+test_be_data: test_be_data.o
+	$(LD) -o $@ $< $(LDFLAGS) -Wl,-rpath=. -L. -locl -lOpenCL -lstdc++ -ldl
 
 
 #################################################################
