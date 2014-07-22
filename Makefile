@@ -10,7 +10,7 @@ MINOR=1#
 
 SLDFLAGS:= $(SLDFLAGS) -lOpenCL
 ARCH+=#-mpopcnt -mfma
-CXXFLAGS+=-I.. -I../stlex -I../thread  -I../sysio -march=native
+CXXFLAGS+=-I.. -march=native
 CXXFLAGS+=-fstrict-aliasing -Wstrict-aliasing=1
 CXXFLAGS+=-Wno-error
 
