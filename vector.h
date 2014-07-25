@@ -493,8 +493,10 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         // execute the kernel
         std::size_t s(eval_size(res));
 
-        impl::queue& q= impl::be_data::instance()->q();
-        impl::device& d= impl::be_data::instance()->d();
+        impl::be_data_ptr& b= res.backend_data();
+
+        impl::queue& q= b->q();
+        impl::device& d= b->d();
         // execute
         std::cout << "executing kernel" << std::endl;
         std::size_t local_size(

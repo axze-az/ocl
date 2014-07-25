@@ -15,7 +15,6 @@ namespace ocl {
 
 
 
-
 // using namespace ocl;
 
 template <class _T>
