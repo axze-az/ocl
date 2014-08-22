@@ -67,7 +67,7 @@ int main()
 
                 const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
                 const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
-                const unsigned SIZE=1024*4096;
+                const unsigned SIZE=4096;
                 std::cout << "using buffers of "
                           << double(SIZE*sizeof(float))/(1024*1024)
                           << "MiB\n";
@@ -79,7 +79,7 @@ int main()
                 std::vector<float> vhb(SIZE, 3.0f);
                 vector<float> vb(vhb);
                 vector<float> vc= test_func(va, vb);
-                vector<float> vd= test_func(va, vb, vc);
+                vector<float> vd(test_func(va, vb, vc));
                 vector<float> vd2= test_func(va, vb, vc);
 
                 float c= test_func(a, b);
