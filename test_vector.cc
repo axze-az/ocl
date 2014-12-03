@@ -63,7 +63,7 @@ int main()
 
                 using namespace ocl;
 
-                using cftal::vec::v8f32;
+                using cftal::v8f32;
 
                 const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
                 const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;

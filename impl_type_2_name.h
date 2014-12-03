@@ -82,7 +82,7 @@ namespace ocl {
                 };
 
                 template <>
-                struct type_2_name<cftal::vec::v4f32> {
+                struct type_2_name<cftal::v4f32> {
                         static
                         constexpr const char* v() {
                                 return "float4";
@@ -90,7 +90,7 @@ namespace ocl {
                 };
 
                 template <>
-                struct type_2_name<cftal::vec::v8f32> {
+                struct type_2_name<cftal::v8f32> {
                         static
                         constexpr const char* v() {
                                 return "float8";
