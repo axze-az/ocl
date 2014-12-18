@@ -4,6 +4,7 @@
 #include <ocl/config.h>
 #include <ocl/impl_be_data.h>
 #include <sstream>
+#include <iostream>
 
 namespace ocl {
 
