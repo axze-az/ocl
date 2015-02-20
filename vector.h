@@ -119,7 +119,7 @@ namespace ocl {
         // default constructor
         vector_base();
         // constructor, with size
-        vector_base(std::size_t s);
+        explicit vector_base(std::size_t s);
         // constructor, copies s bytes from src to
         // buffer
         vector_base(std::size_t s, const char* src);
