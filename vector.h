@@ -115,7 +115,7 @@ namespace ocl {
         std::shared_ptr<impl::be_data> _bed;
         // backend buffer object
         cl::Buffer _b;
-    public:
+    protected:
         // default constructor
         vector_base();
         // constructor, with size
@@ -123,6 +123,7 @@ namespace ocl {
         // constructor, copies s bytes from src to
         // buffer
         vector_base(std::size_t s, const char* src);
+    public:
         // return the size of the vector in bytes
         std::size_t buffer_size() const;
         // return the underlying opencl buffer
@@ -144,7 +145,7 @@ namespace ocl {
         // size of the vector
         std::size_t size() const;
         // default constructor.
-        vector() : vector_base() {}
+        vector() : vector_base{} {}
         // constructor from memory buffer
         vector(std::size_t n, const _T* s);
         // constructor with size and initializer
@@ -642,22 +643,22 @@ ocl::execute(_RES& res, const _EXPR& r)
 
 inline
 ocl::vector_base::vector_base()
-    : _bed(), _b()
+    : _bed{}, _b{}
 {
 }
 
 
 inline
 ocl::vector_base::vector_base(std::size_t s)
-    : _bed(impl::be_data::instance()),
-      _b(_bed->c(), CL_MEM_READ_WRITE, s)
+    : _bed{impl::be_data::instance()},
+      _b{_bed->c(), CL_MEM_READ_WRITE, s}
 {
 }
 
 inline
 ocl::vector_base::vector_base(std::size_t s, const char* src)
-    : _bed(impl::be_data::instance()),
-      _b(_bed->c(), CL_MEM_READ_WRITE, s)
+    : _bed{impl::be_data::instance()},
+      _b{_bed->c(), CL_MEM_READ_WRITE, s}
 {
     impl::queue& q= _bed->q();
     q.enqueueWriteBuffer(_b,
@@ -704,7 +705,7 @@ ocl::vector_base::backend_data()
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::size_t n, const _T* p)
-    : vector_base(n*sizeof(_T)), _size(n)
+    : vector_base{n*sizeof(_T)}, _size{n}
 {
     if (_size) {
         std::size_t s=_size*sizeof(_T);
@@ -723,7 +724,7 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::size_t s, const _T& i)
-    : vector_base(s * sizeof(_T)), _size(s)
+    : vector_base{s * sizeof(_T)}, _size{s}
 {
     if (_size) {
         execute(*this, i);
@@ -733,8 +734,8 @@ ocl::vector<_T>::vector(std::size_t s, const _T& i)
 template <class _T>
 inline
 ocl::vector<_T>::vector(const vector& r)
-    : vector_base(r.size() * sizeof(_T)),
-      _size(r.size())
+    : vector_base{r.size() * sizeof(_T)},
+    _size{r.size()}
 {
     if (_size) {
         execute(*this, r);
@@ -744,7 +745,7 @@ ocl::vector<_T>::vector(const vector& r)
 template <class _T>
 inline
 ocl::vector<_T>::vector(const std::vector<_T>& r)
-    : vector_base(sizeof(_T) * r.size()), _size(r.size())
+    : vector_base{sizeof(_T) * r.size()}, _size{r.size()}
 {
     if (_size) {
         std::size_t s=_size*sizeof(_T);
@@ -763,7 +764,7 @@ template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::
 vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
-    : vector_base(eval_size(r)*sizeof(_T)), _size(eval_size(r))
+    : vector_base{eval_size(r)*sizeof(_T)}, _size{eval_size(r)}
 {
     if (_size) {
         execute(*this, r);
