@@ -5,19 +5,24 @@
 #include <ocl/impl_be_data.h>
 #include <sstream>
 #include <iostream>
+#include <initializer_list>
 
 namespace ocl {
 
     // eval_size
     template <class _T>
     std::size_t eval_size(const _T& t);
-    // eval_args
+    // eval_args, returns the opencl source code
+    // for all arguments of generated from r,
+    // increments arg_num.
     template <class _T>
-    std::string eval_args(const std::string& p, const _T& r,
-                          unsigned& arg_num, bool ro);
+    std::string
+    eval_args(const std::string& p, const _T& r,
+              unsigned& arg_num, bool ro);
     // eval_vars
     template <class _T>
-    std::string eval_vars(const _T& r, unsigned& arg_num, bool read);
+    std::string
+    eval_vars(const _T& r, unsigned& arg_num, bool read);
     // eval_ops
     template <class _T>
     std::string eval_ops(const _T& r, unsigned& arg_num);
@@ -93,10 +98,12 @@ namespace ocl {
         execute(_RES& res, const _EXPR& r, const void* addr)
             const;
     private:
+        // returns a cached kernel for (res, r) or calls gen_kernel
+        // and inserts the new kernel into the cache
         impl::pgm_kernel_lock&
         get_kernel(_RES& res, const _EXPR& r, const void* addr)
-        const;
-
+            const;
+        // generate a new kernel for (res, r)
         impl::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr)
             const;
@@ -106,7 +113,6 @@ namespace ocl {
     // expression
     template <class _RES, class _EXPR>
     void execute(_RES& res, const _EXPR& r);
-
 
     // vector base class wrapping an opencl buffer and a
     // (shared) pointer to opencl backend data
@@ -150,6 +156,8 @@ namespace ocl {
         vector(std::size_t n, const _T* s);
         // constructor with size and initializer
         vector(std::size_t n, const _T& i);
+        // constructor from initializer list
+        vector(std::initializer_list<_T> l);
         // copy constructor
         vector(const vector& v);
         // construction from std::vector, forces move of data
@@ -160,13 +168,12 @@ namespace ocl {
         // assignment from scalar
         vector& operator=(const _T& i);
         // template constructor for evaluation of expressions
-        explicit vector(std::size_t n);
         template <template <class _V> class _OP,
                   class _L, class _R>
         vector(const expr<_OP<vector<_T> >, _L, _R>& r);
         // conversion operator to std::vector, forces move of
         // data to host
-        operator std::vector<_T> () const;
+        explicit operator std::vector<_T> () const;
     };
 
     template <class _T>
@@ -179,25 +186,27 @@ namespace ocl {
     std::size_t eval_size(const vector<_T>& t);
     // eval_args specialized for vector
     template <class _T>
-    std::string eval_args(const std::string& p,
-                          const vector<_T>& r,
-                          unsigned& arg_num, bool ro);
+    std::string
+    eval_args(const std::string& p, const vector<_T>& r,
+              unsigned& arg_num, bool ro);
     // eval_vars specialized for vector
     template <class _T>
-    std::string eval_vars(const vector<_T>& r, unsigned& arg_num,
-                          bool read);
+    std::string
+    eval_vars(const vector<_T>& r, unsigned& arg_num, bool read);
 
     // store the results into a vector
     template <class _T>
-    std::string eval_results(vector<_T>& r,
-                             unsigned& res_num);
+    std::string
+    eval_results(vector<_T>& r, unsigned& res_num);
 
     // bind_args for non const arguments
     template <class _T>
-    void bind_args(cl::Kernel& k, vector<_T>& r,  unsigned& arg_num);
+    void
+    bind_args(cl::Kernel& k, vector<_T>& r,  unsigned& arg_num);
     // bind_args for const arguments
     template <class _T>
-    void bind_args(cl::Kernel& k, const vector<_T>& r,  unsigned& arg_num);
+    void
+    bind_args(cl::Kernel& k, const vector<_T>& r,  unsigned& arg_num);
 
     namespace ops {
 
@@ -674,8 +683,8 @@ std::size_t
 ocl::vector_base::buffer_size()
     const
 {
-    std::size_t r(_b() != nullptr ?
-                  _b.getInfo<CL_MEM_SIZE>(nullptr) : 0);
+    std::size_t r{_b() != nullptr ?
+            _b.getInfo<CL_MEM_SIZE>(nullptr) : 0};
     return r;
 }
 
@@ -754,6 +763,23 @@ ocl::vector<_T>::vector(const std::vector<_T>& r)
                              true,
                              0, s,
                              &r[0],
+                             nullptr,
+                             nullptr);
+    }
+}
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(std::initializer_list<_T> l)
+    : vector_base{sizeof(_T) * l.size()}, _size{l.size()}
+{
+    if (_size) {
+        std::size_t s=_size*sizeof(_T);
+        impl::queue& q= backend_data()->q();
+        q.enqueueWriteBuffer(this->buf(),
+                             true,
+                             0, s,
+                             l.begin(),
                              nullptr,
                              nullptr);
     }

@@ -13,8 +13,6 @@ namespace ocl {
 
 }
 
-
-
 // using namespace ocl;
 
 template <class _T>
@@ -107,14 +105,14 @@ int main()
         std::cout << "scalar " << d << std::endl;
 
     }
-    catch (const std::runtime_error& e) {
-        std::cout << "caught exception: " << e.what()
-                  << std::endl;
-    }
     catch (const ocl::impl::error& e) {
         std::cout << "caught exception: " << e.what()
                   << '\n'
                   << ocl::impl::err2str(e)
+                  << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        std::cout << "caught exception: " << e.what()
                   << std::endl;
     }
     return 0;
