@@ -2,117 +2,10 @@
 #define __OCL_VECTOR_H__ 1
 
 #include <ocl/config.h>
-#include <ocl/impl_be_data.h>
-#include <sstream>
-#include <iostream>
+#include <ocl/expr_kernel.h>
 #include <initializer_list>
 
 namespace ocl {
-
-    // eval_size
-    template <class _T>
-    std::size_t eval_size(const _T& t);
-    // eval_args, returns the opencl source code
-    // for all arguments of generated from r,
-    // increments arg_num.
-    template <class _T>
-    std::string
-    eval_args(const std::string& p, const _T& r,
-              unsigned& arg_num, bool ro);
-    // eval_vars
-    template <class _T>
-    std::string
-    eval_vars(const _T& r, unsigned& arg_num, bool read);
-    // eval_ops
-    template <class _T>
-    std::string eval_ops(const _T& r, unsigned& arg_num);
-
-    // eval_results, unimplemented
-    template <class _T>
-    std::string eval_results(_T& r, unsigned& res_num);
-
-    // bind_args for const arguments
-    template <class _T>
-    void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
-
-    // default expression traits for simple/unspecialized
-    // types
-    template <class _T>
-    struct expr_traits {
-        typedef const _T type;
-    };
-
-    // the expression template
-    template <class _OP, class _L, class _R>
-    struct expr {
-        typename expr_traits<_L>::type _l;
-        typename expr_traits<_R>::type _r;
-        constexpr expr(const _L& l, const _R& r);
-    };
-
-    // eval_size specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
-    template <class _OP, class _L, class _R>
-    std::size_t eval_size(const expr<_OP, _L, _R>& a);
-
-    // eval_args specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
-    template <class _OP, class _L, class _R>
-    std::string
-    eval_args(const std::string& p,
-              const expr<_OP, _L, _R>& r,
-              unsigned& arg_num,
-              bool ro);
-
-    // eval_vars specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
-    template <class _OP, class _L, class _R>
-    std::string
-    eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
-              bool read);
-
-    // eval_vars specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
-    template <class _OP, class _L, class _R>
-    std::string
-    eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num);
-
-    // bind_args specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
-    template <class _OP, class _L, class _R>
-    void bind_args(cl::Kernel& k,
-                   const expr<_OP, _L, _R>& r,
-                   unsigned& arg_num);
-
-    // opencl kernel for expressions
-    template <class _RES, class _EXPR>
-    class expr_kernel {
-    public:
-        expr_kernel() = default;
-        void
-        execute(_RES& res, const _EXPR& r, const void* addr)
-            const;
-    private:
-        // returns a cached kernel for (res, r) or calls gen_kernel
-        // and inserts the new kernel into the cache
-        impl::pgm_kernel_lock&
-        get_kernel(_RES& res, const _EXPR& r, const void* addr)
-            const;
-        // generate a new kernel for (res, r)
-        impl::pgm_kernel_lock
-        gen_kernel(_RES& res, const _EXPR& r, const void* addr)
-            const;
-    };
-
-    // generate and execute an opencl kernel for an
-    // expression
-    template <class _RES, class _EXPR>
-    void execute(_RES& res, const _EXPR& r);
 
     // vector base class wrapping an opencl buffer and a
     // (shared) pointer to opencl backend data
@@ -210,8 +103,7 @@ namespace ocl {
 
     namespace ops {
 
-        template <class _T>
-        struct add {
+        struct add_base {
             static
             std::string body(const std::string& l,
                              const std::string& r) {
@@ -223,7 +115,9 @@ namespace ocl {
         };
 
         template <class _T>
-        struct sub {
+        struct add : public add_base {};
+
+        struct sub_base {
             static
             std::string body(const std::string& l,
                              const std::string& r) {
@@ -235,7 +129,9 @@ namespace ocl {
         };
 
         template <class _T>
-        struct mul {
+        struct sub : public sub_base {};
+        
+        struct mul_base {
             static
             std::string body(const std::string& l,
                              const std::string& r) {
@@ -247,7 +143,9 @@ namespace ocl {
         };
 
         template <class _T>
-        struct div {
+        struct mul : public mul_base {};
+
+        struct div_base {
             static
             std::string body(const std::string& l,
                              const std::string& r) {
@@ -258,6 +156,8 @@ namespace ocl {
             }
         };
 
+        template <class _T>
+        struct div : public div_base {};
     }
 #define DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, op, eq_op, op_name)       \
     /* operator op(V, V) */                                             \
@@ -361,294 +261,6 @@ namespace ocl {
 
 }
 
-template <class _T>
-inline
-std::size_t
-ocl::eval_size(const _T& t)
-{
-    static_cast<void>(t);
-    return 1;
-}
-
-template <class _T>
-std::string ocl::eval_args(const std::string& p,
-                           const _T& r,
-                           unsigned& arg_num,
-                           bool ro)
-{
-    static_cast<void>(ro);
-    std::ostringstream s;
-    if (!p.empty()) {
-        s << p << ",\n";
-    }
-    s << "\t" ;
-    s << impl::type_2_name<_T>::v()
-      << " arg"  << arg_num;
-    ++arg_num;
-    return s.str();
-}
-
-template <class _T>
-std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
-                           bool read)
-{
-    std::ostringstream s;
-    s << '\t' << impl::type_2_name<_T>::v()
-      << " v" << arg_num;
-    if (read== true) {
-        s << " = arg"
-          << arg_num << ";";
-    }
-    std::string a(s.str());
-    ++arg_num;
-    return a;
-}
-
-template <class _T>
-std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
-{
-    std::ostringstream s;
-    s << "v" << arg_num;
-    std::string a(s.str());
-    ++arg_num;
-    return a;
-}
-
-template <class _T>
-void ocl::bind_args(cl::Kernel& k,
-                    _T& r,
-                    unsigned& arg_num)
-{
-    std::cout << "binding nonconst to arg " << arg_num
-              << std::endl;
-    k.setArg(arg_num, r);
-    ++arg_num;
-}
-
-template <class _T>
-void ocl::bind_args(cl::Kernel& k,
-                    const _T& r,
-                    unsigned& arg_num)
-{
-    std::cout << "binding const to arg " << arg_num
-              << std::endl;
-    k.setArg(arg_num, r);
-    ++arg_num;
-}
-
-template <class _OP, class _L, class _R>
-inline
-constexpr
-ocl::expr<_OP, _L, _R>::expr(const _L& l, const _R& r)
-    :  _l(l), _r(r)
-{
-}
-
-template <class _OP, class _L, class _R>
-std::size_t ocl::eval_size(const expr<_OP, _L, _R>& a)
-{
-    std::size_t l=eval_size(a._l);
-    std::size_t r=eval_size(a._r);
-    return std::max(l, r);
-}
-
-template <class _OP, class _L, class _R>
-std::string ocl::eval_args(const std::string& p,
-                           const expr<_OP, _L, _R>& r,
-                           unsigned& arg_num,
-                           bool ro)
-{
-    std::string left(eval_args(p, r._l, arg_num, ro));
-    return eval_args(left, r._r, arg_num, ro);
-}
-
-template <class _OP, class _L, class _R>
-std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
-                           bool read)
-{
-    auto l=eval_vars(a._l, arg_num, read);
-    auto r=eval_vars(a._r, arg_num, read);
-    return std::string(l + '\n' + r);
-}
-
-template <class _OP, class _L, class _R>
-std::string ocl::eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num)
-{
-    auto l=eval_ops(a._l, arg_num);
-    auto r=eval_ops(a._r, arg_num);
-    std::string t(_OP::body(l, r));
-    return std::string("(") + t + std::string(")");
-}
-
-template <class _OP, class _L, class _R>
-void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, _R>& r,
-                    unsigned& arg_num)
-{
-    bind_args(k, r._l, arg_num);
-    bind_args(k, r._r, arg_num);
-}
-
-template <class _RES, class _SRC>
-void
-ocl::expr_kernel<_RES, _SRC>::
-execute(_RES& res, const _SRC& r, const void* cookie)
-    const
-{
-    impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
-
-    std::unique_lock<impl::pgm_kernel_lock> _l(pk);
-    // bind args
-    unsigned arg_num{0};
-    bind_args(pk._k, res, arg_num);
-    bind_args(pk._k, r, arg_num);
-    // execute the kernel
-    std::size_t s(eval_size(res));
-
-    impl::be_data_ptr& b= res.backend_data();
-
-    impl::queue& q= b->q();
-    impl::device& d= b->d();
-    // execute
-    std::cout << "executing kernel" << std::endl;
-    std::size_t local_size(
-        pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d, nullptr));
-    local_size = std::min(local_size, s);
-    std::cout << "kernel: global size: " << s
-              << " local size: " << local_size << std::endl;
-
-    q.enqueueNDRangeKernel(pk._k,
-                           cl::NullRange,
-                           cl::NDRange(s),
-                           cl::NDRange(local_size),
-                           nullptr);
-    std::cout << "execution done" << std::endl;
-    // q.flush();
-}
-
-template <class _RES, class _SRC>
-ocl::impl::pgm_kernel_lock&
-ocl::expr_kernel<_RES, _SRC>::
-get_kernel(_RES& res, const _SRC& r, const void* cookie)
-    const
-{
-    using namespace impl;
-    impl::be_data_ptr& b= res.backend_data();
-
-    std::unique_lock<be_data> _l(*b);
-
-    be_data::iterator f(b->find(cookie));
-    if (f == b->end()) {
-        pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
-        std::pair<be_data::iterator, bool> ir(
-            b->insert(cookie, pkl));
-        f = ir.first;
-    } else {
-        std::cout << "using cached kernel expr_kernel_" << cookie
-                  << std::endl;
-    }
-    return f->second;
-}
-
-template <class _RES, class _SRC>
-ocl::impl::pgm_kernel_lock
-ocl::expr_kernel<_RES, _SRC>::
-gen_kernel(_RES& res, const _SRC& r, const void* cookie)
-    const
-{
-    std::ostringstream s;
-    s << "expr_kernel_" << cookie;
-    std::string k_name(s.str());
-    s.str("");
-
-    s << "__kernel void " << k_name
-      << std::endl
-      << "(\n";
-
-    // argument generation
-    unsigned arg_num{0};
-    s << eval_args("", res, arg_num, false)
-      << ','
-      << std::endl;
-    s << eval_args("", r, arg_num, true) << std::endl;
-
-    s << ")" << std::endl;
-
-    // begin body
-    s << "{" << std::endl;
-
-    // global id
-    s << "\tsize_t gid = get_global_id(0);" << std::endl;
-
-    // temporary variables
-    unsigned var_num{1};
-    s << eval_vars(r, var_num, true)
-      << std::endl;
-
-    // result variable
-    unsigned res_num{0};
-    s << eval_vars(res, res_num, false) << "= "
-      << std::endl;
-    // the operations
-    unsigned body_num{1};
-    s << "\t\t" << eval_ops(r, body_num) << ';'
-      << std::endl;
-    // write back
-    res_num = 0;
-    s << eval_results(res, res_num)
-      << std::endl;
-
-    // end body
-    s << "}" << std::endl;
-
-    std::cout << "--- source code ------------------\n";
-    std::cout << s.str();
-
-    std::string ss(s.str());
-    cl::Program::Sources sv;
-    sv.push_back(std::make_pair(ss.c_str(), ss.size()));
-
-    using namespace impl;
-    be_data_ptr& bd= res.backend_data();
-
-    cl::Program pgm(bd->c(), sv);
-    std::vector<cl::Device> vk(1, bd->d());
-
-    try {
-        pgm.build(vk,
-                  // "-v "
-                  "-I /usr/include/clang/3.5/include "
-                  "-I /usr/include/clang/3.4/include "
-                  "-I /usr/include/clang/3.3/include ");
-    }
-    catch (const cl::Error& e) {
-        std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
-                           bd->d(), nullptr));
-        std::cerr << "build options: " << op << '\n';
-        std::string em(pgm.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
-                           bd->d(), nullptr));
-        std::cerr << "error info: " << em << '\n';
-        throw;
-    }
-    kernel k(pgm, k_name.c_str());
-
-    std::cout << "-- compiled with success ---------\n";
-
-    pgm_kernel_lock pkl(pgm, k);
-    return pkl;
-}
-
-
-
-template <class _RES, class _EXPR>
-void
-ocl::execute(_RES& res, const _EXPR& r)
-{
-    // auto pf=execute<_RES, _EXPR>;
-    void (*pf)(_RES&, const _EXPR&) = execute<_RES, _EXPR>  ;
-    const void* pv=reinterpret_cast<const void*>(pf);
-    expr_kernel<_RES, _EXPR> k;
-    k.execute(res, r, pv);
-}
 
 inline
 ocl::vector_base::vector_base()
