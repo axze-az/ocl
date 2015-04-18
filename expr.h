@@ -49,15 +49,21 @@ namespace ocl {
         constexpr expr(const _L& l, const _R& r);
     };
 
-    // eval_size specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
+    template <class _OP, class _L>
+    struct expr<_OP, _L, void> {
+        typename expr_traits<_L>::type _l;
+        constexpr expr(const _L& l) : _l{l} {};
+    };
+    
+
+    // eval_size specialized for expr<>
     template <class _OP, class _L, class _R>
     std::size_t eval_size(const expr<_OP, _L, _R>& a);
 
-    // eval_args specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
+    template <class _OP, class _L>
+    std::size_t eval_size(const expr<_OP, _L, void>& a);
+    
+    // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
     eval_args(const std::string& p,
@@ -65,28 +71,44 @@ namespace ocl {
               unsigned& arg_num,
               bool ro);
 
-    // eval_vars specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
+    template <class _OP, class _L>
+    std::string
+    eval_args(const std::string& p,
+              const expr<_OP, _L, void>& r,
+              unsigned& arg_num,
+              bool ro);
+    
+    // eval_vars specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
     eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
               bool read);
 
-    // eval_vars specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
+    template <class _OP, class _L>
+    std::string
+    eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
+              bool read);
+    
+    // eval_vars specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
     eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num);
 
-    // bind_args specialized for expr<>, returns
-    // the maximum of all eval_size functions applied
-    // recursivly
+    template <class _OP, class _L>
+    std::string
+    eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num);
+    
+    // bind_args specialized for expr<>
     template <class _OP, class _L, class _R>
     void bind_args(cl::Kernel& k,
                    const expr<_OP, _L, _R>& r,
                    unsigned& arg_num);
+
+    template <class _OP, class _L>
+    void bind_args(cl::Kernel& k,
+                   const expr<_OP, _L, void>& r,
+                   unsigned& arg_num);
+
 }
 
 template <class _T>
@@ -180,6 +202,14 @@ std::size_t ocl::eval_size(const expr<_OP, _L, _R>& a)
     return std::max(l, r);
 }
 
+template <class _OP, class _L>
+std::size_t ocl::eval_size(const expr<_OP, _L, void>& a)
+{
+    std::size_t l=eval_size(a._l);
+    return l;
+}
+
+
 template <class _OP, class _L, class _R>
 std::string ocl::eval_args(const std::string& p,
                            const expr<_OP, _L, _R>& r,
@@ -190,6 +220,17 @@ std::string ocl::eval_args(const std::string& p,
     return eval_args(left, r._r, arg_num, ro);
 }
 
+template <class _OP, class _L>
+std::string ocl::eval_args(const std::string& p,
+                           const expr<_OP, _L, void>& r,
+                           unsigned& arg_num,
+                           bool ro)
+{
+    std::string left(eval_args(p, r._l, arg_num, ro));
+    return left;
+}
+
+
 template <class _OP, class _L, class _R>
 std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
                            bool read)
@@ -198,6 +239,15 @@ std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
     auto r=eval_vars(a._r, arg_num, read);
     return std::string(l + '\n' + r);
 }
+
+template <class _OP, class _L>
+std::string ocl::eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
+                           bool read)
+{
+    auto l=eval_vars(a._l, arg_num, read);
+    return std::string(l + '\n');
+}
+
 
 template <class _OP, class _L, class _R>
 std::string ocl::eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num)
@@ -208,12 +258,28 @@ std::string ocl::eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num)
     return std::string("(") + t + std::string(")");
 }
 
+template <class _OP, class _L>
+std::string ocl::eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num)
+{
+    auto l=eval_ops(a._l, arg_num);
+    std::string t(_OP::body(l));
+    return std::string("(") + t + std::string(")");
+}
+
+
 template <class _OP, class _L, class _R>
 void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, _R>& r,
                     unsigned& arg_num)
 {
     bind_args(k, r._l, arg_num);
     bind_args(k, r._r, arg_num);
+}
+
+template <class _OP, class _L>
+void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, void>& r,
+                    unsigned& arg_num)
+{
+    bind_args(k, r._l, arg_num);
 }
 
 // Local variables:

@@ -104,9 +104,8 @@ int main()
         }
         std::cout << "scalar " << d << std::endl;
 
-        vector<float> cvt_dst;
-        vector<int32_t> cvt_src(SIZE, 42);
-        cvt_dst = cvt_to<vector<float> >(cvt_src);
+        vector<float> cvt_dst = -vd2;
+        // vector<float> abs_dst = abs(cvt_dst);
 
     }
     catch (const ocl::impl::error& e) {

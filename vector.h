@@ -103,6 +103,31 @@ namespace ocl {
 
     namespace ops {
 
+        struct neg_base {
+            static
+            std::string body(const std::string& l) {
+                std::string res("-");
+                res += l;
+                return res;
+            }
+        };
+        
+        template <class _T>
+        struct neg : public neg_base {};
+
+        struct abs_base {
+            static
+            std::string body(const std::string& l) {
+                std::string res("abs(");
+                res += l;
+                res += ")";
+                return res;
+            }
+        };
+
+        template <class _T>
+        struct abs : public abs_base {};
+        
         struct add_base {
             static
             std::string body(const std::string& l,
@@ -158,7 +183,21 @@ namespace ocl {
 
         template <class _T>
         struct div : public div_base {};
+
     }
+
+    template <class _T>
+    expr<ops::abs<_T>, _T, void>
+    abs(const _T& t) {
+        return expr<ops::abs<_T>, _T, void>(t);
+    }
+
+    inline
+    auto // expr<ops::neg<vector<float> >, vector<float>, void>
+    operator-(const vector<float>& f) {
+        return expr<ops::neg<vector<float> >, vector<float>, void>(f);
+    }
+    
 #define DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, op, eq_op, op_name)       \
     /* operator op(V, V) */                                             \
     inline                                                              \
