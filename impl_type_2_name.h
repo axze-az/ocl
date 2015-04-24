@@ -3,6 +3,7 @@
 
 #include <ocl/config.h>
 #include <cftal/vec.h>
+#include <sstream>
 
 namespace ocl {
 
@@ -13,7 +14,7 @@ namespace ocl {
             static
             constexpr const char* v() {
                 // static_assert(0, "specialization required");
-                return nullptr;
+                return "missing type_2_name";
             }
         };
 
@@ -21,7 +22,7 @@ namespace ocl {
         struct type_2_name<std::int16_t> {
             static
             constexpr const char* v() {
-                return "short int";
+                return "short";
             }
         };
 
@@ -29,7 +30,7 @@ namespace ocl {
         struct type_2_name<std::uint16_t> {
             static
             constexpr const char* v() {
-                return "unsigned short int";
+                return "ushort";
             }
         };
 
@@ -45,7 +46,7 @@ namespace ocl {
         struct type_2_name<std::uint32_t> {
             static
             constexpr const char* v() {
-                return "unsigned int";
+                return "uint";
             }
         };
 
@@ -61,7 +62,7 @@ namespace ocl {
         struct type_2_name<std::uint64_t> {
             static
             constexpr const char* v() {
-                return "unsigned long";
+                return "ulong";
             }
         };
 
@@ -81,6 +82,19 @@ namespace ocl {
             }
         };
 
+        template <typename _T, std::size_t _N>
+        struct type_2_name<cftal::vec<_T, _N> > {
+            static_assert(_N <= 16, "invalid vector size for OpenCL");
+            static
+            const std::string v() {
+                std::string t(type_2_name<_T>::v());
+                std::ostringstream s;
+                s << _N;
+                return  t+s.str();
+            }
+        };
+        
+#if 0
         template <>
         struct type_2_name<cftal::v4f32> {
             static
@@ -96,7 +110,7 @@ namespace ocl {
                 return "float8";
             }
         };
-
+#endif
     }
 }
 

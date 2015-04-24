@@ -71,7 +71,7 @@ ln -sf lib$(LIBNAME).so.$(MAJOR).$(MINOR) lib$(LIBNAME).so.$(MAJOR)
 	cd $(INSTALLDIR)/lib && \
 ln -sf lib$(LIBNAME).so.$(MAJOR) lib$(LIBNAME).so
 
-TESTPROGS=testocl testocl_g test_vector test_be_data
+TESTPROGS=testocl testocl_g test_vector test_vector_g test_be_data
 
 tests: $(TESTPROGS)
 
@@ -86,6 +86,9 @@ test_be_data: test_be_data.o
 
 test_vector: test_vector.o
 	$(LD) -o $@ $< $(LDFLAGS) -Wl,-rpath=. -L. -locl -lOpenCL -lstdc++ -ldl
+
+test_vector_g: test_vector.od lib$(LIBNAME)-g.a
+	$(LD) -o $@ $< -g $(LDFLAGS) -L. -locl-g -lOpenCL -lstdc++ -ldl
 
 
 #################################################################

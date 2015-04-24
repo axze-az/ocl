@@ -21,15 +21,15 @@ test_func(const _T& a, const _T& b)
 {
     // return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
 
-    return _T((2.0 + a + b) / (a * b)  + (a + a * b ) - a) *
-        ((6.0 + a + b) / (a * b)  + (a + a * b ) - a);
+    return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
+        ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
 }
 
 template <class _T>
 _T
 test_func(const _T& a, const _T& b, const _T& c)
 {
-    return _T((a+b *c) *c + 2.0f);
+    return (a+b *c) *c + 2.0f;
 }
 
 namespace {
@@ -55,7 +55,7 @@ int main()
 
         using namespace ocl;
 
-        using cftal::v8f32;
+        // using cftal::v8f32;
 
         const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
         const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
@@ -79,10 +79,10 @@ int main()
 
         std::vector<float> res(vd);
 
-        vector<v8f32> vva(SIZE/8, a);
-        vector<v8f32> vvb(SIZE/8, b);
-        vector<v8f32> vvc(SIZE/8, c);
-        vector<v8f32> vres(test_func(vva, vvb, vvc));
+        vector<cftal::v8f32> vva(SIZE/8, a);
+        vector<cftal::v8f32> vvb(SIZE/8, b);
+        vector<cftal::v8f32> vvc(SIZE/8, c);
+        vector<cftal::v8f32> vres(test_func(vva, vvb, vvc));
 
         if (SIZE <= 4096) {
             for (std::size_t i=0; i< res.size(); ++i) {

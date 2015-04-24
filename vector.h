@@ -3,6 +3,7 @@
 
 #include <ocl/config.h>
 #include <ocl/expr_kernel.h>
+#include <ocl/impl_type_2_name.h>
 #include <initializer_list>
 
 namespace ocl {
@@ -41,6 +42,7 @@ namespace ocl {
         // count of elements
         std::size_t _size;
     public:
+        using value_type = _T;
         // size of the vector
         std::size_t size() const;
         // default constructor.
@@ -115,6 +117,18 @@ namespace ocl {
         template <class _T>
         struct neg : public neg_base {};
 
+        struct bit_not_base {
+            static
+            std::string body(const std::string& l) {
+                std::string res("~");
+                res += l;
+                return res;
+            }
+        };
+        
+        template <class _T>
+        struct bit_not : public bit_not_base {};
+
         struct abs_base {
             static
             std::string body(const std::string& l) {
@@ -127,6 +141,17 @@ namespace ocl {
 
         template <class _T>
         struct abs : public abs_base {};
+
+        template <>
+        struct abs<vector<float> > {
+            static
+            std::string body(const std::string& l) {
+                std::string res("fabs(");
+                res += l;
+                res += ")";
+                return res;
+            }
+        };
         
         struct add_base {
             static
@@ -184,120 +209,308 @@ namespace ocl {
         template <class _T>
         struct div : public div_base {};
 
+        struct bit_and_base {
+            static
+            std::string body(const std::string& l,
+                             const std::string& r) {
+                std::string res(l);
+                res += " & ";
+                res += r;
+                return res;
+            }
+        };
+
+        template <class _T>
+        struct bit_and : public bit_and_base {};
+
+        struct bit_or_base {
+            static
+            std::string body(const std::string& l,
+                             const std::string& r) {
+                std::string res(l);
+                res += " | ";
+                res += r;
+                return res;
+            }
+        };
+        
+        template <class _T>
+        struct bit_or : public bit_or_base {};
+
+        struct bit_xor_base {
+            static
+            std::string body(const std::string& l,
+                             const std::string& r) {
+                std::string res(l);
+                res += " ^ ";
+                res += r;
+                return res;
+            }
+        };
+        
+        template <class _T>
+        struct bit_xor : public bit_xor_base {};
+        
+        template <class _D>
+        struct cvt_to {
+            static
+            std::string body(const std::string& l) {
+                std::string res("((");
+                // I AM BUGGY:
+                res += "int"; // impl::type_2_name<_D>::v();
+                res += ")";
+                res += l;
+                res += ")";
+                std::cout<< res << std::endl;
+                return res;
+            }
+        };
+
+        template <class _D>
+        struct cvt_to<vector<_D> > {
+            static
+            std::string body(const std::string& l) {
+                std::string res("convert_");
+                res += impl::type_2_name<_D>::v();
+                res += "_rtz(";
+                res += l;
+                res += ")";
+                return res;
+            }
+        };
+
+        template <class _D>
+        struct as {
+            static
+            std::string body(const std::string& l);
+        };
+
+        template <class _D>
+        struct as<vector<_D> > {
+            static
+            std::string body(const std::string& l) {
+                std::string res("(");
+                res += "as_";
+                res += impl::type_2_name<_D>::v();
+                res += "(";
+                res += l;
+                res += "))";
+                std::cout<< res << std::endl;
+                return res;
+            }
+        };
+        
     }
 
-    template <class _T>
-    expr<ops::abs<_T>, _T, void>
-    abs(const _T& t) {
-        return expr<ops::abs<_T>, _T, void>(t);
-    }
-
+    template <class _D, class _S>
     inline
-    auto // expr<ops::neg<vector<float> >, vector<float>, void>
-    operator-(const vector<float>& f) {
-        return expr<ops::neg<vector<float> >, vector<float>, void>(f);
+    expr<ops::cvt_to<_D>, _S, void>
+    cvt_to(const _S& s) {
+        return expr<ops::cvt_to<_D>, _S, void>(s);
+    }
+
+    template <class _D, class _S>
+    inline
+    expr<ops::as<_D>, _S, void>
+    as(const _S& s) {
+        return expr<ops::as<_D>, _S, void>(s);
     }
     
-#define DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, op, eq_op, op_name)       \
+    // abs(V)
+    template <class _T>
+    inline
+    expr<ops::abs<vector<_T> >, vector<_T>, void>
+    abs(const vector<_T>& t) {
+        return expr<ops::abs<vector<_T> >, vector<_T>, void>(t);
+    }
+
+    // abs(expr)
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R>
+    inline
+    expr<ops::abs<vector<_T> >,
+         expr<_OP<vector<_T> >, _L, _R>,
+         void>
+    abs(const expr<_OP<vector<_T> >, _L, _R>& v) {
+        return expr<ops::abs<vector<_T> >,
+                    expr<_OP<vector<_T> >, _L, _R>,
+                    void>(v);
+    }
+    
+    // unary plus
+    template <class _T>
+    inline
+    const
+    _T& operator+(const _T& v) {
+        return v;
+    }
+
+    // unary minus V 
+    template <class _T>
+    inline
+    expr<ops::neg<vector<_T> >, vector<_T>, void>
+    operator-(const vector<_T>& v) {
+        return expr<ops::neg<vector<_T> >, vector<_T>, void>(v);
+    };
+    // unary minus expr
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R>
+    inline
+    expr<ops::neg<vector<_T> >,
+         expr<_OP<vector<_T> >, _L, _R>,
+         void>
+    operator-(const expr<_OP<vector<_T> >, _L, _R>& v) {
+        return expr<ops::neg<vector<_T> >,
+                    expr<_OP<vector<_T> >, _L, _R>,
+                    void>(v);
+    }
+
+    // unary not V
+    template <class _T>
+    inline
+    expr<ops::bit_not<vector<_T> >, vector<_T>, void>
+    operator~(const vector<_T>& v) {
+        return expr<ops::bit_not<vector<_T> >, vector<_T>, void>(v);
+    };
+    // unary not expr
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R>
+    inline
+    expr<ops::bit_not<vector<_T> >,
+         expr<_OP<vector<_T> >, _L, _R>,
+         void>
+    operator~(const expr<_OP<vector<_T> >, _L, _R>& v) {
+        return expr<ops::bit_not<vector<_T> >,
+                    expr<_OP<vector<_T> >, _L, _R>,
+                    void>(v);
+    }
+    
+    
+#define DEFINE_OCLVEC_OPERATOR(op, eq_op, op_name)                      \
     /* operator op(V, V) */                                             \
+    template <class _T>                                                 \
     inline                                                              \
-    expr<ops:: op_name<vx>, vx, vx>                                     \
-    operator op (const vx& a, const vx& b) {                            \
-        return expr<ops:: op_name<vx>, vx, vx>(a,b);                    \
+    expr<ops:: op_name<vector<_T> >, vector<_T>, vector<_T> >           \
+    operator op (const vector<_T>& a, const vector<_T>& b) {            \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    vector<_T>, vector<_T> >(a,b);                      \
     }                                                                   \
-    /* operator op(V, scalar) */                                        \
+    /* operator op(V, _T) */                                            \
+    template <class _T, class _S>                                       \
     inline                                                              \
-    expr<ops:: op_name<vx>, vx, scalar>                                 \
-    operator op (const vx& a, const scalar& b) {                        \
-        return expr<ops:: op_name<vx>, vx, scalar>(a,b);                \
+    expr<ops:: op_name<vector<_T> >, vector<_T>, _S>                    \
+    operator op (const vector<_T>& a, const _S& b) {                    \
+        return expr<ops:: op_name<vector<_T> >, vector<_T>, _S>(a,b);   \
     }                                                                   \
-    /* operator op(scalar, V) */                                        \
+    /* operator op(_T, V) */                                            \
+    template <class _T, class _S>                                       \
     inline                                                              \
-    expr<ops:: op_name<vx>, scalar, vx>                                 \
-    operator op (const scalar& a, const vx& b) {                        \
-        return expr<ops:: op_name<vx>, scalar, vx>(a,b);                \
+    expr<ops:: op_name<vector<_T> >, _S, vector<_T> >                   \
+    operator op (const _S& a, const vector<_T>& b) {                    \
+        return expr<ops:: op_name<vector<_T> >, _S, vector<_T> >(a,b);  \
     }                                                                   \
     /* operator op(V, expr) */                                          \
-    template <template <class _V> class _OP, class _L, class _R>        \
+    template <class _T,                                                 \
+              template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vx>, vx, expr<_OP<vx>, _L, _R> >                 \
-    operator op (const vx& a, const expr<_OP<vx>, _L, _R>& b) {         \
-        return expr<ops:: op_name<vx>,                                  \
-                    vx, expr<_OP<vx>, _L, _R> >(a, b);                  \
+    expr<ops:: op_name<vector<_T> >,                                    \
+         vector<_T>,                                                    \
+         expr<_OP<vector<_T> >, _L, _R> >                               \
+    operator op (const vector<_T>& a,                                   \
+                 const expr<_OP<vector<_T> >, _L, _R>& b) {             \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    vector<_T>,                                         \
+                    expr<_OP<vector<_T>>, _L, _R> >(a, b);              \
     }                                                                   \
-    /* operator op(scalar, expr) */                                     \
-    template <template <class _V> class _OP, class _L, class _R>        \
+    /* operator op(_S, expr) */                                         \
+    template <class _T, class _S,                                       \
+              template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vx>, scalar, expr<_OP<vx>, _L, _R> >             \
-    operator op (const scalar& a, const expr<_OP<vx>, _L, _R>& b) {     \
-        return expr<ops:: op_name<vx>,                                  \
-                    scalar, expr<_OP<vx>, _L, _R> >(a, b);              \
+    expr<ops:: op_name<vector<_T> >, _S,                                \
+         expr<_OP<vector<_T> >, _L, _R> >                               \
+    operator op (const _S& a,                                           \
+                 const expr<_OP<vector<_T> >, _L, _R>& b) {             \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    _S, expr<_OP<vector<_T> >, _L, _R> >(a, b);         \
     }                                                                   \
     /* operator op(expr, V) */                                          \
-    template <template <class _V> class _OP, class _L, class _R>        \
+    template <class _T,                                                 \
+              template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, vx>                  \
-    operator op (const expr<_OP<vx>, _L, _R>& a, const vx& b) {         \
-        return expr<ops:: op_name<vx>,                                  \
-                    expr<_OP<vx>, _L, _R>, vx>(a, b);                   \
+    expr<ops:: op_name<vector<_T>>,                                     \
+         expr<_OP<vector<_T> >, _L, _R>, vector<_T> >                   \
+    operator op (const expr<_OP<vector<_T> >, _L, _R>& a,               \
+                 const vector<_T>& b) {                                 \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    expr<_OP<vector<_T> >, _L, _R>,                     \
+                    vector<_T> >(a, b);                                 \
     }                                                                   \
-    /* operator op(expr, scalar) */                                     \
-    template <template <class _V> class _OP, class _L, class _R>        \
+    /* operator op(expr, _S) */                                         \
+    template <class _T, class _S,                                       \
+              template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vx>, expr<_OP<vx>, _L, _R>, scalar>              \
-    operator op (const expr<_OP<vx>, _L, _R>& a, const scalar& b) {     \
-        return expr<ops:: op_name<vx>,                                  \
-                    expr<_OP<vx>, _L, _R>, scalar>(a, b);               \
+    expr<ops:: op_name<vector<_T> >,                                    \
+         expr<_OP<vector<_T> >, _L, _R>, _S>                            \
+    operator op (const expr<_OP<vector<_T> >,                           \
+                 _L, _R>& a, const _S& b) {                             \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    expr<_OP<vector<_T> >, _L, _R>, _S>(a, b);          \
     }                                                                   \
     /* operator op(expr, expr)  */                                      \
-    template <template <class _V> class _OP1, class _L1, class _R1,     \
+    template <class _T,                                                 \
+              template <class _V> class _OP1, class _L1, class _R1,     \
               template <class _V> class _OP2, class _L2, class _R2>     \
     inline                                                              \
-    expr<ops:: op_name<vx>,                                             \
-         expr<_OP1<vx>, _L1, _R1>, expr<_OP2<vx>, _L2, _R2> >           \
-    operator op(const expr<_OP1<vx>, _L1, _R1>& a,                      \
-                const expr<_OP2<vx>, _L2, _R2>& b) {                    \
-        return expr<ops:: op_name<vx>,                                  \
-                    expr<_OP1<vx>, _L1, _R1>,                           \
-                    expr<_OP2<vx>, _L2, _R2> > (a, b);                  \
+    expr<ops:: op_name<vector<_T> >,                                    \
+         expr<_OP1<vector<_T> >, _L1, _R1>,                             \
+         expr<_OP2<vector<_T> >, _L2, _R2> >                            \
+    operator op(const expr<_OP1<vector<_T> >, _L1, _R1>& a,             \
+                const expr<_OP2<vector<_T> >, _L2, _R2>& b) {           \
+        return expr<ops:: op_name<vector<_T> >,                         \
+                    expr<_OP1<vector<_T> >, _L1, _R1>,                  \
+                    expr<_OP2<vector<_T> >, _L2, _R2> > (a, b);         \
     }                                                                   \
     /* operator eq_op V */                                              \
+    template <class _T>                                                 \
     inline                                                              \
-    vx& operator eq_op(vx& a, const vx& r) {                            \
+    vector<_T>& operator eq_op(vector<_T>& a, const vector<_T>& r) {    \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
-    /* operator eq_op scalar */                                         \
+    /* operator eq_op _T */                                             \
+    template <class _T>                                                 \
     inline                                                              \
-    vx& operator eq_op(vx& a, const scalar& r) {                        \
+    vector<_T>& operator eq_op(vector<_T>& a, const _T& r) {            \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
     /* operator eq_op expr */                                           \
-    template <template <class _V> class _OP, class _L, class _R>        \
+    template <class _T,                                                 \
+              template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    vx& operator eq_op(vx& a, const expr<_OP<vx>, _L, _R>& r) {         \
+    vector<_T>&                                                         \
+    operator eq_op(vector<_T>& a,                                       \
+                   const expr<_OP<vector<_T> >, _L, _R>& r) {           \
         a = a op r;                                                     \
         return a;                                                       \
     }
 
 
-#define DEFINE_OCLVEC_FP_OPERATORS(vx, scalar)          \
-    DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, +, +=, add)   \
-    DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, -, -=, sub)   \
-    DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, *, *=, mul)   \
-    DEFINE_OCLVEC_FP_OPERATOR(vx, scalar, /, /=, div)
-
-#define DEFINE_OCLSCALAR_FP_OPERATORS(vx)               \
-    DEFINE_OCLSCALAR_FP_OPERATOR(vx, +, +=, add)        \
-    DEFINE_OCLSCALAR_FP_OPERATOR(vx, -, -=, sub)        \
-    DEFINE_OCLSCALAR_FP_OPERATOR(vx, *, *=, mul)        \
-    DEFINE_OCLSCALAR_FP_OPERATOR(vx, /, /=, div)
+#define DEFINE_OCLVEC_OPERATORS()        \
+    DEFINE_OCLVEC_OPERATOR(+, +=, add)   \
+    DEFINE_OCLVEC_OPERATOR(-, -=, sub)   \
+    DEFINE_OCLVEC_OPERATOR(*, *=, mul)   \
+    DEFINE_OCLVEC_OPERATOR(/, /=, div)   \
+    DEFINE_OCLVEC_OPERATOR(&, &=, sub)   \
+    DEFINE_OCLVEC_OPERATOR(|, |=, mul)   \
+    DEFINE_OCLVEC_OPERATOR(^, ^=, div)
 
 
-    DEFINE_OCLVEC_FP_OPERATORS(vector<float>, float);
-    DEFINE_OCLVEC_FP_OPERATORS(vector<cftal::v8f32>, cftal::v8f32);
-
+    DEFINE_OCLVEC_OPERATORS();
+#undef DEFINE_OCLVEC_OPERATORS
 }
 
 

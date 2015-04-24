@@ -23,8 +23,8 @@ test_func(const _T& a, const _T& b)
 {
     // return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
 
-    return _T((2.0 + a + b) / (a * b)  + (a + a * b ) - a) *
-        ((6.0 + a + b) / (a * b)  + (a + a * b ) - a);
+    return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
+        ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
 }
 
 template <class _T>
@@ -105,8 +105,9 @@ int main()
         std::cout << "scalar " << d << std::endl;
 
         vector<float> cvt_dst = -vd2;
-        // vector<float> abs_dst = abs(cvt_dst);
-
+        vector<float> abs_dst = abs(cvt_dst);
+        vector<int32_t> iv= ~(cvt_to<vector<int32_t> >(cvt_dst)*2);
+        vector<float> ivf= as<vector<float> >(iv);
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught exception: " << e.what()
