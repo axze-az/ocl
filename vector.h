@@ -23,6 +23,8 @@ namespace ocl {
         // constructor, copies s bytes from src to
         // buffer
         vector_base(std::size_t s, const char* src);
+        // swap two vector base objects
+        vector_base& swap(vector_base& r);
     public:
         // return the size of the vector in bytes
         std::size_t buffer_size() const;
@@ -250,6 +252,35 @@ namespace ocl {
         
         template <class _T>
         struct bit_xor : public bit_xor_base {};
+
+        template <const char* _P>
+        struct func_base {
+            static
+            std::string body(const std::string& l,
+                             const std::string& r) {
+                std::string res("");
+                res += _P;
+                res += "(";
+                res += l;
+                res += ", ";
+                res += r;
+                res += ")";
+                return res;
+            }
+        };
+
+        namespace ops_impl {
+
+            constexpr const char _min[]= "min";
+            constexpr const char _max[]= "max";
+        };
+        
+
+        template <class _T>
+        struct max_func : public func_base<ops_impl::_max> {};
+
+        template <class _T>
+        struct min_func : public func_base<ops_impl::_min> {};
         
         template <class _D>
         struct cvt_to {
@@ -323,7 +354,7 @@ namespace ocl {
     abs(const vector<_T>& t) {
         return expr<ops::abs<vector<_T> >, vector<_T>, void>(t);
     }
-
+    
     // abs(expr)
     template <class _T,
               template <class _T1> class _OP,
@@ -336,6 +367,93 @@ namespace ocl {
         return expr<ops::abs<vector<_T> >,
                     expr<_OP<vector<_T> >, _L, _R>,
                     void>(v);
+    }
+
+    // min(V)
+    template <class _T, class _S>
+    inline
+    expr<ops::min_func<vector<_T> >,
+         vector<_T>, _S>
+    min(const vector<_T>& a, const _S& b)
+    {
+        return expr<ops::min_func<vector<_T> >,
+                    vector<_T>, _S >(a, b);
+    }
+
+    // min(V)
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R,
+              class _S>
+    inline
+    expr<ops::min_func<vector<_T> >,
+         expr<_OP<vector<_T> >, _L, _R>,
+         _S >
+    min(const expr<_OP<vector<_T> >, _L, _R>& a, const _S& b)
+    {
+        return expr<ops::min_func<vector<_T> >,
+                    expr<_OP<vector<_T> >, _L, _R>,
+                    _S >(a, b);
+    }
+
+    // min(V)
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R,
+              class _S>
+    inline
+    expr<ops::min_func<vector<_T> >,
+         _S, 
+         expr<_OP<vector<_T> >, _L, _R> >
+    min(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
+    {
+        return expr<ops::min_func<vector<_T> >,
+                    _S, 
+                    expr<_OP<vector<_T> >, _L, _R> >(a, b);
+    }
+
+    
+    // max(V)
+    template <class _T, class _S>
+    inline
+    expr<ops::max_func<vector<_T> >,
+         vector<_T>, _S>
+    max(const vector<_T>& a, const _S& b)
+    {
+        return expr<ops::max_func<vector<_T> >,
+                    vector<_T>, _S >(a, b);
+    }
+
+    // max(V)
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R,
+              class _S>
+    inline
+    expr<ops::max_func<vector<_T> >,
+         expr<_OP<vector<_T> >, _L, _R>,
+         _S >
+    max(const expr<_OP<vector<_T> >, _L, _R>& a, const _S& b)
+    {
+        return expr<ops::max_func<vector<_T> >,
+                    expr<_OP<vector<_T> >, _L, _R>,
+                    _S >(a, b);
+    }
+
+    // max(V)
+    template <class _T,
+              template <class _T1> class _OP,
+              class _L, class _R,
+              class _S>
+    inline
+    expr<ops::max_func<vector<_T> >,
+         _S, 
+         expr<_OP<vector<_T> >, _L, _R> >
+    max(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
+    {
+        return expr<ops::max_func<vector<_T> >,
+                    _S, 
+                    expr<_OP<vector<_T> >, _L, _R> >(a, b);
     }
     
     // unary plus
@@ -543,6 +661,15 @@ ocl::vector_base::vector_base(std::size_t s, const char* src)
 }
 
 inline
+ocl::vector_base&
+ocl::vector_base::swap(vector_base& r)
+{
+    std::swap(_bed, r._bed);
+    std::swap(_b, r._b);
+    return *this;
+}
+
+inline
 std::size_t
 ocl::vector_base::buffer_size()
     const
@@ -659,6 +786,23 @@ vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
     if (_size) {
         execute(*this, r);
     }
+}
+
+template <class _T>
+inline
+ocl::vector<_T>&
+ocl::vector<_T>::operator=(const vector& r)
+{
+    if (this != &r) {
+        if (size() == r.size()) {
+            execute(*this, r);
+        } else {
+            vector t(r);
+            swap(t);
+            std::swap(this->_size, t._size);
+        }
+    }
+    return *this;
 }
 
 template <class _T>
