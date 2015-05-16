@@ -122,8 +122,9 @@ namespace ocl {
         struct bit_not_base {
             static
             std::string body(const std::string& l) {
-                std::string res("~");
+                std::string res("(~");
                 res += l;
+                res += ")";
                 return res;
             }
         };
