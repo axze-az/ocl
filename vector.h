@@ -131,7 +131,7 @@ namespace ocl {
         
         template <class _T>
         struct bit_not : public bit_not_base {};
-
+        
         struct abs_base {
             static
             std::string body(const std::string& l) {
@@ -623,9 +623,9 @@ namespace ocl {
     DEFINE_OCLVEC_OPERATOR(-, -=, sub)   \
     DEFINE_OCLVEC_OPERATOR(*, *=, mul)   \
     DEFINE_OCLVEC_OPERATOR(/, /=, div)   \
-    DEFINE_OCLVEC_OPERATOR(&, &=, sub)   \
-    DEFINE_OCLVEC_OPERATOR(|, |=, mul)   \
-    DEFINE_OCLVEC_OPERATOR(^, ^=, div)
+    DEFINE_OCLVEC_OPERATOR(&, &=, bit_and) \
+    DEFINE_OCLVEC_OPERATOR(|, |=, bit_or)  \
+    DEFINE_OCLVEC_OPERATOR(^, ^=, bit_xor)
 
 
     DEFINE_OCLVEC_OPERATORS();

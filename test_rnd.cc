@@ -13,49 +13,44 @@
 namespace ocl {
 
     // template <class _T>
-    struct mrand48 {
-
-        vector<std::uint64_t> m_state;
+    class mrand48 {
+        vector<std::uint64_t> _state;
 
         static const std::uint64_t A;
         static const std::uint32_t C;
         static const std::uint64_t M;
         static const std::uint64_t MM;
         static const float REC;
-        
-        vector<std::int32_t>
+    public:
         inline
+        vector<std::uint32_t>
         next() {
-            vector<std::uint64_t> nv= (m_state * A + C) & MM;
-            m_state = nv;
+            // vector<std::uint64_t> nv= ((m_state * A + C) & MM);
+            _state = (_state * A + C) /* & MM */;
             // nv >>= 16;
-            return cvt_to<vector<std::int32_t> >(nv);
+            return cvt_to<vector<std::uint32_t> >(_state);
         }
 
         void 
         seed(const vector<uint64_t>& gid){
-            // m_state= (gid << 16u) | 0x330E;
-            // m_state = (gid * 65536ll) | 0x330E;
-            m_state = gid;
-            m_state *= 65536lu;
-            m_state |= 0x330Elu;
+            // m_state = (gid * 65536) | 0x330E;
+            _state = (7*gid) ^ 0x330E;
         }
 
         vector<float>
         nextf() {
-            // vector<float> t= cvt_to<vector<float> >(next());
-            vector<float> r=max(min(cvt_to<vector<float> >(next()) * REC, 1.0f), -1.0f);
-            // vector<float> r= max(r1, -1.0f);
+            vector<float> r=max(
+                min(cvt_to<vector<float> >(next()) * REC, 1.0f), 0.0f);
             return r;
         }
     };
 }
 
-const std::uint64_t ocl::mrand48::A=0x5DEECE66Du;
+const std::uint64_t ocl::mrand48::A=0x5DEECE66Dul;
 const std::uint32_t ocl::mrand48::C=0xBL;
-const std::uint64_t ocl::mrand48::M=(1LL<<48);
+const std::uint64_t ocl::mrand48::M=(1ULL<<48);
 const std::uint64_t ocl::mrand48::MM=(M-1);
-const float ocl::mrand48::REC= 1.0f / 2147483647.0f;
+const float ocl::mrand48::REC= 1.0f/uint32_t(-1);
 
 
 int main()
