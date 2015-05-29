@@ -65,6 +65,10 @@ namespace ocl {
                                                    v));
             }
 
+            void clear() {
+                _kmap.clear();
+            }
+            
             iterator begin() {
                 return _kmap.begin();
             }

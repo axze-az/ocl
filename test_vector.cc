@@ -108,6 +108,8 @@ int main()
         vector<float> abs_dst = abs(cvt_dst);
         vector<int32_t> iv= ~(cvt_to<vector<int32_t> >(cvt_dst)*2);
         vector<float> ivf= as<vector<float> >(iv);
+
+        impl::be_data::instance()->clear();
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught exception: " << e.what()
