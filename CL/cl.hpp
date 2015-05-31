@@ -142,6 +142,7 @@
  * \endcode
  *
  */
+#pragma GCC system_header
 #ifndef CL_HPP_
 #define CL_HPP_
 
