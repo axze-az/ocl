@@ -15,30 +15,67 @@
 
 namespace ocl {
 
+#if 0
+    // POSIX random
+    static unsigned long next = 1;
+
+    /* RAND_MAX assumed to be 32767 */
+    int myrand(void)
+    {
+        next = next * 1103515245 + 12345;
+        return((unsigned)(next/65536) % 32768);
+    }
+
+    void mysrand(unsigned int seed)
+    {
+        next = seed;
+    }
+#endif
+    
     // template <class _T>
     class mrand48 {
-        vector<std::uint64_t> _state;
+        vector<std::int32_t> _state;
 
-        static const std::uint64_t A;
+        static const std::uint32_t A;
         static const std::uint32_t C;
-        static const std::uint64_t M;
-        static const std::uint64_t MM;
+        static const std::uint32_t M;
+        static const std::uint32_t MM;
         static const float REC;
-    public:
+
         inline
-        vector<std::uint32_t>
+        void
         next() {
-            vector<std::uint64_t> nv= ((_state * A + C) & MM);
-            // _state = (_state * A + C) & MM;
-            _state= nv;
-            nv = nv / (1<<16);
-            return cvt_to<vector<std::uint32_t> >(nv);
+            _state= ((_state * A + C) & MM);
+        }
+    public:
+        // returns non negative numbers between 0 and 2^31
+        inline
+        vector<std::int32_t>
+        lrand48() {
+            next();
+            return cvt_to<vector<std::int32_t> >(_state) & (0x7fffffff);
         }
 
+        // returns non negative numbers between -2^31 and 2^31
+        inline
+        vector<std::int32_t>
+        mrand48() {
+            next();
+            return cvt_to<vector<std::int32_t> >(_state);
+        }
+
+        // returns floating point variables in interval [0, 1.0)
+        inline
+        vector<float>
+        drand48() {
+            next();
+            
+        }
+        
         void 
         seed(const vector<uint64_t>& gid){
-            // m_state = (gid * 65536) | 0x330E;
-            _state = (7*gid) ^ 0x330E;
+            _state = ((gid * 65536) | 0x330E) & MM;
+
         }
 
         vector<float>
