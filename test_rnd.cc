@@ -33,13 +33,13 @@ namespace ocl {
 #endif
     
     // template <class _T>
-    class mrand48 {
-        vector<std::int32_t> _state;
+    class rand48 {
+        vector<std::uint64_t> _state;
 
-        static const std::uint32_t A;
-        static const std::uint32_t C;
-        static const std::uint32_t M;
-        static const std::uint32_t MM;
+        static const std::uint64_t A;
+        static const std::uint64_t C;
+        static const std::uint64_t M;
+        static const std::uint64_t MM;
         static const float REC;
 
         inline
@@ -69,19 +69,18 @@ namespace ocl {
         vector<float>
         drand48() {
             next();
-            
+            return cvt_to<vector<float> >(_state);
         }
         
         void 
         seed(const vector<uint64_t>& gid){
             _state = ((gid * 65536) | 0x330E) & MM;
-
         }
 
         vector<float>
         nextf() {
-            vector<float> r=max(
-                min(cvt_to<vector<float> >(next()) * REC, 1.0f), 0.0f);
+            vector<float> t=cvt_to<vector<float> >(drand48()) * REC;
+            vector<float> r=max(min(t, 1.0f), 0.0f);
             return r;
         }
     };
@@ -112,11 +111,11 @@ namespace ocl {
 
 }
 
-const std::uint64_t ocl::mrand48::A=0x5DEECE66Dul;
-const std::uint32_t ocl::mrand48::C=0xBL;
-const std::uint64_t ocl::mrand48::M=(1ULL<<48);
-const std::uint64_t ocl::mrand48::MM=(M-1);
-const float ocl::mrand48::REC= 1.0f/uint32_t(-1);
+const std::uint64_t ocl::rand48::A=0x5DEECE66Dul;
+const std::uint64_t ocl::rand48::C=0xBL;
+const std::uint64_t ocl::rand48::M=(1ULL<<48);
+const std::uint64_t ocl::rand48::MM=(M-1);
+const float ocl::rand48::REC= 1.0f/uint32_t(-1);
 
 
 template <typename _T, std::size_t _N>
@@ -165,26 +164,26 @@ int main()
 {
     try {
 
-        const int _N=1000000;
+        // const int _N=1000000;
+        const unsigned _N = 1024;
         const float _R=1./_N;
         std::uniform_int_distribution<> dx(0, _N+1);
         std::mt19937 rnd;
 
+#if 0        
         ocl::rnd_distribution<float, 20> dst(0, 1.0);
         for (long int i=0; i<10000000; ++i) {
             float r= _R * dx(rnd);
             dst.insert(r);
         }
-#if 0        
+#else
         using namespace ocl;
-
-        const unsigned _N = 1024;
         
         std::vector<std::uint64_t> gid(_N, 0ull);
         for (std::size_t i=0; i<gid.size(); ++i)
             gid[i] = i;
         vector<std::uint64_t> dg=gid;
-        ocl::mrand48 t;
+        ocl::rand48 t;
         t.seed(dg);
 
         ocl::rnd_distribution<float, 20> dst(0, 1.0);
