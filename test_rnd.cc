@@ -31,6 +31,31 @@ namespace ocl {
         next = seed;
     }
 #endif
+
+    class srand {
+        vector<std::uint32_t> _next;
+    public:
+        srand() : _next() {}
+        srand(const vector<uint32_t>& gid) : _next(gid) {}
+        void 
+        seed(const vector<uint64_t>& gid){
+            _next = cvt_to<vector<uint32_t> >(gid);
+        }
+        void 
+        seed(const vector<uint32_t>& gid){
+            _next = gid;
+        }
+        vector<uint32_t>
+        next() {
+            _next = (_next * 1103515245 + 12345);
+            return (_next/65536) & 0x7fff;
+        }
+        vector<float>
+        nextf() {
+            return (cvt_to<vector<float>>(next()) * 1.0f/32768);
+        }
+    };
+
     
     // template <class _T>
     class rand48 {
@@ -96,7 +121,9 @@ namespace ocl {
     public:
         rnd_distribution(const _T& min_val, const _T& max_val)
             : _min{min_val}, _max{max_val},
-              _rec_interval{_T(1)/(_max - _min)} {}
+              _rec_interval{_T(1)/(_max - _min)} {
+            std::fill(std::begin(_val), std::end(_val), 0u);       
+        }
         void insert(const _T& v);
         using const_iterator = const std::uint32_t*;
         const _T& min_val() const { return _min; }
@@ -165,7 +192,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 1024;
+        const unsigned _N = 128*1024;
         const float _R=1./_N;
         std::uniform_int_distribution<> dx(0, _N+1);
         std::mt19937 rnd;
@@ -183,18 +210,19 @@ int main()
         for (std::size_t i=0; i<gid.size(); ++i)
             gid[i] = i;
         vector<std::uint64_t> dg=gid;
-        ocl::rand48 t;
+        //ocl::rand48 t;
+        ocl::srand t;
         t.seed(dg);
 
         ocl::rnd_distribution<float, 20> dst(0, 1.0);
 
-        for (int i=0; i<50; ++i) {
+        for (int i=0; i<5000; ++i) {
             vector<float> f= t.nextf();
             std::cout << "iteration " << i << std::endl;
             std::vector<float> fh(f);
             for (std::size_t j=0; j<fh.size(); ++j)
                 dst.insert(fh[j]);
-            if ((i & (32-1)) == (32-1)) {
+            if ((i & (256-1)) == (256-1)) {
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j
                               << ": " << fh[j] << std::endl;
