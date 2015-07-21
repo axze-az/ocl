@@ -52,7 +52,7 @@ namespace ocl {
         }
         vector<float>
         nextf() {
-            return (cvt_to<vector<float>>(next()) * 1.0f/32768);
+            return (cvt_to<vector<float>>(next()) * (1.0f/32768.f));
         }
     };
 
