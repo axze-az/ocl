@@ -231,7 +231,7 @@ int main()
         }
 #endif
         std::cout << dst << std::endl;
-        
+        impl::be_data::instance()->clear();
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()
