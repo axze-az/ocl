@@ -327,7 +327,7 @@ namespace ocl {
                 res += "(";
                 res += l;
                 res += "))";
-                std::cout<< res << std::endl;
+                // std::cout<< res << std::endl;
                 return res;
             }
         };
@@ -412,7 +412,6 @@ namespace ocl {
                     _S, 
                     expr<_OP<vector<_T> >, _L, _R> >(a, b);
     }
-
     
     // max(V)
     template <class _T, class _S>

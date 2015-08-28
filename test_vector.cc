@@ -10,10 +10,12 @@
 
 namespace ocl {
 
+#if 0    
     template <class _T>
     std::size_t eval_size(const std::vector<_T>& v) {
         return v.size();
     }
+#endif
 }
 
 // using namespace ocl;
