@@ -34,6 +34,10 @@ namespace ocl {
     template <class _T>
     void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
 
+    // bind_args for const arguments
+    template <class _T>
+    void bind_args(cl::Kernel& k, _T& r,  unsigned& arg_num);
+
     // default expression traits for simple/unspecialized
     // types
     template <class _T>

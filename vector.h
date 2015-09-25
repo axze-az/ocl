@@ -289,7 +289,8 @@ namespace ocl {
             std::string body(const std::string& l) {
                 std::string res("((");
                 // I AM BUGGY:
-                res += "int"; // impl::type_2_name<_D>::v();
+                // res += "int"; // impl::type_2_name<_D>::v();
+                res += impl::type_2_name<_D>::v();
                 res += ")";
                 res += l;
                 res += ")";
