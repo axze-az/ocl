@@ -107,46 +107,61 @@ namespace ocl {
 
     namespace ops {
 
-        struct neg_base {
+        template <const char* _P, bool _OP=false>
+        struct unary_func {
             static
             std::string body(const std::string& l) {
-                std::string res("-");
+                std::string res;
+                res += _P;
+                if (_OP == false)
+                    res += '(';
                 res += l;
+                if (_OP == false)
+                    res += ')';
                 return res;
-            }
-        };
-        
-        template <class _T>
-        struct neg : public neg_base {};
-
-        struct bit_not_base {
-            static
-            std::string body(const std::string& l) {
-                std::string res("(~");
-                res += l;
-                res += ")";
-                return res;
-            }
-        };
-        
-        template <class _T>
-        struct bit_not : public bit_not_base {};
-        
-        struct abs_base {
-            static
-            std::string body(const std::string& l) {
-                std::string res("abs(");
-                res += l;
-                res += ")";
-                return res;
-            }
+            };
         };
 
+        template <const char* _P, bool _OP = false>
+        struct binary_func {
+            static
+            std::string body(const std::string& l,
+                             const std::string& r) {
+                std::string res;
+                if (_OP == false) {
+                    res += _P;
+                    res += "(";
+                }
+                res += l;
+                if (_OP == false)
+                    res += ", ";
+                else
+                    res += _P;
+                res += r;
+                if (_OP == false)
+                    res += ")";
+                return res;
+            }
+        };
+        
+        namespace names {
+            constexpr const char neg[] ="-";
+            constexpr const char bit_not[]="~";
+            constexpr const char fabs[]="fabs";
+            constexpr const char abs[]="abs";
+        };
+
         template <class _T>
-        struct abs : public abs_base {};
+        struct neg : public unary_func<names::neg, true>{};
+
+        template <class _T>
+        struct bit_not : public unary_func<names::bit_not, true>{};
+
+        template <class _T>
+        struct abs : public unary_func<names::abs, false>{};
 
         template <>
-        struct abs<vector<float> > {
+        struct abs< vector<float> > {
             static
             std::string body(const std::string& l) {
                 std::string res("fabs(");
@@ -155,133 +170,68 @@ namespace ocl {
                 return res;
             }
         };
-        
-        struct add_base {
+        // public unary_func<names::fabs, false>{};
+
+        template <>
+        struct abs< vector<double> >  {
             static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " + ";
-                res += r;
-                return res;
-            }
-        };
-
-        template <class _T>
-        struct add : public add_base {};
-
-        struct sub_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " - ";
-                res += r;
-                return res;
-            }
-        };
-
-        template <class _T>
-        struct sub : public sub_base {};
-        
-        struct mul_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " * ";
-                res += r;
-                return res;
-            }
-        };
-
-        template <class _T>
-        struct mul : public mul_base {};
-
-        struct div_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " / ";
-                res += r;
-                return res;
-            }
-        };
-
-        template <class _T>
-        struct div : public div_base {};
-
-        struct bit_and_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " & ";
-                res += r;
-                return res;
-            }
-        };
-
-        template <class _T>
-        struct bit_and : public bit_and_base {};
-
-        struct bit_or_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " | ";
-                res += r;
-                return res;
-            }
-        };
-        
-        template <class _T>
-        struct bit_or : public bit_or_base {};
-
-        struct bit_xor_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res(l);
-                res += " ^ ";
-                res += r;
-                return res;
-            }
-        };
-        
-        template <class _T>
-        struct bit_xor : public bit_xor_base {};
-
-        template <const char* _P>
-        struct func_base {
-            static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res("");
-                res += _P;
-                res += "(";
+            std::string body(const std::string& l) {
+                std::string res("fabs(");
                 res += l;
-                res += ", ";
-                res += r;
                 res += ")";
                 return res;
             }
         };
+        // public unary_func<names::fabs, false>{};
 
-        namespace ops_impl {
 
-            constexpr const char _min[]= "min";
-            constexpr const char _max[]= "max";
+        namespace names {
+
+            constexpr const char add[]="+";
+            constexpr const char sub[]="-";
+            constexpr const char mul[]="*";
+            constexpr const char div[]="/";
+
+            constexpr const char bit_and[]="&";
+            constexpr const char bit_or[]="|";
+            constexpr const char bit_xor[]="^";
+
+        }
+
+
+        template <class _T>
+        struct add : public binary_func<names::add, true> {};
+
+        template <class _T>
+        struct sub : public binary_func<names::sub, true> {};
+
+        template <class _T>
+        struct mul : public binary_func<names::mul, true> {};
+        
+        template <class _T>
+        struct div : public binary_func<names::div, true> {};
+
+        template <class _T>
+        struct bit_and : public binary_func<names::bit_and, true> {};
+
+        template <class _T>
+        struct bit_or : public binary_func<names::bit_or, true> {};
+
+        template <class _T>
+        struct bit_xor : public binary_func<names::bit_xor, true> {};
+
+        namespace names {
+
+            constexpr const char min[]= "min";
+            constexpr const char max[]= "max";
         };
         
 
         template <class _T>
-        struct max_func : public func_base<ops_impl::_max> {};
+        struct max_func : public binary_func<names::max> {};
 
         template <class _T>
-        struct min_func : public func_base<ops_impl::_min> {};
+        struct min_func : public binary_func<names::min> {};
         
         template <class _D>
         struct cvt_to {
