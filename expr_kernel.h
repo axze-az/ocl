@@ -145,7 +145,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
 
     std::string ss(s.str());
     cl::Program::Sources sv;
-    sv.push_back(std::make_pair(ss.c_str(), ss.size()));
+    sv.push_back(ss);
 
     using namespace impl;
     be_data_ptr& bd= res.backend_data();

@@ -196,6 +196,8 @@ namespace ocl {
             constexpr const char bit_or[]="|";
             constexpr const char bit_xor[]="^";
 
+            constexpr const char shl[]="<<";
+            constexpr const char shr[]=">>";
         }
 
 
@@ -219,6 +221,12 @@ namespace ocl {
 
         template <class _T>
         struct bit_xor : public binary_func<names::bit_xor, true> {};
+
+        template <class _T>
+        struct shl : public binary_func<names::shl, true> {};
+        
+        template <class _T>
+        struct shr : public binary_func<names::shr, true> {};
 
         namespace names {
 
@@ -568,18 +576,21 @@ namespace ocl {
     }
 
 
-#define DEFINE_OCLVEC_OPERATORS()        \
-    DEFINE_OCLVEC_OPERATOR(+, +=, add)   \
-    DEFINE_OCLVEC_OPERATOR(-, -=, sub)   \
-    DEFINE_OCLVEC_OPERATOR(*, *=, mul)   \
-    DEFINE_OCLVEC_OPERATOR(/, /=, div)   \
+#define DEFINE_OCLVEC_OPERATORS()          \
+    DEFINE_OCLVEC_OPERATOR(+, +=, add)     \
+    DEFINE_OCLVEC_OPERATOR(-, -=, sub)     \
+    DEFINE_OCLVEC_OPERATOR(*, *=, mul)     \
+    DEFINE_OCLVEC_OPERATOR(/, /=, div)     \
     DEFINE_OCLVEC_OPERATOR(&, &=, bit_and) \
     DEFINE_OCLVEC_OPERATOR(|, |=, bit_or)  \
-    DEFINE_OCLVEC_OPERATOR(^, ^=, bit_xor)
-
+    DEFINE_OCLVEC_OPERATOR(^, ^=, bit_xor) \
+    DEFINE_OCLVEC_OPERATOR(<<, <<=, shl)   \
+    DEFINE_OCLVEC_OPERATOR(>>, >>=, shr) 
 
     DEFINE_OCLVEC_OPERATORS();
 #undef DEFINE_OCLVEC_OPERATORS
+
+
 }
 
 

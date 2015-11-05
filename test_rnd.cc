@@ -45,10 +45,12 @@ namespace ocl {
         seed(const vector<uint32_t>& gid){
             _next = gid;
         }
-        vector<uint32_t>
+        // vector<uint32_t>
+        auto
         next() {
             _next = (_next * 1103515245 + 12345);
-            return (_next/65536) & 0x7fff;
+            //return (_next/65536) & 0x7fff;
+            return (_next>>16) & 0x7fff;
         }
         vector<float>
         nextf() {
@@ -214,7 +216,7 @@ int main()
         ocl::srand t;
         t.seed(dg);
 
-        ocl::rnd_distribution<float, 20> dst(0, 1.0);
+        ocl::rnd_distribution<float, 25> dst(0, 1.0);
 
         for (int i=0; i<5000; ++i) {
             vector<float> f= t.nextf();
@@ -222,12 +224,14 @@ int main()
             std::vector<float> fh(f);
             for (std::size_t j=0; j<fh.size(); ++j)
                 dst.insert(fh[j]);
+#if 0
             if ((i & (256-1)) == (256-1)) {
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j
                               << ": " << fh[j] << std::endl;
                 }
             }
+#endif
         }
 #endif
         std::cout << dst << std::endl;
