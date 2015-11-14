@@ -1,4 +1,5 @@
 #include "ocl.h"
+#include <ocl/random.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -31,12 +32,12 @@ namespace ocl {
         next = seed;
     }
 #endif
-
+#if 0
     class srand {
         vector<std::uint32_t> _next;
     public:
         srand() : _next() {}
-        srand(const vector<uint32_t>& gid) : _next(gid) {}
+        srand(const vector<uint32_t>& gid) : _next{gid} {}
         void 
         seed(const vector<uint64_t>& gid){
             _next = cvt_to<vector<uint32_t> >(gid);
@@ -49,15 +50,14 @@ namespace ocl {
         auto
         next() {
             _next = (_next * 1103515245 + 12345);
-            //return (_next/65536) & 0x7fff;
             return (_next>>16) & 0x7fff;
         }
-        vector<float>
+        auto
         nextf() {
             return (cvt_to<vector<float>>(next()) * (1.0f/32768.f));
         }
     };
-
+#endif
     
     // template <class _T>
     class rand48 {
@@ -130,8 +130,8 @@ namespace ocl {
         using const_iterator = const std::uint32_t*;
         const _T& min_val() const { return _min; }
         const _T& max_val() const { return _max; }
-        const_iterator begin() const { return std::begin(_val); }
-        const_iterator end() const { return std::end(_val); }
+        const_iterator begin() const { return std::cbegin(_val); }
+        const_iterator end() const { return std::cend(_val); }
     };
 
     template <typename _T, std::size_t _N>
@@ -177,12 +177,21 @@ std::ostream& ocl::operator<<(std::ostream& s,
     const _T& min_v= d.min_val();
     const _T& max_v= d.max_val();
     const _T interval= max_v - min_v;
+
+    std::uint64_t n=0;
+    for (auto b= std::cbegin(d), e=std::cend(d); b!=e; ++b) {
+        n+= *b;
+    }
+    const double rn=1.0/n;
+
     std::size_t i=0;
-    for (const std::uint32_t* b= std::begin(d), *e=std::end(d);
-         b != e; ++b, ++i) {
+    for (auto b= std::cbegin(d), e=std::cend(d); b != e; ++b, ++i) {
         _T v= min_v + (i * interval)/_N;
+        double rt= *b * rn;
+        s << std::setprecision(6) << std::fixed;
         s << std::setw(8) << v << ' '
           << std::setw(8) << *b
+          << ' ' << rt
           << std::endl;
     }
     return s;
@@ -195,11 +204,12 @@ int main()
 
         // const int _N=1000000;
         const unsigned _N = 128*1024;
-        const float _R=1./_N;
+#if 0
+        const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
         std::mt19937 rnd;
 
-#if 0        
+
         ocl::rnd_distribution<float, 20> dst(0, 1.0);
         for (long int i=0; i<10000000; ++i) {
             float r= _R * dx(rnd);
@@ -218,7 +228,7 @@ int main()
 
         ocl::rnd_distribution<float, 25> dst(0, 1.0);
 
-        for (int i=0; i<5000; ++i) {
+        for (int i=0; i<50; ++i) {
             vector<float> f= t.nextf();
             std::cout << "iteration " << i << std::endl;
             std::vector<float> fh(f);

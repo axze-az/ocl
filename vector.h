@@ -700,6 +700,7 @@ ocl::vector<_T>::vector(const vector& r)
     _size{r.size()}
 {
     if (_size) {
+#pragma message("copy constructor via opencl")
         execute(*this, r);
     }
 }
