@@ -109,10 +109,11 @@ namespace ocl {
 
         template <typename _P, bool _OP=false>
         struct unary_func {
+            static const _P m_p;
             static
             std::string body(const std::string& l) {
                 std::string res;
-                res += _P();
+                res += m_p();
                 if (_OP == false)
                     res += '(';
                 res += l;
@@ -122,21 +123,25 @@ namespace ocl {
             };
         };
 
-        template <const char* _P, bool _OP = false>
+        template <typename _P, bool _OP>
+        const _P unary_func<_P, _OP>::m_p=_P();
+
+        template <typename _P, bool _OP = false>
         struct binary_func {
+            static const _P m_p;
             static
             std::string body(const std::string& l,
                              const std::string& r) {
                 std::string res;
                 if (_OP == false) {
-                    res += _P;
+                    res += m_p();
                     res += "(";
                 }
                 res += l;
                 if (_OP == false)
                     res += ", ";
                 else
-                    res += _P;
+                    res += m_p();
                 res += r;
                 if (_OP == false)
                     res += ")";
@@ -144,15 +149,22 @@ namespace ocl {
             }
         };
 
+        template <typename _P, bool _OP>
+        const _P binary_func<_P, _OP>::m_p=_P();
+
         namespace names {
             struct neg {
-                const char* operator()() {
-                    return "-";
-                }
+                const char* operator()() const { return "-"; }
             };
-            constexpr const char bit_not[]="~";
-            constexpr const char* fabs() { return "fabs"; }
-            constexpr const char* abs() { return "abs"; }
+            struct bit_not {
+                const char* operator()() const { return "~"; }
+            };
+            struct fabs {
+                const char* operator()() const { return "fabs"; }
+            };
+            struct abs {
+                const char* operator()() const { return "abs"; }
+            };
         };
 
         template <class _T>
@@ -191,17 +203,17 @@ namespace ocl {
 
         namespace names {
 
-            constexpr const char add[]="+";
-            constexpr const char sub[]="-";
-            constexpr const char mul[]="*";
-            constexpr const char div[]="/";
+            struct add{ const char* operator()() const { return "+"; }};
+            struct sub{ const char* operator()() const { return "-"; }};
+            struct mul{ const char* operator()() const { return "*"; }};
+            struct div{ const char* operator()() const { return "/"; }};
 
-            constexpr const char bit_and[]="&";
-            constexpr const char bit_or[]="|";
-            constexpr const char bit_xor[]="^";
+            struct bit_and{ const char* operator()() const { return "&"; }};
+            struct bit_or{ const char* operator()() const { return "|"; }};
+            struct bit_xor{ const char* operator()() const { return "^"; }};
 
-            constexpr const char shl[]="<<";
-            constexpr const char shr[]=">>";
+            struct shl{ const char* operator()() const { return "<<"; }};
+            struct shr{ const char* operator()() const { return ">>"; }};
         }
 
 
@@ -234,8 +246,8 @@ namespace ocl {
 
         namespace names {
 
-            constexpr const char min[]= "min";
-            constexpr const char max[]= "max";
+            struct min{ const char* operator()() const { return  "min"; }};
+            struct max{ const char* operator()() const { return  "max"; }};
         };
 
 
