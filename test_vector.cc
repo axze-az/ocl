@@ -10,7 +10,7 @@
 
 namespace ocl {
 
-#if 0    
+#if 0
     template <class _T>
     std::size_t eval_size(const std::vector<_T>& v) {
         return v.size();
@@ -60,8 +60,8 @@ int main()
 
         using cftal::v8f32;
 
-        const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
-        const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
+        // const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
+        // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
         const unsigned SIZE=4096;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(float))/(1024*1024)

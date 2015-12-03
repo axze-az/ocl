@@ -57,8 +57,8 @@ int main()
 
         // using cftal::v8f32;
 
-        const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
-        const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
+        // const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
+        // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
         const unsigned SIZE=1024*4096;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(float))/(1024*1024)

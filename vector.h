@@ -107,12 +107,12 @@ namespace ocl {
 
     namespace ops {
 
-        template <const char* _P, bool _OP=false>
+        template <typename _P, bool _OP=false>
         struct unary_func {
             static
             std::string body(const std::string& l) {
                 std::string res;
-                res += _P;
+                res += _P();
                 if (_OP == false)
                     res += '(';
                 res += l;
@@ -143,12 +143,16 @@ namespace ocl {
                 return res;
             }
         };
-        
+
         namespace names {
-            constexpr const char neg[] ="-";
+            struct neg {
+                const char* operator()() {
+                    return "-";
+                }
+            };
             constexpr const char bit_not[]="~";
-            constexpr const char fabs[]="fabs";
-            constexpr const char abs[]="abs";
+            constexpr const char* fabs() { return "fabs"; }
+            constexpr const char* abs() { return "abs"; }
         };
 
         template <class _T>
@@ -209,7 +213,7 @@ namespace ocl {
 
         template <class _T>
         struct mul : public binary_func<names::mul, true> {};
-        
+
         template <class _T>
         struct div : public binary_func<names::div, true> {};
 
@@ -224,7 +228,7 @@ namespace ocl {
 
         template <class _T>
         struct shl : public binary_func<names::shl, true> {};
-        
+
         template <class _T>
         struct shr : public binary_func<names::shr, true> {};
 
@@ -233,14 +237,14 @@ namespace ocl {
             constexpr const char min[]= "min";
             constexpr const char max[]= "max";
         };
-        
+
 
         template <class _T>
         struct max_func : public binary_func<names::max> {};
 
         template <class _T>
         struct min_func : public binary_func<names::min> {};
-        
+
         template <class _D>
         struct cvt_to {
             static
@@ -290,7 +294,7 @@ namespace ocl {
                 return res;
             }
         };
-        
+
     }
 
     template <class _D, class _S>
@@ -306,7 +310,7 @@ namespace ocl {
     as(const _S& s) {
         return expr<ops::as<_D>, _S, void>(s);
     }
-    
+
     // abs(V)
     template <class _T>
     inline
@@ -314,7 +318,7 @@ namespace ocl {
     abs(const vector<_T>& t) {
         return expr<ops::abs<vector<_T> >, vector<_T>, void>(t);
     }
-    
+
     // abs(expr)
     template <class _T,
               template <class _T1> class _OP,
@@ -363,15 +367,15 @@ namespace ocl {
               class _S>
     inline
     expr<ops::min_func<vector<_T> >,
-         _S, 
+         _S,
          expr<_OP<vector<_T> >, _L, _R> >
     min(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
     {
         return expr<ops::min_func<vector<_T> >,
-                    _S, 
+                    _S,
                     expr<_OP<vector<_T> >, _L, _R> >(a, b);
     }
-    
+
     // max(V)
     template <class _T, class _S>
     inline
@@ -406,15 +410,15 @@ namespace ocl {
               class _S>
     inline
     expr<ops::max_func<vector<_T> >,
-         _S, 
+         _S,
          expr<_OP<vector<_T> >, _L, _R> >
     max(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
     {
         return expr<ops::max_func<vector<_T> >,
-                    _S, 
+                    _S,
                     expr<_OP<vector<_T> >, _L, _R> >(a, b);
     }
-    
+
     // unary plus
     template <class _T>
     inline
@@ -423,7 +427,7 @@ namespace ocl {
         return v;
     }
 
-    // unary minus V 
+    // unary minus V
     template <class _T>
     inline
     expr<ops::neg<vector<_T> >, vector<_T>, void>
@@ -464,8 +468,8 @@ namespace ocl {
                     expr<_OP<vector<_T> >, _L, _R>,
                     void>(v);
     }
-    
-    
+
+
 #define DEFINE_OCLVEC_OPERATOR(op, eq_op, op_name)                      \
     /* operator op(V, V) */                                             \
     template <class _T>                                                 \
@@ -585,7 +589,7 @@ namespace ocl {
     DEFINE_OCLVEC_OPERATOR(|, |=, bit_or)  \
     DEFINE_OCLVEC_OPERATOR(^, ^=, bit_xor) \
     DEFINE_OCLVEC_OPERATOR(<<, <<=, shl)   \
-    DEFINE_OCLVEC_OPERATOR(>>, >>=, shr) 
+    DEFINE_OCLVEC_OPERATOR(>>, >>=, shr)
 
     DEFINE_OCLVEC_OPERATORS();
 #undef DEFINE_OCLVEC_OPERATORS
