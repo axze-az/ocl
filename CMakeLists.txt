@@ -93,7 +93,9 @@ include_directories(../cftal/include)
 
 set (CSRCS
   impl_devices.cc
-  impl_be_data.cc)
+  impl_be_data.cc
+  random.cc
+)
 
 add_library (ocl STATIC ${CSRCS})
 install(TARGETS ocl
