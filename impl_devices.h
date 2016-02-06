@@ -26,6 +26,7 @@ namespace ocl {
         typedef cl::CommandQueue queue;
         typedef cl::Buffer buffer;
         typedef cl::Kernel kernel;
+        typedef cl::Event event;
 
         struct device_type {
             enum type {

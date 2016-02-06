@@ -716,8 +716,20 @@ ocl::vector<_T>::vector(const vector& r)
     _size{r.size()}
 {
     if (_size) {
-#pragma message("copy constructor via opencl")
+//#pragma message("copy constructor via opencl")
+#if 1
         execute(*this, r);
+#else
+        impl::event ev;
+        impl::queue& q= backend_data()->q();
+        q.enqueueCopyBuffer(this->buf(),
+                            r.buf(),
+                            0, 0,
+                            r.buffer_size(),
+                            nullptr,
+                            &ev);
+        ev.wait();
+#endif
     }
 }
 
