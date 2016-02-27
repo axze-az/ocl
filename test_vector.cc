@@ -77,6 +77,8 @@ int main()
         vector<float> vd(test_func(va, vb, vc));
         vector<float> vd2= test_func(va, vb, vc);
 
+        vector<int32_t> tgt= vc < vd;
+
         float c= test_func(a, b);
         float d= test_func(a, b, c);
 

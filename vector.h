@@ -203,17 +203,24 @@ namespace ocl {
 
         namespace names {
 
-            struct add{ const char* operator()() const { return "+"; }};
-            struct sub{ const char* operator()() const { return "-"; }};
-            struct mul{ const char* operator()() const { return "*"; }};
-            struct div{ const char* operator()() const { return "/"; }};
+            struct add { const char* operator()() const { return "+"; }};
+            struct sub { const char* operator()() const { return "-"; }};
+            struct mul { const char* operator()() const { return "*"; }};
+            struct div { const char* operator()() const { return "/"; }};
 
-            struct bit_and{ const char* operator()() const { return "&"; }};
-            struct bit_or{ const char* operator()() const { return "|"; }};
-            struct bit_xor{ const char* operator()() const { return "^"; }};
+            struct bit_and { const char* operator()() const { return "&"; }};
+            struct bit_or { const char* operator()() const { return "|"; }};
+            struct bit_xor { const char* operator()() const { return "^"; }};
 
-            struct shl{ const char* operator()() const { return "<<"; }};
-            struct shr{ const char* operator()() const { return ">>"; }};
+            struct shl { const char* operator()() const { return "<<"; }};
+            struct shr { const char* operator()() const { return ">>"; }};
+
+            struct lt { const char* operator()() const { return "<"; }};
+            struct le { const char* operator()() const { return "<="; }};
+            struct eq { const char* operator()() const { return "=="; }};
+            struct ne { const char* operator()() const { return "!="; }};
+            struct ge { const char* operator()() const { return ">="; }};
+            struct gt { const char* operator()() const { return ">"; }};
         }
 
 
@@ -243,6 +250,21 @@ namespace ocl {
 
         template <class _T>
         struct shr : public binary_func<names::shr, true> {};
+
+        template <class _T>
+        struct lt : public binary_func<names::lt, true> {};
+        template <class _T>
+        struct le : public binary_func<names::le, true> {};
+        template <class _T>
+        struct eq : public binary_func<names::eq, true> {};
+        template <class _T>
+        struct ne : public binary_func<names::ne, true> {};
+        template <class _T>
+        struct ge : public binary_func<names::ge, true> {};
+        template <class _T>
+        struct gt : public binary_func<names::gt, true> {};
+
+
 
         namespace names {
 
@@ -606,6 +628,12 @@ namespace ocl {
     DEFINE_OCLVEC_OPERATORS();
 #undef DEFINE_OCLVEC_OPERATORS
 
+    template <typename _T>
+    expr<ops::lt<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator<(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::lt< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
 
 }
 
