@@ -635,6 +635,38 @@ namespace ocl {
                     vector<_T>, vector<_T> >(a, b);
     }
 
+    template <typename _T>
+    expr<ops::le<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator<=(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::le< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
+
+    template <typename _T>
+    expr<ops::eq<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator==(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::eq< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
+    template <typename _T>
+    expr<ops::ne<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator!=(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::ne< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
+    template <typename _T>
+    expr<ops::ge<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator>=(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::ge< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
+    template <typename _T>
+    expr<ops::gt<vector<int32_t> >, vector<_T>, vector<_T> >
+    operator>(const vector<_T>& a, const vector<_T>& b) {
+        return expr<ops::gt< vector<int32_t> >,
+                    vector<_T>, vector<_T> >(a, b);
+    }
+
 }
 
 
