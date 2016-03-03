@@ -134,6 +134,9 @@ target_link_libraries(test_vector ocl-so)
 # test_rnd
 add_executable(test_rnd test_rnd.cc)
 target_link_libraries(test_rnd ocl-so)
+# test_reduce
+add_executable(test_reduce test_reduce.cc)
+target_link_libraries(test_reduce ocl-so)
 
 enable_testing()
 
