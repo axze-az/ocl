@@ -37,8 +37,6 @@ ocl::none_of(const vector<int32_t>& v)
     return false;
 }
 
-
-
 int main()
 {
     try {
@@ -61,6 +59,10 @@ int main()
         bool no = none_of(tgt);
         bool so = any_of(tgt);
 
+        if (ao != true || no != false || so != true) {
+            throw std::runtime_error("xxx_of failed.");
+        }
+        
         impl::be_data::instance()->clear();
     }
     catch (const ocl::impl::error& e) {
@@ -69,7 +71,7 @@ int main()
                   << ocl::impl::err2str(e)
                   << std::endl;
     }
-    catch (const std::runtime_error& e) {
+    catch (const std::exception& e) {
         std::cout << "caught exception: " << e.what()
                   << std::endl;
     }
