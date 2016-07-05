@@ -50,18 +50,24 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     impl::be_data_ptr& b= res.backend_data();
     impl::queue& q= b->q();
     impl::device& d= b->d();
-    std::cout << "executing kernel" << std::endl;
+    if (b->debug() != 0) {
+        std::cout << "executing kernel" << std::endl;
+    }
     std::size_t local_size(
         pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d, nullptr));
     local_size = std::min(local_size, s);
-    std::cout << "kernel: global size: " << s
-              << " local size: " << local_size << std::endl;
+    if (b->debug() != 0) {
+        std::cout << "kernel: global size: " << s
+                  << " local size: " << local_size << std::endl;
+    }
     q.enqueueNDRangeKernel(pk._k,
                            cl::NullRange,
                            cl::NDRange(s),
                            cl::NDRange(local_size),
                            nullptr);
-    std::cout << "execution done" << std::endl;
+    if (b->debug() != 0) {
+        std::cout << "execution done" << std::endl;
+    }
     // q.flush();
 }
 
@@ -83,8 +89,10 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
             b->insert(cookie, pkl));
         f = ir.first;
     } else {
-        std::cout << "using cached kernel expr_kernel_" << cookie
-                  << std::endl;
+        if (b->debug() != 0) {
+            std::cout << "using cached kernel expr_kernel_" << cookie
+                      << std::endl;
+        }
     }
     return f->second;
 }
@@ -139,16 +147,15 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
 
     // end body
     s << "}" << std::endl;
-
-    std::cout << "--- source code ------------------\n";
-    std::cout << s.str();
-
+    using namespace impl;
+    be_data_ptr& bd= res.backend_data();
+    if (bd->debug() != 0) {
+        std::cout << "--- source code ------------------\n";
+        std::cout << s.str();
+    }
     std::string ss(s.str());
     cl::Program::Sources sv;
     sv.push_back(ss);
-
-    using namespace impl;
-    be_data_ptr& bd= res.backend_data();
 
     cl::Program pgm(bd->c(), sv);
     std::vector<cl::Device> vk(1, bd->d());
@@ -168,8 +175,9 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         throw;
     }
     kernel k(pgm, k_name.c_str());
-
-    std::cout << "-- compiled with success ---------\n";
+    if (bd->debug() != 0) {
+        std::cout << "-- compiled with success ---------\n";
+    }
 
     pgm_kernel_lock pkl(pgm, k);
     return pkl;

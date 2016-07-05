@@ -203,7 +203,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 128*1024;
+        const unsigned _N = 256*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -227,14 +227,18 @@ int main()
         t.seed(dg);
 
         ocl::rnd_distribution<float, 25> dst(0, 1.0);
+        vector<float> f;
 
-        for (int i=0; i<50; ++i) {
-            vector<float> f= t.nextf();
-            std::cout << "iteration " << i << std::endl;
+        for (int i=0; i<20000; ++i) {
+            f=t.nextf();
+            if ((i & 0xff)==0xff) {
+                std::cout << "iteration " << i << std::endl;
+            }
+#if 0
             std::vector<float> fh(f);
             for (std::size_t j=0; j<fh.size(); ++j)
                 dst.insert(fh[j]);
-#if 0
+
             if ((i & (256-1)) == (256-1)) {
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j

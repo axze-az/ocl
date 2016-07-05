@@ -3,6 +3,7 @@
 
 #include <ocl/config.h>
 #include <ocl/impl_be_data.h>
+#include <ocl/impl_type_2_name.h>
 #include <iostream>
 #include <sstream>
 
@@ -173,8 +174,10 @@ void ocl::bind_args(cl::Kernel& k,
                     _T& r,
                     unsigned& arg_num)
 {
-    std::cout << "binding nonconst to arg " << arg_num
-              << std::endl;
+    if (impl::be_data::instance()->debug() != 0) {
+        std::cout << "binding nonconst to arg " << arg_num
+                  << std::endl;
+    }
     k.setArg(arg_num, r);
     ++arg_num;
 }
@@ -184,8 +187,10 @@ void ocl::bind_args(cl::Kernel& k,
                     const _T& r,
                     unsigned& arg_num)
 {
-    std::cout << "binding const to arg " << arg_num
-              << std::endl;
+    if (impl::be_data::instance()->debug() != 0) {
+        std::cout << "binding const to arg " << arg_num
+                  << std::endl;
+    }
     k.setArg(arg_num, r);
     ++arg_num;
 }

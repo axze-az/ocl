@@ -1,4 +1,5 @@
 #include "impl_be_data.h"
+#include <cstdlib>
 
 std::mutex
 ocl::impl::be_data::_instance_mutex;
@@ -40,8 +41,19 @@ ocl::impl::be_data::create(const device& dev, const context& ctx,
     return std::make_shared<be_data>(dev, ctx, qe);
 }
 
+std::uint32_t
+ocl::impl::be_data::read_debug_env()
+{
+    std::uint32_t r=0;
+    const char* pe=std::getenv("OCL_DEBUG");
+    if (pe != nullptr) {
+        r = 1;
+    }
+    return r;
+}
+
 ocl::impl::be_data::be_data()
-    : _d(default_device()), _c(), _q()
+    : _d(default_device()), _c(), _q(), _debug(read_debug_env())
 {
     // create context from device, command queue from context and
     // device
@@ -52,7 +64,7 @@ ocl::impl::be_data::be_data()
 }
 
 ocl::impl::be_data::be_data(const device& dev)
-    : _d(dev), _c(), _q()
+    : _d(dev), _c(), _q(), _debug(read_debug_env())
 {
     std::vector<cl::Device> vd;
     vd.push_back(_d);
@@ -61,7 +73,7 @@ ocl::impl::be_data::be_data(const device& dev)
 }
 
 ocl::impl::be_data::be_data(const device& dev, const context& ctx)
-    : _d(dev), _c(ctx), _q(cl::CommandQueue(_c, _d))
+    : _d(dev), _c(ctx), _q(cl::CommandQueue(_c, _d)), _debug(read_debug_env())
 {
 }
 

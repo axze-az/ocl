@@ -50,6 +50,10 @@ namespace ocl {
                 return _c;
             }
 
+            uint32_t debug() const {
+                return _debug;
+            }
+
             typedef std::map<const void*, pgm_kernel_lock>
             kernel_map_type;
             typedef kernel_map_type::iterator iterator;
@@ -107,7 +111,10 @@ namespace ocl {
             context _c;
             queue _q;
             kernel_map_type _kmap;
+            uint32_t _debug;
 
+            static
+            uint32_t read_debug_env();
 
             static std::mutex _instance_mutex;
             static std::atomic<bool> _init;
