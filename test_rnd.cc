@@ -234,11 +234,11 @@ int main()
             if ((i & 0xff)==0xff) {
                 std::cout << "iteration " << i << std::endl;
             }
-#if 0
             std::vector<float> fh(f);
             for (std::size_t j=0; j<fh.size(); ++j)
                 dst.insert(fh[j]);
 
+#if 0
             if ((i & (256-1)) == (256-1)) {
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j
