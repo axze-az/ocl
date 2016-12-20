@@ -10,23 +10,26 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <experimental/string_view>
 
 namespace ocl {
 
     namespace impl {
 
-        typedef cl::Error error;
+        using const_str_ref = std::experimental::basic_string_view<char>;
+        
+        using error = cl::Error;
 
-        const char* err2str(const error& e);
-        const char* err2str(int e);
+        const_str_ref err2str(const error& e);
+        const_str_ref err2str(int e);
 
-        typedef cl::Program program;
-        typedef cl::Context context;
-        typedef cl::Device device;
-        typedef cl::CommandQueue queue;
-        typedef cl::Buffer buffer;
-        typedef cl::Kernel kernel;
-        typedef cl::Event event;
+        using program = cl::Program;
+        using context = cl::Context;
+        using device = cl::Device;
+        using queue = cl::CommandQueue;
+        using buffer = cl::Buffer;
+        using kernel = cl::Kernel;
+        using event = cl::Event;
 
         struct device_type {
             enum type {

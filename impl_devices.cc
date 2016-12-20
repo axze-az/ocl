@@ -1,16 +1,18 @@
 #include "ocl.h"
 #include <iostream>
 
-const char* ocl::impl::err2str(const error& e)
+ocl::impl::const_str_ref
+ocl::impl::err2str(const error& e)
 {
     return err2str(e.err());
 }
 
-const char* ocl::impl::err2str(int err)
+ocl::impl::const_str_ref 
+ocl::impl::err2str(int e)
 {
-    if (err > 0)
-        return strerror(err);
-    switch (err) {
+    if (e > 0)
+        return strerror(e);
+    switch (e) {
     case CL_SUCCESS:
         return "Success!";
     case CL_DEVICE_NOT_FOUND:

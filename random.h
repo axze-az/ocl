@@ -10,8 +10,8 @@ namespace ocl {
         vector<std::uint32_t> _next;
     public:
 
-        constexpr static const std::uint32_t max_val = 0x7fff;
-        constexpr static const float _R= (1.0f/32768.f);
+        constexpr static const std::uint32_t max_val() { return 0x7fff; }
+        constexpr static const float _R() { return 1.0f/32768.f; }
         
         srand() : _next() {}
         srand(const vector<uint32_t>& gid) : _next{gid} {}
@@ -27,11 +27,11 @@ namespace ocl {
         auto
         next() {
             _next = (_next * 1103515245 + 12345);
-            return (_next>>16) & max_val;
+            return (_next>>17) /* & max_val()*/ ;
         }
         auto
         nextf() {
-            return (cvt_to<vector<float>>(next()) * _R);
+            return (cvt_to<vector<float> >(next()) * _R());
         }
     };
     

@@ -1,5 +1,5 @@
-#if !defined (__OCL_TYPE_2_NAME_H__)
-#define __OCL_TYPE_2_NAME_H__ 1
+#if !defined (__OCL_IMPL_TYPE_2_NAME_H__)
+#define __OCL_IMPL_TYPE_2_NAME_H__ 1
 
 #include <ocl/config.h>
 #include <cftal/vec.h>
@@ -94,7 +94,7 @@ namespace ocl {
             }
         };
         
-#if 0
+#if 1
         template <>
         struct type_2_name<cftal::v4f32> {
             static
