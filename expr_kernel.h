@@ -107,7 +107,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     s << "expr_kernel_" << cookie;
     std::string k_name(s.str());
     s.str("");
-
+    s << "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
     s << "__kernel void " << k_name
       << std::endl
       << "(\n";
@@ -161,9 +161,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     std::vector<cl::Device> vk(1, bd->d());
 
     try {
-        pgm.build(vk,
-                  // "-v "
-                 );
+        pgm.build(vk /*, -"v"*/);
     }
     catch (const cl::Error& e) {
         std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
