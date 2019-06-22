@@ -163,7 +163,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     try {
         pgm.build(vk,
                   // "-v "
-                  "-I /usr/include/clang/3.5/include");
+                 );
     }
     catch (const cl::Error& e) {
         std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
