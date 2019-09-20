@@ -228,17 +228,30 @@ int main()
 
         ocl::rnd_distribution<float, 25> dst(0, 1.0);
         vector<float> f;
-
+        
         for (int i=0; i<20000; ++i) {
             f=t.nextf();
             if ((i & 0xff)==0xff) {
                 std::cout << "iteration " << i << std::endl;
             }
             std::vector<float> fh(f);
-            for (std::size_t j=0; j<fh.size(); ++j)
-                dst.insert(fh[j]);
-
-#if 0
+#if 1
+            for (std::size_t j=0; j<fh.size(); ++j) {
+                try {
+                    dst.insert(fh[j]);
+                }
+                catch (...) {
+                    for (std::size_t j=0; j<fh.size(); ++j) {
+                        std::cout << std::setw(2) << j
+                                  << ": " << fh[j] << std::endl;
+                    }
+                    throw;
+                }
+                
+            }
+#endif
+            
+#if 1
             if ((i & (256-1)) == (256-1)) {
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j
