@@ -10,14 +10,14 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <experimental/string_view>
+#include <string_view>
 
 namespace ocl {
 
     namespace impl {
 
-        using const_str_ref = std::experimental::basic_string_view<char>;
-        
+        using const_str_ref = std::basic_string_view<char>;
+
         using error = cl::Error;
 
         const_str_ref err2str(const error& e);
