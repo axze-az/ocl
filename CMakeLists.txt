@@ -1,4 +1,11 @@
 cmake_minimum_required (VERSION 3.0.0)
+
+if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    message( FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt.")
+endif()
+
+add_subdirectory(../cftal cftal)
+
 # configurations
 if(CMAKE_CONFIGURATION_TYPES)
    set(CMAKE_CONFIGURATION_TYPES debug release profile)
@@ -33,7 +40,7 @@ set (OCL_VERSION_STR
     "${OCL_VERSION_MAJ}.${OCL_VERSION_MIN}.${OCL_VERSION_PLV}")
 
 # compile flags for usage with cmake -DCMAKE_BUILD_TYPE=debug/release/profile
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
     # warnings for all
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
@@ -68,8 +75,8 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
         #set (CMAKE_CXX_FLAGS_RELEASE
         #    "${CMAKE_CXX_FLAGS_RELEASE} -fsel-sched-pipelining")
     endif()
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR 
-        CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")    
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
         set (CMAKE_CXX_FLAGS_RELEASE
             "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
         set (CMAKE_CXX_FLAGS_DEBUG
@@ -91,6 +98,8 @@ option(OCL_FULL_TEST "perform a full test with long compile times" OFF)
 
 include_directories(..)
 include_directories(../cftal/include)
+include_directories(../cftal/test/include)
+include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
 set (CSRCS
   impl_devices.cc
