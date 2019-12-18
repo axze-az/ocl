@@ -58,36 +58,38 @@ int main()
 
         using namespace ocl;
 
-        using cftal::v8f32;
+        using ftype = double;
+        using itype = int64_t;
+        using v8fXX = cftal::vec<ftype, 8>;
 
         // const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
-        // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
-        const unsigned SIZE=4096;
+        const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
+        const unsigned SIZE=GALLIUM_MAX_BUFFER_SIZE;
         std::cout << "using buffers of "
-                  << double(SIZE*sizeof(float))/(1024*1024)
+                  << double(SIZE*sizeof(ftype))/(1024*1024)
                   << "MiB\n";
-        float a(2.0f), b(3.0f);
+        ftype a(2.0f), b(3.0f);
 
-        vector<float> v0(SIZE, a);
-        // std::vector<float> vha(SIZE, a);
-        vector<float> va(v0);
-        std::vector<float> vhb(SIZE, 3.0f);
-        vector<float> vb(vhb);
-        vector<float> vc= test_func(va, vb);
-        vector<float> vd(test_func(va, vb, vc));
-        vector<float> vd2= test_func(va, vb, vc);
+        vector<ftype> v0(SIZE, a);
+        // std::vector<ftype> vha(SIZE, a);
+        vector<ftype> va(v0);
+        std::vector<ftype> vhb(SIZE, 3.0f);
+        vector<ftype> vb(vhb);
+        vector<ftype> vc= test_func(va, test_func(va, vb));
+        vector<ftype> vd(test_func(va, vb, vc));
+        vector<ftype> vd2= test_func(va, vb, vc);
 
         vector<int32_t> tgt= vc < vd;
 
-        float c= test_func(a, b);
-        float d= test_func(a, b, c);
+        ftype c= test_func(a, test_func(a, b));
+        ftype d= test_func(a, b, c);
 
-        std::vector<float> res(vd);
+        std::vector<ftype> res(vd);
 
-        vector<v8f32> vva(SIZE/8, a);
-        vector<v8f32> vvb(SIZE/8, b);
-        vector<v8f32> vvc(SIZE/8, c);
-        vector<v8f32> vres(test_func(vva, vvb, vvc));
+        vector<v8fXX> vva(SIZE/8, a);
+        vector<v8fXX> vvb(SIZE/8, b);
+        vector<v8fXX> vvc(SIZE/8, c);
+        vector<v8fXX> vres(test_func(vva, vvb, vvc));
 
         if (SIZE <= 4096) {
             for (std::size_t i=0; i< res.size(); ++i) {
@@ -95,7 +97,7 @@ int main()
             }
         } else {
             for (std::size_t i=0; i< res.size(); ++i) {
-                float e=rel_error(res[i], d);
+                ftype e=rel_error(res[i], d);
                 if (e > 1e-7) {
                     std::ostringstream m;
                     m << "res[" << i << " ]="
@@ -108,10 +110,10 @@ int main()
         }
         std::cout << "scalar " << d << std::endl;
 
-        vector<float> cvt_dst = -vd2;
-        vector<float> abs_dst = abs(cvt_dst);
-        vector<int32_t> iv= ~(cvt_to<vector<int32_t> >(cvt_dst)*2);
-        vector<float> ivf= as<vector<float> >(iv);
+        vector<ftype> cvt_dst = -vd2;
+        vector<ftype> abs_dst = abs(cvt_dst);
+        vector<itype> iv= ~(cvt_to<vector<itype> >(cvt_dst)*2);
+        vector<ftype> ivf= as<vector<ftype> >(iv);
 
         impl::be_data::instance()->clear();
     }

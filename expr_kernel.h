@@ -161,7 +161,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     std::vector<cl::Device> vk(1, bd->d());
 
     try {
-        pgm.build(vk /*, -"v"*/);
+        pgm.build(vk , "-cl-std=clc++");
     }
     catch (const cl::Error& e) {
         std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
