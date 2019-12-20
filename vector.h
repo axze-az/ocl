@@ -905,7 +905,7 @@ std::string ocl::eval_args(const std::string& p,
     if (!p.empty()) {
         s << p << ",\n";
     }
-    s << "\t__global " ;
+    s << spaces(4) << "__global " ;
     if (ro) {
         s<< "const ";
     }
@@ -920,7 +920,7 @@ std::string ocl::eval_vars(const vector<_T>& r, unsigned& arg_num,
                            bool read)
 {
     std::ostringstream s;
-    s << '\t' << impl::type_2_name<_T>::v()
+    s << spaces(8) << impl::type_2_name<_T>::v()
       << " v" << arg_num;
     if (read== true) {
         s << " = arg"
@@ -936,7 +936,7 @@ std::string ocl::eval_results(vector<_T>& r,
                               unsigned& res_num)
 {
     std::ostringstream s;
-    s << "\targ" << res_num << "[gid]="
+    s << spaces(8) << "arg" << res_num << "[gid]="
       << " v" << res_num << ';';
     ++res_num;
     return s.str();
@@ -948,7 +948,7 @@ void ocl::bind_args(cl::Kernel& k,
                     vector<_T>& r,
                     unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {   
+    if (impl::be_data::instance()->debug() != 0) {
         std::cout << "binding buffer to arg " << arg_num
                   << std::endl;
     }
@@ -961,7 +961,7 @@ void ocl::bind_args(cl::Kernel& k,
                     const vector<_T>& r,
                     unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {   
+    if (impl::be_data::instance()->debug() != 0) {
         std::cout << "binding constant buffer to arg " << arg_num
                   << std::endl;
     }

@@ -42,11 +42,13 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 
     std::unique_lock<impl::pgm_kernel_lock> _l(pk);
     // bind args
+    std::size_t s(eval_size(res));
+    const auto& sc=s;
     unsigned arg_num{0};
+    bind_args(pk._k, sc, arg_num);
     bind_args(pk._k, res, arg_num);
     bind_args(pk._k, r, arg_num);
     // execute the kernel
-    std::size_t s(eval_size(res));
     impl::be_data_ptr& b= res.backend_data();
     impl::queue& q= b->q();
     impl::device& d= b->d();
@@ -60,15 +62,18 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         std::cout << "kernel: global size: " << s
                   << " local size: " << local_size << std::endl;
     }
+    impl::event ev;
     q.enqueueNDRangeKernel(pk._k,
                            cl::NullRange,
                            cl::NDRange(s),
-                           cl::NDRange(local_size),
-                           nullptr);
+                           cl::NullRange, //cl::NDRange(local_size),
+                           nullptr,
+                           &ev);
+    ev.wait();
     if (b->debug() != 0) {
         std::cout << "execution done" << std::endl;
     }
-    // q.flush();
+    q.flush();
 }
 
 template <class _RES, class _SRC>
@@ -111,10 +116,12 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     s << "__kernel void " << k_name
       << std::endl
       << "(\n";
-
+    // buffer length:
+    std::string buf_len=spaces(4) +
+        impl::type_2_name<unsigned long>::v() + " n";
     // argument generation
     unsigned arg_num{0};
-    s << eval_args("", res, arg_num, false)
+    s << eval_args(buf_len, res, arg_num, false)
       << ','
       << std::endl;
     s << eval_args("", r, arg_num, true) << std::endl;
@@ -125,8 +132,8 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     s << "{" << std::endl;
 
     // global id
-    s << "\tsize_t gid = get_global_id(0);" << std::endl;
-
+    s << spaces(4) << "ulong gid = get_global_id(0);" << std::endl;
+    s << spaces(4) << "if (gid < n) { " << std::endl;
     // temporary variables
     unsigned var_num{1};
     s << eval_vars(r, var_num, true)
@@ -134,17 +141,17 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
 
     // result variable
     unsigned res_num{0};
-    s << eval_vars(res, res_num, false) << "= "
-      << std::endl;
+    s << eval_vars(res, res_num, false) << "= ";
     // the operations
     unsigned body_num{1};
-    s << "\t\t" << eval_ops(r, body_num) << ';'
+    s << eval_ops(r, body_num) << ';'
       << std::endl;
     // write back
     res_num = 0;
     s << eval_results(res, res_num)
       << std::endl;
-
+    // end if
+    s << spaces(4) << "}" << std::endl;
     // end body
     s << "}" << std::endl;
     using namespace impl;

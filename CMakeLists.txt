@@ -45,6 +45,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     # warnings for all
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-attributes")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-attributes")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
     # release
     set (CMAKE_CXX_FLAGS_RELEASE
         "${CMAKE_CXX_FLAGS_RELEASE} -fomit-frame-pointer")
@@ -147,6 +149,10 @@ target_link_libraries(test_rnd ocl-so)
 # test_reduce
 add_executable(test_reduce test_reduce.cc)
 target_link_libraries(test_reduce ocl-so)
+
+# test_math
+add_executable(test_math test_math.cc)
+target_link_libraries(test_math ocl-so)
 
 enable_testing()
 

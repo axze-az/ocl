@@ -9,6 +9,10 @@
 
 namespace ocl {
 
+    struct spaces : public std::string {
+        spaces(unsigned int n) : std::string(n, ' ') {}
+    };
+
     // Eval_size
     template <class _T>
     std::size_t eval_size(const _T& t);
@@ -59,7 +63,7 @@ namespace ocl {
         typename expr_traits<_L>::type _l;
         constexpr expr(const _L& l) : _l{l} {};
     };
-    
+
 
     // eval_size specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -67,7 +71,7 @@ namespace ocl {
 
     template <class _OP, class _L>
     std::size_t eval_size(const expr<_OP, _L, void>& a);
-    
+
     // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
@@ -82,7 +86,7 @@ namespace ocl {
               const expr<_OP, _L, void>& r,
               unsigned& arg_num,
               bool ro);
-    
+
     // eval_vars specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
@@ -93,7 +97,7 @@ namespace ocl {
     std::string
     eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
               bool read);
-    
+
     // eval_vars specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
@@ -102,7 +106,7 @@ namespace ocl {
     template <class _OP, class _L>
     std::string
     eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num);
-    
+
     // bind_args specialized for expr<>
     template <class _OP, class _L, class _R>
     void bind_args(cl::Kernel& k,
@@ -136,7 +140,7 @@ std::string ocl::eval_args(const std::string& p,
     if (!p.empty()) {
         s << p << ",\n";
     }
-    s << "\t" ;
+    s << spaces(4) ;
     s << impl::type_2_name<_T>::v()
       << " arg"  << arg_num;
     ++arg_num;
@@ -148,7 +152,7 @@ std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
                            bool read)
 {
     std::ostringstream s;
-    s << '\t' << impl::type_2_name<_T>::v()
+    s << spaces(8) << impl::type_2_name<_T>::v()
       << " v" << arg_num;
     if (read== true) {
         s << " = arg"
@@ -246,7 +250,7 @@ std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
 {
     std::string l=eval_vars(a._l, arg_num, read);
     std::string r=eval_vars(a._r, arg_num, read);
-    return std::string(l + '\n' + r);
+    return std::string(l + "\n"+  r);
 }
 
 template <class _OP, class _L>
@@ -254,7 +258,7 @@ std::string ocl::eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
                            bool read)
 {
     auto l=eval_vars(a._l, arg_num, read);
-    return std::string(l + '\n');
+    return std::string(l + "\n");
 }
 
 
