@@ -57,15 +57,17 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     }
     std::size_t local_size(
         pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d, nullptr));
-    local_size = std::min(local_size, s);
+    std::size_t gs= ((s+local_size-1)/local_size)*local_size;
     if (b->debug() != 0) {
-        std::cout << "kernel: global size: " << s
-                  << " local size: " << local_size << std::endl;
+        std::cout << "kernel: size: " << s
+                  << " global size: " << gs
+                  << " local size: " << local_size
+                  << std::endl;
     }
     impl::event ev;
     q.enqueueNDRangeKernel(pk._k,
                            cl::NullRange,
-                           cl::NDRange(s),
+                           cl::NDRange(gs),
                            cl::NullRange, //cl::NDRange(local_size),
                            nullptr,
                            &ev);

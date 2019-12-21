@@ -780,7 +780,7 @@ ocl::vector<_T>::vector(const vector& r)
 {
     if (_size) {
 //#pragma message("copy constructor via opencl")
-#if 1
+#if 0
         execute(*this, r);
 #else
         impl::event ev;

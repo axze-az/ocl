@@ -58,16 +58,46 @@ namespace cftal {
 namespace ocl {
 
     template <typename _X, typename _C1, typename _C0>
-    _X
+    auto
     horner(const _X& x, const _C1& c1, const _C0& c0);
 
+    template <typename _X,
+                typename _CN, typename _CNM1, typename ... _CS>
+    auto
+    horner(const _X& x, const _CN& cn,
+           const _CNM1& cnm1, _CS... cs);
+
+    namespace impl {
+
+        template <typename _T, typename _C, size_t _N, size_t _I>
+        struct unroll_horner {
+            template <typename _E>
+            static
+            auto
+            v(_T x, _E e, const _C* p) {
+                using v_t = unroll_horner<_T, _C, _N, _I-1>;
+                return v_t::v(x, x*e + p[_N-_I], p);
+            }
+        };
+
+        template <typename _T, typename _C, size_t _N>
+        struct unroll_horner<_T, _C, _N, 1> {
+            template <typename _E>
+            static
+            auto
+            v(_T x, _E e, const _C* p) {
+                return x*e + p[_N-1];
+            }
+        };
+
+    }
+    
     template <typename _T, typename _C, size_t _N>
-    vector<_T>
+    auto
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
-
     namespace test {
-        const int ELEMENTS=4096*1024;
+        const int ELEMENTS=4095;
         void
         test_add12cond();
 
@@ -80,26 +110,33 @@ namespace ocl {
 };
 
 template <typename _T, typename _C, size_t _N>
-ocl::vector<_T>
+auto
 ocl::horner(const vector<_T>& x, const _C(&a)[_N])
 {
-    const _C* pa=a;
-    vector<_T> r(x.size(), pa[0]);
     static_assert(_N > 0, "invalid call to horner(x, array)");
-#pragma GCC unroll 256
-#pragma clang loop unroll(full)
-    for (std::size_t i=1; i<_N; ++i) {
-        r= horner(x, r, pa[i]);
-    }
-    return r;
+    const _C* pa=a;
+    using _T_t= const vector<_T>&;
+    return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa); 
 }
 
 template <typename _X, typename _C1, typename _C0>
-_X
+auto
 ocl::horner(const _X& x, const _C1& c1, const _C0& c0)
 {
     return x*c1 + c0;
 }
+
+template <typename _X,
+          typename _CN, typename _CNM1, typename ... _CS>
+auto
+ocl::horner(const _X& x, const _CN& cn,
+            const _CNM1& cnm1, _CS... cs)
+{
+    auto t = horner(x, cn, cnm1);
+    auto r = horner(x, t, cs...);
+    return r;
+}
+
 
 void
 ocl::test::test_add12cond()
@@ -127,11 +164,14 @@ void
 ocl::test::test_horner()
 {
     using vf_type = vector<float>;
+    using vi_type = vector<int32_t>;
     vf_type x(ELEMENTS, 2.0f);
     static const float ci[]={
-        1.0f, 2.0f, 3.0f
+        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f
     };
-    vf_type y=horner(x, ci);
+    vf_type y0=horner(x, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f);
+    vf_type y1=horner(x, ci);
+    vi_type eq=y0 == y1;
     std::cout << __PRETTY_FUNCTION__ << std::endl;
 }
 
