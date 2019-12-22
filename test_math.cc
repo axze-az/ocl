@@ -45,6 +45,16 @@ namespace cftal {
         split(const ocl::vector<float> & a,
               ocl::vector<float>& h,
               ocl::vector<float>& l) {
+#if 1
+            const int32_t msk=
+                const_u32<0xfffff000U>::v.s32();
+            using vi_type = ocl::vector<int32_t>;
+            using ocl::as;
+            vi_type& hi=reinterpret_cast<vi_type&>(h);
+            const vi_type& ai=reinterpret_cast<const vi_type&>(a);
+            hi = ai & msk;
+            l= a - h;
+#else
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
             using vi_type = ocl::vector<int32_t>;
@@ -52,6 +62,7 @@ namespace cftal {
             using ocl::as;
             h=as<vf_type>(as<vi_type>(a) & msk);
             l=a - h;
+#endif
         }
 
         constexpr
@@ -107,7 +118,7 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=4095;
+        const int ELEMENTS=4095+4095*1024;
         void
         test_add12cond();
 
@@ -151,6 +162,7 @@ void
 ocl::test::test_add12cond()
 {
     using vf_type = vector<float>;
+
     vf_type a(ELEMENTS, 1.0f), b(ELEMENTS, 2.0f);
     using d_ops=cftal::d_real_ops<vf_type, false>;
     vf_type h, l;

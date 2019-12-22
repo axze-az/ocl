@@ -7,18 +7,42 @@
 #include <mutex>
 #include <memory> // for shared_ptr
 #include <atomic>
+#include <iostream>
 
 namespace ocl {
 
     namespace impl {
+
+        struct debug_mutex : private std::mutex {
+            using base_type = std::mutex;
+            using base_type::base_type;
+            void lock() {
+                try {
+                    base_type::lock();
+                }
+                catch (...) {
+                    std::cout << "lock failed\n";
+                }
+            }
+            void unlock() {
+                try {
+                    base_type::unlock();
+                }
+                catch (...) {
+                    std::cout << "unlock failed\n";
+                }
+            }
+        };
+
+
         // for mesa we need the keep the programs
         struct pgm_kernel_lock {
             program _p;
             kernel _k;
-            std::shared_ptr<std::mutex> _m;
+            std::shared_ptr<debug_mutex> _m;
             pgm_kernel_lock(const program& p,
                             const kernel& k) :
-                _p(p), _k(k), _m(new std::mutex()) {}
+                _p(p), _k(k), _m(new debug_mutex()) {}
             void lock() { _m->lock(); }
             void unlock() { _m->unlock(); }
         };
@@ -30,10 +54,6 @@ namespace ocl {
 
             void lock() {
                 _m.lock();
-            }
-
-            bool try_lock() {
-                return _m.try_lock();
             }
 
             void unlock() {
@@ -116,7 +136,7 @@ namespace ocl {
                     const queue& qe);
 
         private:
-            std::mutex _m;
+            debug_mutex _m;
             device _d;
             context _c;
             queue _q;
@@ -127,7 +147,7 @@ namespace ocl {
             static
             uint32_t read_debug_env();
 
-            static std::mutex _instance_mutex;
+            static debug_mutex _instance_mutex;
             static std::atomic<bool> _init;
             static std::shared_ptr<be_data> _default;
         };

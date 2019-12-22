@@ -39,6 +39,11 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     const
 {
     impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
+    // execute the kernel
+    impl::be_data_ptr& b= res.backend_data();
+    impl::queue& q= b->q();
+    impl::device& d= b->d();
+    q.flush();
 
     std::unique_lock<impl::pgm_kernel_lock> _l(pk);
     // bind args
@@ -48,10 +53,6 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     bind_args(pk._k, sc, arg_num);
     bind_args(pk._k, res, arg_num);
     bind_args(pk._k, r, arg_num);
-    // execute the kernel
-    impl::be_data_ptr& b= res.backend_data();
-    impl::queue& q= b->q();
-    impl::device& d= b->d();
     if (b->debug() != 0) {
         std::cout << "executing kernel" << std::endl;
     }
