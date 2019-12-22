@@ -13,7 +13,10 @@ namespace ocl {
     namespace ll {
 
         inline void
-        check_err(cl_uint rc, const std::string& msg="") {
+        check_err(cl_uint rc,
+                  const char* fname=nullptr,
+                  unsigned line=0,
+                  const std::string& msg="") {
             if (rc != CL_SUCCESS)
                 throw impl::error(rc, msg.c_str());
         }

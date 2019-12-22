@@ -16,6 +16,33 @@ namespace ocl {
         return v.size();
     }
 #endif
+    namespace test {
+        template <typename _V0, typename _V1>
+        struct dump {
+            const _V0& _v0;
+            const _V1& _v1;
+            dump(const _V0& v0, const _V1& v1) : _v0(v0), _v1(v1) {}
+        };
+        template <typename _V0, typename _V1>
+        dump<_V0, _V1>
+        dump_from(const _V0& v0, const _V1& v1) {
+            return dump<_V0, _V1>(v0, v1);
+        }
+
+        template <typename _V0, typename _V1>
+        std::ostream&
+        operator<<(std::ostream& s, const dump<_V0, _V1>& d) {
+            using e0_t = typename _V0::value_type;
+            using e1_t = typename _V1::value_type;
+            std::vector<e0_t> v0(d._v0);
+            std::vector<e1_t> v1(d._v1);
+            size_t nm=std::min(v0.size(), v1.size());
+            for (size_t i=0; i<nm; ++i) {
+                s << v0[i] << ' ' << v1[i] << '\n';
+            }
+            return s;
+        }
+    }
 }
 
 // using namespace ocl;
@@ -24,9 +51,9 @@ _T
 test_func(const _T& a, const _T& b)
 {
     // return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
-
-    return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
-        ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
+    return (a+b)/(a-b) + (a+b)*(a-b);
+    // return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
+    //    ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
 }
 
 template <class _T>
@@ -57,23 +84,28 @@ int main()
     try {
 
         using namespace ocl;
+        using namespace ocl::test;
 
         using ftype = double;
-        using itype = int64_t;
-        using v8fXX = cftal::vec<ftype, 8>;
+        // using itype = int64_t;
+        // using v8fXX = cftal::vec<ftype, 8>;
 
         // const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
-        const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
-        const unsigned SIZE=GALLIUM_MAX_BUFFER_SIZE;
+        // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
+        const unsigned SIZE=4;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(ftype))/(1024*1024)
                   << "MiB\n";
-        ftype a(2.0f), b(3.0f);
+        ftype a(ftype(2.0)), b(ftype(3.0));
 
-        vector<ftype> v0(SIZE, a);
-        // std::vector<ftype> vha(SIZE, a);
-        vector<ftype> va(v0);
-        std::vector<ftype> vhb(SIZE, 3.0f);
+        vector<ftype> va(SIZE, a);
+        vector<ftype> vb(SIZE, b);
+        ftype c= test_func(a, b);
+        std::cout << "c: " << c << std::endl;
+        vector<ftype> vc=test_func(va, vb);
+        std::cout << dump_from(vb, vc);
+#if 0
+        std::vector<ftype> vhb(SIZE, ftype(3.0));
         vector<ftype> vb(vhb);
         vector<ftype> vc= test_func(va, test_func(va, vb));
         vector<ftype> vd(test_func(va, vb, vc));
@@ -116,6 +148,7 @@ int main()
         vector<ftype> ivf= as<vector<ftype> >(iv);
 
         impl::be_data::instance()->clear();
+#endif
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught exception: " << e.what()

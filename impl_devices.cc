@@ -7,7 +7,7 @@ ocl::impl::err2str(const error& e)
     return err2str(e.err());
 }
 
-ocl::impl::const_str_ref 
+ocl::impl::const_str_ref
 ocl::impl::err2str(int e)
 {
     if (e > 0)
@@ -296,7 +296,8 @@ ocl::impl::default_device()
 {
     device r;
     try {
-        r= default_gpu_device();
+        r= default_cpu_device();
+        // r= default_gpu_device();
     }
     catch (const error& e) {
         try {

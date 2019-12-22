@@ -64,14 +64,17 @@ execute(_RES& res, const _SRC& r, const void* cookie)
                   << " local size: " << local_size
                   << std::endl;
     }
+    auto& evs=b->evs();
+    const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
     impl::event ev;
     q.enqueueNDRangeKernel(pk._k,
                            cl::NullRange,
                            cl::NDRange(gs),
                            cl::NullRange, //cl::NDRange(local_size),
-                           nullptr,
+                           pev,
                            &ev);
-    ev.wait();
+    evs.clear();
+    evs.emplace_back(ev);
     if (b->debug() != 0) {
         std::cout << "execution done" << std::endl;
     }
@@ -170,7 +173,8 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     std::vector<cl::Device> vk(1, bd->d());
 
     try {
-        pgm.build(vk , "-cl-std=clc++");
+        // pgm.build(vk , "-cl-std=clc++");
+        pgm.build(vk , "-cl-std=CL1.1");
     }
     catch (const cl::Error& e) {
         std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(

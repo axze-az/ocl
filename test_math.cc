@@ -4,6 +4,8 @@
 #include <cftal/d_real.h>
 #include <ocl/ocl.h>
 #include <ocl/vector.h>
+#include <chrono>
+#include <thread>
 
 
 namespace cftal {
@@ -15,8 +17,18 @@ namespace cftal {
         using int_type = ocl::vector<int32_t>;
 
         static
-        bool any(const cmp_result_type& b) {
+        bool any_of_v(const cmp_result_type& b) {
             return true;
+        }
+
+        static
+        bool all_of_v(const cmp_result_type& b) {
+            return false;
+        }
+
+        static
+        bool none_of_v(const cmp_result_type& b) {
+            return false;
         }
 
         static
@@ -37,11 +49,9 @@ namespace cftal {
                 const_u32<0xfffff000U>::v.s32();
             using vi_type = ocl::vector<int32_t>;
             using vf_type = ocl::vector<float>;
-            vi_type ai=ocl::as<vi_type>(a);
-            vf_type th=ocl::as<vf_type>(ai & msk);
-            vf_type tl=a - th;
-            h = th;
-            l = tl;
+            using ocl::as;
+            h=as<vf_type>(as<vi_type>(a) & msk);
+            l=a - h;
         }
 
         constexpr
@@ -62,7 +72,7 @@ namespace ocl {
     horner(const _X& x, const _C1& c1, const _C0& c0);
 
     template <typename _X,
-                typename _CN, typename _CNM1, typename ... _CS>
+              typename _CN, typename _CNM1, typename ... _CS>
     auto
     horner(const _X& x, const _CN& cn,
            const _CNM1& cnm1, _CS... cs);
@@ -91,7 +101,7 @@ namespace ocl {
         };
 
     }
-    
+
     template <typename _T, typename _C, size_t _N>
     auto
     horner(const vector<_T>& x, const _C(&ci)[_N]);
@@ -116,7 +126,7 @@ ocl::horner(const vector<_T>& x, const _C(&a)[_N])
     static_assert(_N > 0, "invalid call to horner(x, array)");
     const _C* pa=a;
     using _T_t= const vector<_T>&;
-    return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa); 
+    return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa);
 }
 
 template <typename _X, typename _C1, typename _C0>
@@ -137,7 +147,6 @@ ocl::horner(const _X& x, const _CN& cn,
     return r;
 }
 
-
 void
 ocl::test::test_add12cond()
 {
@@ -152,12 +161,32 @@ ocl::test::test_add12cond()
 void
 ocl::test::test_mul12()
 {
-    using vf_type = vector<float>;
-    vf_type a(ELEMENTS, 1.0f), b(ELEMENTS, 2.0f);
-    using d_ops=cftal::d_real_ops<vf_type, false>;
-    vf_type h, l;
-    d_ops::mul12(h, l, a, b);
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    try {
+        using vf_type = vector<float>;
+        vf_type a(ELEMENTS, 1.0f), b(ELEMENTS, 2.0f);
+        using d_ops=cftal::d_real_ops<vf_type, false>;
+        vf_type h, l;
+        d_ops::mul12(h, l, a, b);
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        std::vector<float> hh(h), hl(l);
+    }
+    catch (const cl::Error& ex) {
+        std::cout << "Exception: " << ex.what() << std::endl;
+        std::cout << ex.err() << std::endl;
+        std::cout << impl::err2str(ex.err()) << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    catch (const std::system_error& ex) {
+        std::cout << "Exception: " << ex.what() << std::endl;
+        std::cout << ex.code() << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
+    catch (const std::exception& ex) {
+        // const std::type_info& ti_ex = typeid(ex);
+        // std::cout << ti_ex.name() << std::endl;
+        std::cout << "Exception: " << ex.what() << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    }
 }
 
 void
@@ -178,9 +207,14 @@ ocl::test::test_horner()
 int main()
 {
     try {
-        ocl::test::test_add12cond();
-        ocl::test::test_mul12();
-        ocl::test::test_horner();
+        // ocl::test::test_add12cond();
+        for (int i=0; i<10; ++i) {
+            ocl::test::test_mul12();
+            std::cout << i << std::endl;
+            // std::chrono::seconds s4(1);
+            // std::this_thread::sleep_for(s4);
+        }
+        // ocl::test::test_horner();
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()

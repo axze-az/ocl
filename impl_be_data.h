@@ -50,6 +50,11 @@ namespace ocl {
                 return _c;
             }
 
+            std::vector<event>& evs() {
+                return _ev;
+            }
+
+
             uint32_t debug() const {
                 return _debug;
             }
@@ -63,6 +68,11 @@ namespace ocl {
                 return _kmap.find(cookie);
             }
 
+            void
+            erase(iterator f) {
+                _kmap.erase(f);
+            }
+
             std::pair<iterator, bool>
             insert(const void* cookie, const pgm_kernel_lock& v) {
                 return _kmap.insert(std::make_pair(cookie,
@@ -72,7 +82,7 @@ namespace ocl {
             void clear() {
                 _kmap.clear();
             }
-            
+
             iterator begin() {
                 return _kmap.begin();
             }
@@ -111,6 +121,7 @@ namespace ocl {
             context _c;
             queue _q;
             kernel_map_type _kmap;
+            std::vector<event> _ev;
             uint32_t _debug;
 
             static

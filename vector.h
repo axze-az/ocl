@@ -16,6 +16,8 @@ namespace ocl {
         // backend buffer object
         cl::Buffer _b;
     protected:
+        // destructor
+        ~vector_base();
         // default constructor
         vector_base();
         // constructor, with size
@@ -672,6 +674,10 @@ namespace ocl {
 
 }
 
+inline
+ocl::vector_base::~vector_base()
+{
+}
 
 inline
 ocl::vector_base::vector_base()
@@ -693,12 +699,15 @@ ocl::vector_base::vector_base(std::size_t s, const char* src)
       _b{_bed->c(), CL_MEM_READ_WRITE, s}
 {
     impl::queue& q= _bed->q();
+    auto& evs=_bed->evs();
+    impl::event ev;
     q.enqueueWriteBuffer(_b,
                          true,
                          0, s,
                          src,
                          nullptr,
-                         nullptr);
+                         &ev);
+    evs.emplace_back(ev);
 }
 
 inline
@@ -753,12 +762,14 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
         std::shared_ptr<impl::be_data>& bed=
             this->backend_data();
         impl::queue& q= bed->q();
+        impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
                              true,
                              0, s,
                              p,
                              nullptr,
-                             nullptr);
+                             &ev);
+        bed->evs().emplace_back(ev);
     }
 }
 
@@ -785,13 +796,16 @@ ocl::vector<_T>::vector(const vector& r)
 #else
         impl::event ev;
         impl::queue& q= backend_data()->q();
+        auto& evs=backend_data()->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
         q.enqueueCopyBuffer(this->buf(),
                             r.buf(),
                             0, 0,
                             r.buffer_size(),
-                            nullptr,
+                            pev,
                             &ev);
-        ev.wait();
+        evs.clear();
+        evs.emplace_back(ev);
 #endif
     }
 }
@@ -804,12 +818,15 @@ ocl::vector<_T>::vector(const std::vector<_T>& r)
     if (_size) {
         std::size_t s=_size*sizeof(_T);
         impl::queue& q= backend_data()->q();
+        auto& evs=backend_data()->evs();
+        impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
                              true,
                              0, s,
                              &r[0],
                              nullptr,
-                             nullptr);
+                             &ev);
+        evs.emplace_back(ev);
     }
 }
 
@@ -821,12 +838,15 @@ ocl::vector<_T>::vector(std::initializer_list<_T> l)
     if (_size) {
         std::size_t s=_size*sizeof(_T);
         impl::queue& q= backend_data()->q();
+        auto& evs=backend_data()->evs();
+        impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
                              true,
                              0, s,
                              l.begin(),
                              nullptr,
-                             nullptr);
+                             &ev);
+        evs.emplace_back(ev);
     }
 }
 
@@ -870,12 +890,16 @@ ocl::vector<_T>::operator std::vector<_T> ()
         std::size_t s(n*sizeof(_T));
         std::shared_ptr<impl::be_data> bed(backend_data());
         impl::queue& q= bed->q();
+        auto& evs=bed->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
+        impl::event ev;
         q.enqueueReadBuffer(this->buf(),
                             true,
                             0, s,
                             &v[0],
-                            nullptr,
-                            nullptr);
+                            pev,
+                            &ev);
+        ev.wait();
     }
     return v;
 }
@@ -949,7 +973,9 @@ void ocl::bind_args(cl::Kernel& k,
                     unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding buffer to arg " << arg_num
+        std::cout << "binding buffer of size "
+                  << r.size()
+                  << " to arg " << arg_num
                   << std::endl;
     }
     k.setArg(arg_num, r.buf());
@@ -962,7 +988,9 @@ void ocl::bind_args(cl::Kernel& k,
                     unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding constant buffer to arg " << arg_num
+        std::cout << "binding constant buffer of size "
+                  << r.size()
+                  << " to arg " << arg_num
                   << std::endl;
     }
     k.setArg(arg_num, r.buf());
