@@ -45,7 +45,7 @@ namespace cftal {
         split(const ocl::vector<float> & a,
               ocl::vector<float>& h,
               ocl::vector<float>& l) {
-#if 1
+#if 0
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
             using vi_type = ocl::vector<int32_t>;
@@ -118,15 +118,15 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=4095+4095*1024;
+        const int ELEMENTS=1024*1024-1;
         void
-        test_add12cond();
+        test_add12cond(const vector<float>& x);
 
         void
-        test_mul12();
+        test_mul12(const vector<float>& x);
 
         void
-        test_horner();
+        test_horner(const vector<float>& x);
     }
 };
 
@@ -159,11 +159,11 @@ ocl::horner(const _X& x, const _CN& cn,
 }
 
 void
-ocl::test::test_add12cond()
+ocl::test::test_add12cond(const vector<float>& x)
 {
     using vf_type = vector<float>;
 
-    vf_type a(ELEMENTS, 1.0f), b(ELEMENTS, 2.0f);
+    vf_type a=x, b=x;
     using d_ops=cftal::d_real_ops<vf_type, false>;
     vf_type h, l;
     d_ops::add12cond(h, l, a, b);
@@ -171,16 +171,16 @@ ocl::test::test_add12cond()
 }
 
 void
-ocl::test::test_mul12()
+ocl::test::test_mul12(const vector<float>& x)
 {
     try {
         using vf_type = vector<float>;
-        vf_type a(ELEMENTS, 1.0f), b(ELEMENTS, 2.0f);
+        vf_type a=x, b=x;
         using d_ops=cftal::d_real_ops<vf_type, false>;
         vf_type h, l;
         d_ops::mul12(h, l, a, b);
         std::cout << __PRETTY_FUNCTION__ << std::endl;
-        std::vector<float> hh(h), hl(l);
+        // std::vector<float> hh(h), hl(l);
     }
     catch (const cl::Error& ex) {
         std::cout << "Exception: " << ex.what() << std::endl;
@@ -202,11 +202,10 @@ ocl::test::test_mul12()
 }
 
 void
-ocl::test::test_horner()
+ocl::test::test_horner(const vector<float>& x)
 {
     using vf_type = vector<float>;
     using vi_type = vector<int32_t>;
-    vf_type x(ELEMENTS, 2.0f);
     static const float ci[]={
         1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f
     };
@@ -219,9 +218,13 @@ ocl::test::test_horner()
 int main()
 {
     try {
+        const int count=3;
+        ocl::vector<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
-        for (int i=0; i<10; ++i) {
-            ocl::test::test_mul12();
+        for (int i=0; i<count; ++i) {
+            ocl::test::test_mul12(x);
+            ocl::test::test_add12cond(x);
+            ocl::test::test_horner(x);
             std::cout << i << std::endl;
             // std::chrono::seconds s4(1);
             // std::this_thread::sleep_for(s4);

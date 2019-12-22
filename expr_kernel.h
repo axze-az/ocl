@@ -3,6 +3,8 @@
 
 #include <ocl/config.h>
 #include <ocl/expr.h>
+#include <thread>
+#include <chrono>
 
 namespace ocl {
 
@@ -43,7 +45,6 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     impl::be_data_ptr& b= res.backend_data();
     impl::queue& q= b->q();
     impl::device& d= b->d();
-    q.flush();
 
     std::unique_lock<impl::pgm_kernel_lock> _l(pk);
     // bind args
@@ -80,6 +81,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         std::cout << "execution done" << std::endl;
     }
     q.flush();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 template <class _RES, class _SRC>

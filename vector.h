@@ -59,11 +59,15 @@ namespace ocl {
         vector(std::initializer_list<_T> l);
         // copy constructor
         vector(const vector& v);
+        // move constructor
+        vector(vector&& v);
         // construction from std::vector, forces move of data
         // from host to device
         vector(const std::vector<_T>& v);
         // assignment operator from vector
         vector& operator=(const vector& v);
+        // move assignment
+        vector& operator=(vector&& v);
         // assignment from scalar
         vector& operator=(const _T& i);
         // template constructor for evaluation of expressions
@@ -700,13 +704,15 @@ ocl::vector_base::vector_base(std::size_t s, const char* src)
 {
     impl::queue& q= _bed->q();
     auto& evs=_bed->evs();
+    const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
     impl::event ev;
     q.enqueueWriteBuffer(_b,
-                         true,
+                         false,
                          0, s,
                          src,
-                         nullptr,
+                         pev,
                          &ev);
+    evs.clear();
     evs.emplace_back(ev);
 }
 
@@ -762,14 +768,18 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
         std::shared_ptr<impl::be_data>& bed=
             this->backend_data();
         impl::queue& q= bed->q();
+        auto& evs=bed->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
         impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
-                             true,
+                             false,
                              0, s,
                              p,
-                             nullptr,
+                             pev,
                              &ev);
-        bed->evs().emplace_back(ev);
+        q.flush();
+        evs.clear();
+        evs.emplace_back(ev);
     }
 }
 
@@ -804,10 +814,20 @@ ocl::vector<_T>::vector(const vector& r)
                             r.buffer_size(),
                             pev,
                             &ev);
+        q.flush();
         evs.clear();
         evs.emplace_back(ev);
 #endif
     }
+}
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(vector&& r)
+    : vector_base{std::move(r)},
+    _size{r.size()}
+{
+    r._size=0;
 }
 
 template <class _T>
@@ -819,13 +839,16 @@ ocl::vector<_T>::vector(const std::vector<_T>& r)
         std::size_t s=_size*sizeof(_T);
         impl::queue& q= backend_data()->q();
         auto& evs=backend_data()->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
         impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
-                             true,
+                             false,
                              0, s,
                              &r[0],
-                             nullptr,
+                             pev,
                              &ev);
+        q.flush();
+        evs.clear();
         evs.emplace_back(ev);
     }
 }
@@ -839,13 +862,16 @@ ocl::vector<_T>::vector(std::initializer_list<_T> l)
         std::size_t s=_size*sizeof(_T);
         impl::queue& q= backend_data()->q();
         auto& evs=backend_data()->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
         impl::event ev;
         q.enqueueWriteBuffer(this->buf(),
-                             true,
+                             false,
                              0, s,
                              l.begin(),
-                             nullptr,
+                             pev,
                              &ev);
+        q.flush();
+        evs.clear();
         evs.emplace_back(ev);
     }
 }
@@ -881,6 +907,16 @@ ocl::vector<_T>::operator=(const vector& r)
 
 template <class _T>
 inline
+ocl::vector<_T>&
+ocl::vector<_T>::operator=(vector&& r)
+{
+    swap(r);
+    std::swap(this->_size, r._size);
+    return *this;
+}
+
+template <class _T>
+inline
 ocl::vector<_T>::operator std::vector<_T> ()
     const
 {
@@ -894,12 +930,14 @@ ocl::vector<_T>::operator std::vector<_T> ()
         const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
         impl::event ev;
         q.enqueueReadBuffer(this->buf(),
-                            true,
+                            false,
                             0, s,
                             &v[0],
                             pev,
                             &ev);
+        q.flush();
         ev.wait();
+        evs.clear();
     }
     return v;
 }

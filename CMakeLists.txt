@@ -127,37 +127,43 @@ message("open cl library: ${LIBOPENCL}")
 if (LIBOPENCL)
   target_link_libraries(ocl-so ${LIBOPENCL})
 endif()
+find_package(Threads REQUIRED)
+target_link_libraries(ocl-so Threads::Threads)
 
 find_library(LIBM m)
 if (LIBM)
   target_link_libraries(ocl-so ${LIBM})
 endif(LIBM)
 
+function(target_add_libs arg1)
+    target_link_libraries(${arg1} ocl-so)
+    target_link_libraries(${arg1} Threads::Threads)
+endfunction()
 
 # test_be_data
 add_executable(test_be_data test_be_data.cc)
-target_link_libraries(test_be_data ocl-so)
+target_add_libs(test_be_data)
 # test_ocl
 add_executable(test_ocl testocl.cc)
-target_link_libraries(test_ocl ocl-so)
+target_add_libs(test_ocl)
 # test_vector
 add_executable(test_vector test_vector.cc)
-target_link_libraries(test_vector ocl-so)
+target_add_libs(test_vector)
 # test_rnd
 add_executable(test_rnd test_rnd.cc)
-target_link_libraries(test_rnd ocl-so)
+target_add_libs(test_rnd)
 # test_reduce
 add_executable(test_reduce test_reduce.cc)
-target_link_libraries(test_reduce ocl-so)
+target_add_libs(test_reduce)
 
 # test_math
 add_executable(test_math test_math.cc)
-target_link_libraries(test_math ocl-so)
+target_add_libs(test_math)
 
 enable_testing()
 
-set (CPACK_PACKAGE_NAME "libcftal")
-set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "cftal library")
+set (CPACK_PACKAGE_NAME "libocl")
+set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "ocl library")
 set (CPACK_PACKAGE_VENDOR "az")
 set (CPACK_DEBIAN_PACKAGE_MAINTAINER "az")
 #set (CPACK_GENERATOR "DEB;RPM;TBZ2")
@@ -170,12 +176,12 @@ set (CPACK_PACKAGE_VERSION
 set (CPACK_DEBIAN_PACKAGE_PRIORITY "extra")
 
 #set (CPACK_COMPONENTS_GROUPING IGNORE)
-set(CPACK_COMPONENTS_ALL cftal devel tools)
-set (CPACK_COMPONENT_OCL_DISPLAY_NAME "cftal-${OCL_VERSION_STR}")
+set(CPACK_COMPONENTS_ALL ocl devel tools)
+set (CPACK_COMPONENT_OCL_DISPLAY_NAME "ocl-${OCL_VERSION_STR}")
 set (CPACK_OCL_COMPONENT_INSTALL ON)
-set (CPACK_COMPONENT_DISPLAY_DEVEL_NAME "cftal-dev")
+set (CPACK_COMPONENT_DISPLAY_DEVEL_NAME "ocl-dev")
 set (CPACK_DEVEL_COMPONENT_INSTALL ON)
-set (CPACK_COMPONENT_TOOLS_DISPLAY_NAME "cftal-tools")
+set (CPACK_COMPONENT_TOOLS_DISPLAY_NAME "ocl-tools")
 set (CPACK_TOOLS_COMPONENT_INSTALL ON)
 
 set(CPACK_COMPONENTS_IGNORE_GROUPS 1)

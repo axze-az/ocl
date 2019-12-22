@@ -38,11 +38,11 @@ namespace ocl {
     public:
         srand() : _next() {}
         srand(const vector<uint32_t>& gid) : _next{gid} {}
-        void 
+        void
         seed(const vector<uint64_t>& gid){
             _next = cvt_to<vector<uint32_t> >(gid);
         }
-        void 
+        void
         seed(const vector<uint32_t>& gid){
             _next = gid;
         }
@@ -58,7 +58,7 @@ namespace ocl {
         }
     };
 #endif
-    
+
     // template <class _T>
     class rand48 {
         vector<std::uint64_t> _state;
@@ -98,8 +98,8 @@ namespace ocl {
             next();
             return cvt_to<vector<float> >(_state);
         }
-        
-        void 
+
+        void
         seed(const vector<uint64_t>& gid){
             _state = ((gid * 65536) | 0x330E) & MM;
         }
@@ -124,7 +124,7 @@ namespace ocl {
         rnd_distribution(const _T& min_val, const _T& max_val)
             : _min{min_val}, _max{max_val},
               _rec_interval{_T(1)/(_max - _min)} {
-            std::fill(std::begin(_val), std::end(_val), 0u);       
+            std::fill(std::begin(_val), std::end(_val), 0u);
         }
         void insert(const _T& v);
         using const_iterator = const std::uint32_t*;
@@ -203,7 +203,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 256*1024;
+        const unsigned _N = 16*256*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -217,7 +217,7 @@ int main()
         }
 #else
         using namespace ocl;
-        
+
         std::vector<std::uint64_t> gid(_N, 0ull);
         for (std::size_t i=0; i<gid.size(); ++i)
             gid[i] = i;
@@ -228,12 +228,12 @@ int main()
 
         ocl::rnd_distribution<float, 25> dst(0, 1.0);
         vector<float> f;
-        
+
         for (int i=0; i<20000; ++i) {
             f=t.nextf();
-            if ((i & 0xff)==0xff) {
-                std::cout << "iteration " << i << std::endl;
-            }
+            // if ((i & 0xff)==0xff) {
+            //    std::cout << "iteration " << i << std::endl;
+            // }
             std::vector<float> fh(f);
 #if 1
             for (std::size_t j=0; j<fh.size(); ++j) {
@@ -247,21 +247,26 @@ int main()
                     }
                     throw;
                 }
-                
+
             }
 #endif
-            
+
 #if 1
             if ((i & (256-1)) == (256-1)) {
+#if 1
+                std::cout << '.' << std::flush;
+#else
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     std::cout << std::setw(2) << j
                               << ": " << fh[j] << std::endl;
                 }
+#endif
             }
 #endif
         }
 #endif
-        std::cout << dst << std::endl;
+
+        std::cout << std::endl << dst << std::endl;
         impl::be_data::instance()->clear();
     }
     catch (const ocl::impl::error& e) {
