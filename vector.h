@@ -665,48 +665,40 @@ namespace ocl {
     DEFINE_OCLVEC_OPERATORS();
 #undef DEFINE_OCLVEC_OPERATORS
 
-    template <typename _T>
-    expr<ops::lt<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator<(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::lt< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
+    // TODO: more overloads also for (vec, expr), (expr, vec), (expr, expr)
+#define DEFINE_OCLVEC_CMP_OPERATOR(op, op_name )                        \
+    template <typename _T>                                              \
+    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
+         _T, vector<_T> >                                               \
+    operator op(const _T& a, const vector<_T>& b) {                     \
+        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
+                    _T, vector<_T> >(a, b);                             \
+    }                                                                   \
+                                                                        \
+    template <typename _T>                                              \
+    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
+         vector<_T>, vector<_T> >                                       \
+    operator op(const vector<_T>& a, const vector<_T>& b) {             \
+        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
+                    vector<_T>, vector<_T> >(a, b);                     \
+    }                                                                   \
+                                                                        \
+    template <typename _T>                                              \
+    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
+         vector<_T>, _T>                                                \
+    operator op(const vector<_T>& a, const _T& b) {                     \
+        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
+                    vector<_T>, _T>(a, b);                              \
     }
 
-    template <typename _T>
-    expr<ops::le<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator<=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::le< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
-    }
+    DEFINE_OCLVEC_CMP_OPERATOR(<, lt)
+    DEFINE_OCLVEC_CMP_OPERATOR(<=, le)
+    DEFINE_OCLVEC_CMP_OPERATOR(==, eq)
+    DEFINE_OCLVEC_CMP_OPERATOR(!=, ne)
+    DEFINE_OCLVEC_CMP_OPERATOR(>=, ge)
+    DEFINE_OCLVEC_CMP_OPERATOR(>, gt)
 
-    template <typename _T>
-    expr<ops::eq<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator==(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::eq< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
-    }
-
-    template <typename _T>
-    expr<ops::ne<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator!=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::ne< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
-    }
-
-    template <typename _T>
-    expr<ops::ge<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator>=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::ge< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
-    }
-
-    template <typename _T>
-    expr<ops::gt<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
-    operator>(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::gt< typename vector<_T>::mask_type >,
-                    vector<_T>, vector<_T> >(a, b);
-    }
-
+#undef DEFINE_OCLVEC_CMP_OPERATOR
 }
 
 

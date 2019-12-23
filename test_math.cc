@@ -198,6 +198,7 @@ ocl::test::test_horner(const vector<float>& x)
     vf_type y0=horner(x, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f);
     vf_type y1=horner(x, ci);
     vi_type eq=y0 == y1;
+    vi_type eq0=y0 == 1.0f;
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
 }
 
