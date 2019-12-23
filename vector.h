@@ -22,9 +22,8 @@ namespace ocl {
         vector_base();
         // constructor, with size
         explicit vector_base(std::size_t s);
-        // constructor, copies s bytes from src to
-        // buffer
-        vector_base(std::size_t s, const char* src);
+        // move constructor
+        vector_base(vector_base&& r);
         // swap two vector base objects
         vector_base& swap(vector_base& r);
     public:
@@ -43,8 +42,8 @@ namespace ocl {
     // vector: representation of data on the acceleration device
     template <class _T>
     class vector : public vector_base {
-        // count of elements
-        std::size_t _size;
+        void copy_from_device(const vector& r);
+        void copy_from_host(const _T* src);
     public:
         using value_type = _T;
         // size of the vector
@@ -698,22 +697,9 @@ ocl::vector_base::vector_base(std::size_t s)
 }
 
 inline
-ocl::vector_base::vector_base(std::size_t s, const char* src)
-    : _bed{impl::be_data::instance()},
-      _b{_bed->c(), CL_MEM_READ_WRITE, s}
+ocl::vector_base::vector_base(vector_base&& r)
+    : _bed(std::move(r._bed)), _b(std::move(r._b))
 {
-    impl::queue& q= _bed->q();
-    auto& evs=_bed->evs();
-    const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-    impl::event ev;
-    q.enqueueWriteBuffer(_b,
-                         false,
-                         0, s,
-                         src,
-                         pev,
-                         &ev);
-    evs.clear();
-    evs.emplace_back(ev);
 }
 
 inline
@@ -760,48 +746,12 @@ ocl::vector_base::backend_data()
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(std::size_t n, const _T* p)
-    : vector_base{n*sizeof(_T)}, _size{n}
+void
+ocl::vector<_T>::copy_from_device(const vector& r)
 {
-    if (_size) {
-        std::size_t s=_size*sizeof(_T);
-        std::shared_ptr<impl::be_data>& bed=
-            this->backend_data();
-        impl::queue& q= bed->q();
-        auto& evs=bed->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueWriteBuffer(this->buf(),
-                             false,
-                             0, s,
-                             p,
-                             pev,
-                             &ev);
-        q.flush();
-        evs.clear();
-        evs.emplace_back(ev);
-    }
-}
-
-template <class _T>
-inline
-ocl::vector<_T>::vector(std::size_t s, const _T& i)
-    : vector_base{s * sizeof(_T)}, _size{s}
-{
-    if (_size) {
-        execute(*this, i);
-    }
-}
-
-template <class _T>
-inline
-ocl::vector<_T>::vector(const vector& r)
-    : vector_base{r.size() * sizeof(_T)},
-    _size{r.size()}
-{
-    if (_size) {
-//#pragma message("copy constructor via opencl")
+    if (r.buffer_size()) {
 #if 0
+//#pragma message("copy constructor via opencl")
         execute(*this, r);
 #else
         impl::event ev;
@@ -823,57 +773,75 @@ ocl::vector<_T>::vector(const vector& r)
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(vector&& r)
-    : vector_base{std::move(r)},
-    _size{r.size()}
+void
+ocl::vector<_T>::copy_from_host(const _T* p)
 {
-    r._size=0;
+    std::size_t s=buffer_size();
+    if (s) {
+        impl::queue& q= backend_data()->q();
+        auto& evs=backend_data()->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
+        impl::event ev;
+        q.enqueueWriteBuffer(this->buf(),
+                             false,
+                             0, s,
+                             p,
+                             pev,
+                             &ev);
+        q.flush();
+        evs.clear();
+        evs.emplace_back(ev);
+    }
+}
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(std::size_t n, const _T* p)
+    : vector_base{n*sizeof(_T)}
+{
+    copy_from_host(p);
+}
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(std::size_t s, const _T& i)
+    : vector_base{s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i);
+    }
+}
+
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(const vector& r)
+    : vector_base{r.buffer_size()}
+{
+    copy_from_device(r);
+}
+
+template <class _T>
+inline
+ocl::vector<_T>::vector(vector&& r)
+    : vector_base{std::move(r)}
+{
 }
 
 template <class _T>
 inline
 ocl::vector<_T>::vector(const std::vector<_T>& r)
-    : vector_base{sizeof(_T) * r.size()}, _size{r.size()}
+    : vector_base{sizeof(_T) * r.size()}
 {
-    if (_size) {
-        std::size_t s=_size*sizeof(_T);
-        impl::queue& q= backend_data()->q();
-        auto& evs=backend_data()->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueWriteBuffer(this->buf(),
-                             false,
-                             0, s,
-                             &r[0],
-                             pev,
-                             &ev);
-        q.flush();
-        evs.clear();
-        evs.emplace_back(ev);
-    }
+    copy_from_host(&r[0]);
 }
 
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::initializer_list<_T> l)
-    : vector_base{sizeof(_T) * l.size()}, _size{l.size()}
+    : vector_base{sizeof(_T) * l.size()}
 {
-    if (_size) {
-        std::size_t s=_size*sizeof(_T);
-        impl::queue& q= backend_data()->q();
-        auto& evs=backend_data()->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueWriteBuffer(this->buf(),
-                             false,
-                             0, s,
-                             l.begin(),
-                             pev,
-                             &ev);
-        q.flush();
-        evs.clear();
-        evs.emplace_back(ev);
-    }
+    copy_from_host(l.begin());
 }
 
 template <class _T>
@@ -881,9 +849,9 @@ template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::
 vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
-    : vector_base{eval_size(r)*sizeof(_T)}, _size{eval_size(r)}
+    : vector_base{eval_size(r)*sizeof(_T)}
 {
-    if (_size) {
+    if (buffer_size()) {
         execute(*this, r);
     }
 }
@@ -894,12 +862,11 @@ ocl::vector<_T>&
 ocl::vector<_T>::operator=(const vector& r)
 {
     if (this != &r) {
-        if (size() == r.size()) {
-            execute(*this, r);
+        if (buffer_size() == r.buffer_size()) {
+            copy_from_device(r);
         } else {
             vector t(r);
             swap(t);
-            std::swap(this->_size, t._size);
         }
     }
     return *this;
@@ -911,7 +878,6 @@ ocl::vector<_T>&
 ocl::vector<_T>::operator=(vector&& r)
 {
     swap(r);
-    std::swap(this->_size, r._size);
     return *this;
 }
 
@@ -947,7 +913,7 @@ inline
 std::size_t
 ocl::vector<_T>::size() const
 {
-    return _size;
+    return buffer_size()/sizeof(_T);
 }
 
 template <class _T>

@@ -118,7 +118,7 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=1024*1024-1;
+        const int ELEMENTS=4*1024*1024-1;
         void
         test_add12cond(const vector<float>& x);
 
@@ -167,38 +167,24 @@ ocl::test::test_add12cond(const vector<float>& x)
     using d_ops=cftal::d_real_ops<vf_type, false>;
     vf_type h, l;
     d_ops::add12cond(h, l, a, b);
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    vf_type hh, ll;
+    d_ops::add22cond(hh, ll, h, l, h, l);
+    // std::cout << __PRETTY_FUNCTION__ << std::endl;
 }
 
 void
 ocl::test::test_mul12(const vector<float>& x)
 {
-    try {
-        using vf_type = vector<float>;
-        vf_type a=x, b=x;
-        using d_ops=cftal::d_real_ops<vf_type, false>;
-        vf_type h, l;
-        d_ops::mul12(h, l, a, b);
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        // std::vector<float> hh(h), hl(l);
-    }
-    catch (const cl::Error& ex) {
-        std::cout << "Exception: " << ex.what() << std::endl;
-        std::cout << ex.err() << std::endl;
-        std::cout << impl::err2str(ex.err()) << std::endl;
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
-    catch (const std::system_error& ex) {
-        std::cout << "Exception: " << ex.what() << std::endl;
-        std::cout << ex.code() << std::endl;
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
-    catch (const std::exception& ex) {
-        // const std::type_info& ti_ex = typeid(ex);
-        // std::cout << ti_ex.name() << std::endl;
-        std::cout << "Exception: " << ex.what() << std::endl;
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    }
+    using vf_type = vector<float>;
+    vf_type a=x, b=x;
+    using d_ops=cftal::d_real_ops<vf_type, false>;
+    vf_type h, l;
+    d_ops::mul12(h, l, a, b);
+    vf_type hh, ll;
+    d_ops::sqr22(hh, ll, h, l);
+    d_ops::div22(hh, ll, hh, ll, h, l);
+    // std::cout << __PRETTY_FUNCTION__ << std::endl;
+    // std::vector<float> hh(h), hl(l);
 }
 
 void
@@ -207,25 +193,27 @@ ocl::test::test_horner(const vector<float>& x)
     using vf_type = vector<float>;
     using vi_type = vector<int32_t>;
     static const float ci[]={
-        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f
+        1.0f, 2.0/10.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f
     };
-    vf_type y0=horner(x, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f);
+    vf_type y0=horner(x, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f);
     vf_type y1=horner(x, ci);
     vi_type eq=y0 == y1;
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    // std::cout << __PRETTY_FUNCTION__ << std::endl;
 }
 
 int main()
 {
     try {
-        const int count=3;
+        const int count=16*1024;
         ocl::vector<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
         for (int i=0; i<count; ++i) {
             ocl::test::test_mul12(x);
             ocl::test::test_add12cond(x);
             ocl::test::test_horner(x);
-            std::cout << i << std::endl;
+            if ((i & 3)==3) {
+                std::cout << '.' << std::flush;
+            }
             // std::chrono::seconds s4(1);
             // std::this_thread::sleep_for(s4);
         }
