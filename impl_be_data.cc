@@ -1,7 +1,7 @@
 #include "impl_be_data.h"
 #include <cstdlib>
 
-ocl::impl::debug_mutex
+ocl::impl::mutex
 ocl::impl::be_data::_instance_mutex;
 std::atomic<bool>
 ocl::impl::be_data::_init;
@@ -12,7 +12,7 @@ std::shared_ptr<ocl::impl::be_data>
 ocl::impl::be_data::instance()
 {
     if (_init == false) {
-        std::unique_lock<debug_mutex> _l(_instance_mutex);
+        std::unique_lock<mutex> _l(_instance_mutex);
         if (_init==false) {
             _default = std::make_shared<be_data>();
             _init= true;

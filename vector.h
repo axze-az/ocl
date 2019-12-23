@@ -26,6 +26,13 @@ namespace ocl {
         vector_base(vector_base&& r);
         // swap two vector base objects
         vector_base& swap(vector_base& r);
+        // device device copy
+        void copy_on_device(const vector_base& r);
+        // host device copy
+        void copy_from_host(const void* src);
+        // device host copy
+        void copy_to_host(void* dst)
+            const;
     public:
         // return the size of the vector in bytes
         std::size_t buffer_size() const;
@@ -39,13 +46,38 @@ namespace ocl {
         backend_data() const;
     };
 
+    namespace impl {
+
+        template <typename _T>
+        struct vector_select_mask_value {
+            using type = _T;
+        };
+
+        template <>
+        struct vector_select_mask_value<double> {
+            using type = std::int64_t;
+        };
+
+        template <>
+        struct vector_select_mask_value<float> {
+            using type = std::int32_t;
+        };
+
+        template <typename _T>
+        using vector_select_mask_value_t =
+            typename vector_select_mask_value<_T>::type;
+
+    }
+
     // vector: representation of data on the acceleration device
     template <class _T>
     class vector : public vector_base {
-        void copy_from_device(const vector& r);
-        void copy_from_host(const _T* src);
     public:
         using value_type = _T;
+        using mask_value_type = impl::vector_select_mask_value_t<_T>;
+        using mask_type = vector<mask_value_type>;
+        // using vector_base::backend_data;
+        // using vector_base::buf;
         // size of the vector
         std::size_t size() const;
         // default constructor.
@@ -634,44 +666,44 @@ namespace ocl {
 #undef DEFINE_OCLVEC_OPERATORS
 
     template <typename _T>
-    expr<ops::lt<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::lt<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator<(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::lt< vector<int32_t> >,
+        return expr<ops::lt< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
     template <typename _T>
-    expr<ops::le<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::le<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator<=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::le< vector<int32_t> >,
+        return expr<ops::le< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
     template <typename _T>
-    expr<ops::eq<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::eq<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator==(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::eq< vector<int32_t> >,
+        return expr<ops::eq< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
     template <typename _T>
-    expr<ops::ne<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::ne<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator!=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::ne< vector<int32_t> >,
+        return expr<ops::ne< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
     template <typename _T>
-    expr<ops::ge<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::ge<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator>=(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::ge< vector<int32_t> >,
+        return expr<ops::ge< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
     template <typename _T>
-    expr<ops::gt<vector<int32_t> >, vector<_T>, vector<_T> >
+    expr<ops::gt<typename vector<_T>::mask_type >, vector<_T>, vector<_T> >
     operator>(const vector<_T>& a, const vector<_T>& b) {
-        return expr<ops::gt< vector<int32_t> >,
+        return expr<ops::gt< typename vector<_T>::mask_type >,
                     vector<_T>, vector<_T> >(a, b);
     }
 
@@ -744,16 +776,11 @@ ocl::vector_base::backend_data()
     return _bed;
 }
 
-template <class _T>
 inline
 void
-ocl::vector<_T>::copy_from_device(const vector& r)
+ocl::vector_base::copy_on_device(const vector_base& r)
 {
     if (r.buffer_size()) {
-#if 0
-//#pragma message("copy constructor via opencl")
-        execute(*this, r);
-#else
         impl::event ev;
         impl::queue& q= backend_data()->q();
         auto& evs=backend_data()->evs();
@@ -767,14 +794,12 @@ ocl::vector<_T>::copy_from_device(const vector& r)
         q.flush();
         evs.clear();
         evs.emplace_back(ev);
-#endif
     }
 }
 
-template <class _T>
 inline
 void
-ocl::vector<_T>::copy_from_host(const _T* p)
+ocl::vector_base::copy_from_host(const void* p)
 {
     std::size_t s=buffer_size();
     if (s) {
@@ -793,6 +818,31 @@ ocl::vector<_T>::copy_from_host(const _T* p)
         evs.emplace_back(ev);
     }
 }
+
+inline
+void
+ocl::vector_base::copy_to_host(void* p)
+    const
+{
+    std::size_t s=buffer_size();
+    if (s) {
+        std::shared_ptr<impl::be_data> bed(backend_data());
+        impl::queue& q= bed->q();
+        auto& evs=bed->evs();
+        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
+        impl::event ev;
+        q.enqueueReadBuffer(this->buf(),
+                            false,
+                            0, s,
+                            p,
+                            pev,
+                            &ev);
+        q.flush();
+        ev.wait();
+        evs.clear();
+    }
+}
+
 
 template <class _T>
 inline
@@ -818,7 +868,7 @@ inline
 ocl::vector<_T>::vector(const vector& r)
     : vector_base{r.buffer_size()}
 {
-    copy_from_device(r);
+    copy_on_device(r);
 }
 
 template <class _T>
@@ -863,7 +913,7 @@ ocl::vector<_T>::operator=(const vector& r)
 {
     if (this != &r) {
         if (buffer_size() == r.buffer_size()) {
-            copy_from_device(r);
+            copy_on_device(r);
         } else {
             vector t(r);
             swap(t);
@@ -888,23 +938,7 @@ ocl::vector<_T>::operator std::vector<_T> ()
 {
     std::size_t n(this->size());
     std::vector<_T> v(n);
-    if (n) {
-        std::size_t s(n*sizeof(_T));
-        std::shared_ptr<impl::be_data> bed(backend_data());
-        impl::queue& q= bed->q();
-        auto& evs=bed->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueReadBuffer(this->buf(),
-                            false,
-                            0, s,
-                            &v[0],
-                            pev,
-                            &ev);
-        q.flush();
-        ev.wait();
-        evs.clear();
-    }
+    copy_to_host(&v[0]);
     return v;
 }
 

@@ -204,7 +204,7 @@ ocl::test::test_horner(const vector<float>& x)
 int main()
 {
     try {
-        const int count=16*1024;
+        const int count=1;
         ocl::vector<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
         for (int i=0; i<count; ++i) {

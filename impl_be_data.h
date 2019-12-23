@@ -13,9 +13,10 @@ namespace ocl {
 
     namespace impl {
 
-        struct debug_mutex : private std::mutex {
+        struct mutex : public std::mutex {
             using base_type = std::mutex;
             using base_type::base_type;
+#if 0
             void lock() {
                 try {
                     base_type::lock();
@@ -32,6 +33,7 @@ namespace ocl {
                     std::cout << "unlock failed\n";
                 }
             }
+#endif
         };
 
 
@@ -39,10 +41,10 @@ namespace ocl {
         struct pgm_kernel_lock {
             program _p;
             kernel _k;
-            std::shared_ptr<debug_mutex> _m;
+            std::shared_ptr<mutex> _m;
             pgm_kernel_lock(const program& p,
                             const kernel& k) :
-                _p(p), _k(k), _m(new debug_mutex()) {}
+                _p(p), _k(k), _m(new mutex()) {}
             void lock() { _m->lock(); }
             void unlock() { _m->unlock(); }
         };
@@ -136,7 +138,7 @@ namespace ocl {
                     const queue& qe);
 
         private:
-            debug_mutex _m;
+            mutex _m;
             device _d;
             context _c;
             queue _q;
@@ -147,7 +149,7 @@ namespace ocl {
             static
             uint32_t read_debug_env();
 
-            static debug_mutex _instance_mutex;
+            static mutex _instance_mutex;
             static std::atomic<bool> _init;
             static std::shared_ptr<be_data> _default;
         };
