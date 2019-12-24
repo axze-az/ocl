@@ -41,10 +41,6 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     const
 {
     impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
-    // execute the kernel
-    impl::be_data_ptr& b= res.backend_data();
-    impl::queue& q= b->q();
-    impl::device& d= b->d();
 
     std::unique_lock<impl::pgm_kernel_lock> _l(pk);
     // bind args
@@ -54,34 +50,9 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     bind_args(pk._k, sc, arg_num);
     bind_args(pk._k, res, arg_num);
     bind_args(pk._k, r, arg_num);
-    if (b->debug() != 0) {
-        std::cout << "executing kernel" << std::endl;
-    }
-    std::size_t local_size(
-        pk._k.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(d, nullptr));
-    std::size_t gs= ((s+local_size-1)/local_size)*local_size;
-    if (b->debug() != 0) {
-        std::cout << "kernel: size: " << s
-                  << " global size: " << gs
-                  << " local size: " << local_size
-                  << std::endl;
-    }
-    auto& evs=b->evs();
-    const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-    impl::event ev;
-    q.enqueueNDRangeKernel(pk._k,
-                           cl::NullRange,
-                           cl::NDRange(gs),
-                           cl::NullRange, //cl::NDRange(local_size),
-                           pev,
-                           &ev);
-    evs.clear();
-    evs.emplace_back(ev);
-    if (b->debug() != 0) {
-        std::cout << "execution done" << std::endl;
-    }
-    q.flush();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // execute the kernel
+    impl::be_data_ptr b= res.backend_data();
+    b->enqueue_kernel(pk, s);
 }
 
 template <class _RES, class _SRC>
@@ -91,11 +62,16 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
     const
 {
     using namespace impl;
-    impl::be_data_ptr& b= res.backend_data();
+    impl::be_data_ptr b= res.backend_data();
 
     std::unique_lock<be_data> _l(*b);
-
     be_data::iterator f(b->find(cookie));
+#if 0
+    if (f != b->end()) {
+        b->erase(f);
+        f = b->end();
+    }
+#endif
     if (f == b->end()) {
         pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
         std::pair<be_data::iterator, bool> ir(
@@ -163,29 +139,19 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     // end body
     s << "}" << std::endl;
     using namespace impl;
-    be_data_ptr& bd= res.backend_data();
+    be_data_ptr bd= res.backend_data();
     if (bd->debug() != 0) {
         std::cout << "--- source code ------------------\n";
         std::cout << s.str();
     }
     std::string ss(s.str());
-    cl::Program::Sources sv;
-    sv.push_back(ss);
-
-    cl::Program pgm(bd->c(), sv);
-    std::vector<cl::Device> vk(1, bd->d());
-
+    program pgm;
     try {
-        // pgm.build(vk , "-cl-std=clc++");
-        pgm.build(vk , "-cl-std=CL1.1");
+        // pgm=program::build_with_source(ss, bd->c(), "-cl-std=clc++");
+        pgm=program::build_with_source(ss, bd->c(), "-cl-std=CL1.1");
     }
-    catch (const cl::Error& e) {
-        std::string op(pgm.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(
-                           bd->d(), nullptr));
-        std::cerr << "build options: " << op << '\n';
-        std::string em(pgm.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
-                           bd->d(), nullptr));
-        std::cerr << "error info: " << em << '\n';
+    catch (const error& e) {
+        std::cerr << "error info: " << e.what() << '\n';
         throw;
     }
     kernel k(pgm, k_name.c_str());
@@ -196,8 +162,6 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     pgm_kernel_lock pkl(pgm, k);
     return pkl;
 }
-
-
 
 template <class _RES, class _EXPR>
 void

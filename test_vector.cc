@@ -97,8 +97,8 @@ int main()
                   << double(SIZE*sizeof(ftype))/(1024*1024)
                   << "MiB\n";
         ftype a(ftype(2.0)), b(ftype(3.0));
-
         vector<ftype> va(SIZE, a);
+        std::cout << "vector init done" << std::endl;
         vector<ftype> vb(SIZE, b);
         ftype c= test_func(a, b);
         std::cout << "c: " << c << std::endl;

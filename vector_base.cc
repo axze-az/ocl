@@ -1,4 +1,5 @@
 #include "vector.h"
+#include <iomanip>
 
 ocl::vector_base::~vector_base()
 {
@@ -11,13 +12,40 @@ ocl::vector_base::vector_base()
 
 ocl::vector_base::vector_base(std::size_t s)
     : _bed{impl::be_data::instance()},
-      _b{_bed->c(), CL_MEM_READ_WRITE, s}
+      _b{_bed->c(), s}
 {
 }
 
-ocl::vector_base::vector_base(vector_base&& r)
-    : _bed(std::move(r._bed)), _b(std::move(r._b))
+ocl::vector_base::vector_base(const vector_base& r)
+    : _bed(r._bed), _b(r._b)
 {
+    copy_on_device(r);
+}
+
+ocl::vector_base::vector_base(vector_base&& r)
+    : _bed(), _b()
+{
+    swap(r);
+}
+
+ocl::vector_base&
+ocl::vector_base::operator=(const vector_base& r)
+{
+    if (this != &r) {
+        if (buffer_size() == r.buffer_size()) {
+            copy_on_device(r);
+        } else {
+            vector_base t(r);
+            swap(t);
+        }
+    }
+    return *this;
+}
+
+ocl::vector_base&
+ocl::vector_base::operator=(vector_base&& r)
+{
+    return swap(r);
 }
 
 ocl::vector_base&
@@ -32,25 +60,23 @@ std::size_t
 ocl::vector_base::buffer_size()
     const
 {
-    std::size_t r{_b() != nullptr ?
-            _b.getInfo<CL_MEM_SIZE>(nullptr) : 0};
-    return r;
+    return _b.size();
 }
 
-const cl::Buffer&
+const ocl::impl::buffer&
 ocl::vector_base::buf()
     const
 {
     return _b;
 }
 
-std::shared_ptr<ocl::impl::be_data>&
+ocl::impl::be_data_ptr
 ocl::vector_base::backend_data()
 {
     return _bed;
 }
 
-const std::shared_ptr<ocl::impl::be_data>&
+const ocl::impl::be_data_ptr
 ocl::vector_base::backend_data()
     const
 {
@@ -60,20 +86,15 @@ ocl::vector_base::backend_data()
 void
 ocl::vector_base::copy_on_device(const vector_base& r)
 {
-    if (r.buffer_size()) {
-        impl::event ev;
-        impl::queue& q= backend_data()->q();
-        auto& evs=backend_data()->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        q.enqueueCopyBuffer(this->buf(),
-                            r.buf(),
-                            0, 0,
-                            r.buffer_size(),
-                            pev,
-                            &ev);
+    size_t s =r.buffer_size();
+    if (__likely(s)) {
+        impl::queue& q= _bed->q();
+        std::vector<impl::event> next_evs(1);
+        auto& evs=_bed->evs();
+        impl::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, evs);
         q.flush();
         evs.clear();
-        evs.emplace_back(ev);
+        evs.insert(ev);
     }
 }
 
@@ -81,20 +102,13 @@ void
 ocl::vector_base::copy_from_host(const void* p)
 {
     std::size_t s=buffer_size();
-    if (s) {
-        impl::queue& q= backend_data()->q();
-        auto& evs=backend_data()->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueWriteBuffer(this->buf(),
-                             false,
-                             0, s,
-                             p,
-                             pev,
-                             &ev);
+    if (__likely(s)) {
+        impl::queue& q= _bed->q();
+        auto& evs=_bed->evs();
+        impl::event ev=q.enqueue_write_buffer(_b, 0, s, p, evs);
         q.flush();
         evs.clear();
-        evs.emplace_back(ev);
+        evs.insert(ev);
     }
 }
 
@@ -103,20 +117,12 @@ ocl::vector_base::copy_to_host(void* p)
     const
 {
     std::size_t s=buffer_size();
-    if (s) {
-        std::shared_ptr<impl::be_data> bed(backend_data());
-        impl::queue& q= bed->q();
-        auto& evs=bed->evs();
-        const std::vector<impl::event>* pev= evs.empty() ? nullptr : &evs;
-        impl::event ev;
-        q.enqueueReadBuffer(this->buf(),
-                            false,
-                            0, s,
-                            p,
-                            pev,
-                            &ev);
+    if (__likely(s)) {
+        impl::queue& q= _bed->q();
+        auto& evs= _bed->evs();
+        impl::event ev= q.enqueue_read_buffer(_b, 0, s, p, evs);
         q.flush();
-        ev.wait();
         evs.clear();
+        evs.insert(ev);
     }
 }

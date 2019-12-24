@@ -93,19 +93,29 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
     endif()
 endif()
 
+# C++20 ?
+option(OCLL_USE_CXX2A "use C++2A" ON)
 # C++17 ?
 option(OCL_USE_CXX17 "use C++17" ON)
-if(OCL_USE_CXX17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++1z")
-else(OCL_USE_CXX17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
-endif(OCL_USE_CXX17)
+if (OCL_USE_CXX2A)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2a")
+else()
+    if(OCL_USE_CXX17)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+    endif()
+endif()
+
+# create static cftal library
+option(OCL_STATIC_LIB "create static libcftal.a" OFF)
 # Full test ?
 option(OCL_FULL_TEST "perform a full test with long compile times" OFF)
 
 include_directories(..)
 include_directories(../cftal/include)
 include_directories(../cftal/test/include)
+include_directories(../../vexcl)
 include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
 set (CSRCS
@@ -115,10 +125,13 @@ set (CSRCS
   vector_base.cc
 )
 
-add_library (ocl STATIC ${CSRCS})
-install(TARGETS ocl
-  DESTINATION lib LIBRARY
-  COMPONENT devel)
+if (OCL_STATIC_LIB)
+    add_library (ocl STATIC ${CSRCS} ${HDRS})
+    install(TARGETS ocl
+        DESTINATION lib LIBRARY
+        COMPONENT devel)
+endif()
+
 #set_target_properties(ocl PROPERTIES OUTPUT_NAME "ocl")
 add_library (ocl-so SHARED ${CSRCS})
 set_property(TARGET ocl-so
@@ -141,7 +154,10 @@ if (LIBM)
   target_link_libraries(ocl-so ${LIBM})
 endif(LIBM)
 
+find_library(LIB_BOOST_SYSTEM boost_system)
+
 function(target_add_libs arg1)
+    target_link_libraries(${arg1} ${LIB_BOOST_SYSTEM})
     target_link_libraries(${arg1} ocl-so)
     target_link_libraries(${arg1} Threads::Threads)
 endfunction()

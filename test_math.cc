@@ -2,8 +2,8 @@
 #include <cftal/math/elem_func.h>
 #include <cftal/math/elem_func_core_f32.h>
 #include <cftal/d_real.h>
-#include <ocl/ocl.h>
 #include <ocl/vector.h>
+// #include <vexcl/vexcl.hpp>
 #include <chrono>
 #include <thread>
 
@@ -45,11 +45,10 @@ namespace cftal {
         split(const ocl::vector<float> & a,
               ocl::vector<float>& h,
               ocl::vector<float>& l) {
-#if 0
+#if 1
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
             using vi_type = ocl::vector<int32_t>;
-            using ocl::as;
             vi_type& hi=reinterpret_cast<vi_type&>(h);
             const vi_type& ai=reinterpret_cast<const vi_type&>(a);
             hi = ai & msk;
@@ -118,7 +117,7 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=4*1024*1024-1;
+        const int ELEMENTS=1024*1024-1;
         void
         test_add12cond(const vector<float>& x);
 
@@ -191,26 +190,113 @@ void
 ocl::test::test_horner(const vector<float>& x)
 {
     using vf_type = vector<float>;
-    using vi_type = vector<int32_t>;
+    // using vi_type = vector<int32_t>;
+    constexpr
+    const float log_c1=+1.0000000000000000000000e+00;
+    // x^2 : -0x8p-4
+    constexpr
+    const float log_c2=-5.0000000000000000000000e-01;
+    // x^3 : +0xa.aaaaaaaaaaac8p-5
+    constexpr
+    const float log_c3=+3.3333333333333353687422e-01;
+    // x^4 : -0x8.0000000000208p-5
+    constexpr
+    const float log_c4=-2.5000000000000360822483e-01;
+    // x^5 : +0xc.ccccccccc6e9p-6
+    constexpr
+    const float log_c5=+1.9999999999991630028617e-01;
+    // x^6 : -0xa.aaaaaaaa58168p-6
+    constexpr
+    const float log_c6=-1.6666666666549315167778e-01;
+    // x^7 : +0x9.24924927ac58p-6
+    constexpr
+    const float log_c7=+1.4285714286842710052383e-01;
+    // x^8 : -0x8.00000027e75c8p-6
+    constexpr
+    const float log_c8=-1.2500000014516901569728e-01;
+    // x^9 : +0xe.38e38cbfa4d38p-7
+    constexpr
+    const float log_c9=+1.1111111042490638689539e-01;
+    // x^10 : -0xc.ccccb8d164208p-7
+    constexpr
+    const float log_c10=-9.9999990695125454132075e-02;
+    // x^11 : +0xb.a2e8e4465066p-7
+    constexpr
+    const float log_c11=+9.0909110510099810920082e-02;
+    // x^12 : -0xa.aaad942807438p-7
+    constexpr
+    const float log_c12=-8.3333680479023994336352e-02;
+    // x^13 : +0x9.d89c440648528p-7
+    constexpr
+    const float log_c13=+7.6922925200565275827280e-02;
+    // x^14 : -0x9.24504f5c6c73p-7
+    constexpr
+    const float log_c14=-7.1420706511023362983437e-02;
+    // x^15 : +0x8.88565bbd4181p-7
+    constexpr
+    const float log_c15=+6.6660685343332942709438e-02;
+    // x^16 : -0x8.0381a20dc6aap-7
+    constexpr
+    const float log_c16=-6.2607006194914049945766e-02;
+    // x^17 : +0xf.1b610aa965e5p-8
+    constexpr
+    const float log_c17=+5.9011521437603756123913e-02;
+    // x^18 : -0xe.04b526d45cb08p-8
+    constexpr
+    const float log_c18=-5.4759332637660980414029e-02;
+    // x^19 : +0xc.e282859d9531p-8
+    constexpr
+    const float log_c19=+5.0331266041742109274004e-02;
+    // x^20 : -0xd.55ffa43077a8p-8
+    constexpr
+    const float log_c20=-5.2093484483036633925224e-02;
+    // x^21 : +0xf.7e2701c5769a8p-8
+    constexpr
+    const float log_c21=+6.0518682415443704469826e-02;
+    // x^22 : -0xd.b9eebf859befp-8
+    constexpr
+    const float log_c22=-5.3618356474188763605149e-02;
+    // x^23 : +0xb.508a0d3fd5d08p-9
+    constexpr
+    const float log_c23=+2.2098840825417579575296e-02;
+
+    static_assert(log_c1 == 1.0, "constraint violated");
     static const float ci[]={
-        1.0f, 2.0/10.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f
+        log_c23, log_c22, log_c21, log_c20, log_c19,
+        log_c18, log_c17, log_c16, log_c15, log_c14,
+        log_c13, log_c12, log_c11, log_c10, log_c9,
+        log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
+        log_c3,  log_c2,  log_c1
     };
-    vf_type y0=horner(x, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f);
-    vf_type y1=horner(x, ci);
-    vi_type eq=y0 == y1;
-    vi_type eq0=y0 == 1.0f;
+    for (int i=0; i<1; ++i) {
+        vf_type y0=horner(x,
+                          log_c23, log_c22, log_c21, log_c20, log_c19,
+                          log_c18, log_c17, log_c16, log_c15, log_c14,
+                          log_c13, log_c12, log_c11, log_c10, log_c9,
+                          log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
+                          log_c3,  log_c2,  log_c1);
+        vf_type y1=horner(x, ci);
+        // vi_type eq=y0 == y1;
+        // vi_type eq0=y0 == 1.0f;
+    }
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
 }
 
 int main()
 {
     try {
-        const int count=1;
+        const int count=1024*2*1024;
+#if 0
+        vex::Context ctx( vex::Filter::GPU);
+        std::vector<float> xh(ocl::test::ELEMENTS, 1.1235f);
+        ocl::vector<float> x(ctx, ocl::test::ELEMENTS);
+        vex::copy(xh, x);
+#endif
         ocl::vector<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
         for (int i=0; i<count; ++i) {
-            ocl::test::test_mul12(x);
-            ocl::test::test_add12cond(x);
+            // ocl::test::test_mul12(x);
+            // ocl::test::test_add12cond(x);
             ocl::test::test_horner(x);
             if ((i & 3)==3) {
                 std::cout << '.' << std::flush;
@@ -219,6 +305,7 @@ int main()
             // std::this_thread::sleep_for(s4);
         }
         // ocl::test::test_horner();
+        ocl::impl::be_data::instance()->q().finish();
     }
     catch (const ocl::impl::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()

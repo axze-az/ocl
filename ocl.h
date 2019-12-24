@@ -17,10 +17,7 @@ namespace ocl {
                   const char* fname=nullptr,
                   unsigned line=0,
                   const std::string& msg="") {
-            if (rc != CL_SUCCESS)
-                throw impl::error(rc, msg.c_str());
         }
-
         template <class _T>
         struct ref_cnt;
 

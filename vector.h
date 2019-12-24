@@ -5,6 +5,16 @@
 #include <ocl/expr_kernel.h>
 #include <ocl/impl_type_2_name.h>
 #include <initializer_list>
+#include <vexcl/vexcl.hpp>
+#include <atomic>
+
+#if 0
+
+namespace ocl {
+    using vex::vector;
+}
+
+#else
 
 namespace ocl {
 
@@ -12,9 +22,9 @@ namespace ocl {
     // (shared) pointer to opencl backend data
     class vector_base {
         // shared pointer to the backend data
-        std::shared_ptr<impl::be_data> _bed;
+        impl::be_data_ptr _bed;
         // backend buffer object
-        cl::Buffer _b;
+        impl::buffer _b;
     protected:
         // destructor
         ~vector_base();
@@ -22,8 +32,14 @@ namespace ocl {
         vector_base();
         // constructor, with size
         explicit vector_base(std::size_t s);
+        // copy constructor
+        vector_base(const vector_base& r);
         // move constructor
         vector_base(vector_base&& r);
+        // assignment operator
+        vector_base& operator=(const vector_base& r);
+        // move assignment operator
+        vector_base& operator=(vector_base&& r);
         // swap two vector base objects
         vector_base& swap(vector_base& r);
         // device device copy
@@ -37,12 +53,12 @@ namespace ocl {
         // return the size of the vector in bytes
         std::size_t buffer_size() const;
         // return the underlying opencl buffer
-        const cl::Buffer& buf() const;
+        const impl::buffer& buf() const;
         // return the opencl backend information
-        std::shared_ptr<impl::be_data>&
+        impl::be_data_ptr
         backend_data();
         // return the opencl backend information
-        const std::shared_ptr<impl::be_data>&
+        const impl::be_data_ptr
         backend_data() const;
     };
 
@@ -112,7 +128,7 @@ namespace ocl {
 
     template <class _T>
     struct expr_traits<vector<_T> > {
-        typedef const vector<_T>& type;
+        using type = const vector<_T>&;
     };
 
     // eval_size specialized for vector
@@ -136,11 +152,11 @@ namespace ocl {
     // bind_args for non const arguments
     template <class _T>
     void
-    bind_args(cl::Kernel& k, vector<_T>& r,  unsigned& arg_num);
+    bind_args(impl::kernel& k, vector<_T>& r,  unsigned& arg_num);
     // bind_args for const arguments
     template <class _T>
     void
-    bind_args(cl::Kernel& k, const vector<_T>& r,  unsigned& arg_num);
+    bind_args(impl::kernel& k, const vector<_T>& r,  unsigned& arg_num);
 
     namespace ops {
 
@@ -721,19 +737,17 @@ ocl::vector<_T>::vector(std::size_t s, const _T& i)
     }
 }
 
-
 template <class _T>
 inline
 ocl::vector<_T>::vector(const vector& r)
-    : vector_base{r.buffer_size()}
+    : vector_base(r)
 {
-    copy_on_device(r);
 }
 
 template <class _T>
 inline
 ocl::vector<_T>::vector(vector&& r)
-    : vector_base{std::move(r)}
+    : vector_base(std::move(r))
 {
 }
 
@@ -770,14 +784,7 @@ inline
 ocl::vector<_T>&
 ocl::vector<_T>::operator=(const vector& r)
 {
-    if (this != &r) {
-        if (buffer_size() == r.buffer_size()) {
-            copy_on_device(r);
-        } else {
-            vector t(r);
-            swap(t);
-        }
-    }
+    vector_base::operator=(r);
     return *this;
 }
 
@@ -786,7 +793,7 @@ inline
 ocl::vector<_T>&
 ocl::vector<_T>::operator=(vector&& r)
 {
-    swap(r);
+    vector_base::operator=(std::move(r));
     return *this;
 }
 
@@ -863,9 +870,8 @@ std::string ocl::eval_results(vector<_T>& r,
     return s.str();
 }
 
-
 template <class _T>
-void ocl::bind_args(cl::Kernel& k,
+void ocl::bind_args(impl::kernel& k,
                     vector<_T>& r,
                     unsigned& arg_num)
 {
@@ -875,12 +881,12 @@ void ocl::bind_args(cl::Kernel& k,
                   << " to arg " << arg_num
                   << std::endl;
     }
-    k.setArg(arg_num, r.buf());
+    k.set_arg(arg_num, r.buf());
     ++arg_num;
 }
 
 template <class _T>
-void ocl::bind_args(cl::Kernel& k,
+void ocl::bind_args(impl::kernel& k,
                     const vector<_T>& r,
                     unsigned& arg_num)
 {
@@ -890,10 +896,10 @@ void ocl::bind_args(cl::Kernel& k,
                   << " to arg " << arg_num
                   << std::endl;
     }
-    k.setArg(arg_num, r.buf());
+    k.set_arg(arg_num, r.buf());
     ++arg_num;
 }
-
+#endif
 // Local variables:
 // mode: c++
 // end:

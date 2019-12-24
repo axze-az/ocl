@@ -37,11 +37,11 @@ namespace ocl {
 
     // bind_args for const arguments
     template <class _T>
-    void bind_args(cl::Kernel& k, const _T& r,  unsigned& arg_num);
+    void bind_args(impl::kernel& k, const _T& r,  unsigned& arg_num);
 
     // bind_args for const arguments
     template <class _T>
-    void bind_args(cl::Kernel& k, _T& r,  unsigned& arg_num);
+    void bind_args(impl::kernel& k, _T& r,  unsigned& arg_num);
 
     // default expression traits for simple/unspecialized
     // types
@@ -109,12 +109,12 @@ namespace ocl {
 
     // bind_args specialized for expr<>
     template <class _OP, class _L, class _R>
-    void bind_args(cl::Kernel& k,
+    void bind_args(impl::kernel& k,
                    const expr<_OP, _L, _R>& r,
                    unsigned& arg_num);
 
     template <class _OP, class _L>
-    void bind_args(cl::Kernel& k,
+    void bind_args(impl::kernel& k,
                    const expr<_OP, _L, void>& r,
                    unsigned& arg_num);
 
@@ -174,7 +174,7 @@ std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 }
 
 template <class _T>
-void ocl::bind_args(cl::Kernel& k,
+void ocl::bind_args(impl::kernel& k,
                     _T& r,
                     unsigned& arg_num)
 {
@@ -182,12 +182,12 @@ void ocl::bind_args(cl::Kernel& k,
         std::cout << "binding nonconst to arg " << arg_num
                   << std::endl;
     }
-    k.setArg(arg_num, r);
+    k.set_arg(arg_num, r);
     ++arg_num;
 }
 
 template <class _T>
-void ocl::bind_args(cl::Kernel& k,
+void ocl::bind_args(impl::kernel& k,
                     const _T& r,
                     unsigned& arg_num)
 {
@@ -195,7 +195,7 @@ void ocl::bind_args(cl::Kernel& k,
         std::cout << "binding const to arg " << arg_num
                   << std::endl;
     }
-    k.setArg(arg_num, r);
+    k.set_arg(arg_num, r);
     ++arg_num;
 }
 
@@ -281,7 +281,7 @@ std::string ocl::eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num)
 
 
 template <class _OP, class _L, class _R>
-void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, _R>& r,
+void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, _R>& r,
                     unsigned& arg_num)
 {
     bind_args(k, r._l, arg_num);
@@ -289,7 +289,7 @@ void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, _R>& r,
 }
 
 template <class _OP, class _L>
-void ocl::bind_args(cl::Kernel& k, const expr<_OP, _L, void>& r,
+void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, void>& r,
                     unsigned& arg_num)
 {
     bind_args(k, r._l, arg_num);

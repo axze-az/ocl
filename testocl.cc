@@ -78,12 +78,12 @@ int main()
         float d= test_func(a, b, c);
 
         std::vector<float> res(vd);
-
+#if 0
         vector<cftal::v8f32> vva(SIZE/8, a);
         vector<cftal::v8f32> vvb(SIZE/8, b);
         vector<cftal::v8f32> vvc(SIZE/8, c);
         vector<cftal::v8f32> vres(test_func(vva, vvb, vvc));
-
+#endif
         if (SIZE <= 4096) {
             for (std::size_t i=0; i< res.size(); ++i) {
                 std::cout << i << ' ' << res[i] << std::endl;

@@ -2,10 +2,10 @@
 #define __OCL_IMPL_DEVICES_H__ 1
 
 #include <ocl/config.h>
-#define CL_HPP_ENABLE_EXCEPTIONS
-#define CL_HPP_MINIMUM_OPENCL_VERSION 110
-#define CL_HPP_TARGET_OPENCL_VERSION 120
-#include <CL/cl2.hpp>
+#define CL_TARGET_OPENCL_VERSION 120
+#define BOOST_COMPUTE_HAVE_THREAD_LOCAL 1
+#define BOOST_COMPUTE_THREAD_SAFE 1
+#include <boost/compute/core.hpp>
 #include <iosfwd>
 #include <stdexcept>
 #include <string>
@@ -14,22 +14,25 @@
 
 namespace ocl {
 
+    namespace bc= boost::compute;
+
     namespace impl {
 
         using const_str_ref = std::basic_string_view<char>;
 
-        using error = cl::Error;
+        using error = bc::opencl_error;
 
         const_str_ref err2str(const error& e);
         const_str_ref err2str(int e);
 
-        using program = cl::Program;
-        using context = cl::Context;
-        using device = cl::Device;
-        using queue = cl::CommandQueue;
-        using buffer = cl::Buffer;
-        using kernel = cl::Kernel;
-        using event = cl::Event;
+        using program = bc::program;
+        using context = bc::context;
+        using device = bc::device;
+        using queue = bc::command_queue;
+        using buffer = bc::buffer;
+        using kernel = bc::kernel;
+        using event = bc::event;
+        using wait_list = bc::wait_list;
 
         struct device_type {
             enum type {

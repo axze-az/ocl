@@ -72,7 +72,7 @@ namespace ocl {
                 return _c;
             }
 
-            std::vector<event>& evs() {
+            wait_list& evs() {
                 return _ev;
             }
 
@@ -113,9 +113,14 @@ namespace ocl {
                 return _kmap.end();
             }
 
+            // enqueue a kernel with already bound arguments with
+            // size s
+            void
+            enqueue_kernel(const pgm_kernel_lock& pk, size_t s);
+
             // shared, default backend data
             static
-            std::shared_ptr<be_data>
+            be_data*
             instance();
 
             static
@@ -137,13 +142,14 @@ namespace ocl {
             be_data(const device& dev, const context& ctx,
                     const queue& qe);
 
+            ~be_data();
         private:
             mutex _m;
             device _d;
             context _c;
             queue _q;
             kernel_map_type _kmap;
-            std::vector<event> _ev;
+            wait_list _ev;
             uint32_t _debug;
 
             static
@@ -154,7 +160,7 @@ namespace ocl {
             static std::shared_ptr<be_data> _default;
         };
 
-        typedef std::shared_ptr<be_data> be_data_ptr;
+        typedef be_data* be_data_ptr;
 
 
     }

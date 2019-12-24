@@ -1,10 +1,12 @@
 #include <ocl/ocl.h>
+#include <ocl/impl_devices.h>
 
 int main()
 {
     int r;
     try {
-        std::vector<cl::Device> v(ocl::impl::devices());
+
+        std::vector<ocl::impl::device> v(ocl::impl::devices());
         std::cout << std::string(60, '-') << std::endl;
         std::cout << "count of devices: " << v.size() << std::endl;
         for (std::size_t i = 0; i< v.size(); ++i) {
