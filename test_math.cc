@@ -45,7 +45,7 @@ namespace cftal {
         split(const ocl::vector<float> & a,
               ocl::vector<float>& h,
               ocl::vector<float>& l) {
-#if 1
+#if 0
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
             using vi_type = ocl::vector<int32_t>;
@@ -117,7 +117,7 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=1024*1024-1;
+        const int ELEMENTS=512*1024-1;
         void
         test_add12cond(const vector<float>& x);
 
@@ -268,7 +268,7 @@ ocl::test::test_horner(const vector<float>& x)
         log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
         log_c3,  log_c2,  log_c1
     };
-    for (int i=0; i<1; ++i) {
+    for (int i=0; i<1024; ++i) {
         vf_type y0=horner(x,
                           log_c23, log_c22, log_c21, log_c20, log_c19,
                           log_c18, log_c17, log_c16, log_c15, log_c14,
@@ -280,12 +280,13 @@ ocl::test::test_horner(const vector<float>& x)
         // vi_type eq0=y0 == 1.0f;
     }
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
+    // ocl::impl::be_data::instance()->q().finish();
 }
 
 int main()
 {
     try {
-        const int count=1024*2*1024;
+        const int count=1024*2;
 #if 0
         vex::Context ctx( vex::Filter::GPU);
         std::vector<float> xh(ocl::test::ELEMENTS, 1.1235f);

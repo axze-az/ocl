@@ -222,7 +222,6 @@ std::size_t ocl::eval_size(const expr<_OP, _L, void>& a)
     return l;
 }
 
-
 template <class _OP, class _L, class _R>
 std::string ocl::eval_args(const std::string& p,
                            const expr<_OP, _L, _R>& r,

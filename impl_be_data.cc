@@ -10,7 +10,7 @@ ocl::impl::be_data::_default;
 
 void
 ocl::impl::be_data::
-enqueue_kernel(const pgm_kernel_lock& pk, size_t s)
+enqueue_kernel(pgm_kernel_lock& pk, size_t s)
 {
     queue& q= _q;
     if (debug() != 0) {
@@ -30,14 +30,15 @@ enqueue_kernel(const pgm_kernel_lock& pk, size_t s)
     event ev=q.enqueue_1d_range_kernel(pk._k,
                                        0,
                                        gs,
-                                       local_size,
+                                       0,
                                        evs);
     evs.clear();
     evs.insert(ev);
     if (_debug != 0) {
         std::cout << "execution done" << std::endl;
     }
-    q.flush();
+    // q.flush();
+    // q.finish();
 }
 
 ocl::impl::be_data_ptr
@@ -85,7 +86,7 @@ ocl::impl::be_data::read_debug_env()
 
 ocl::impl::be_data::be_data()
     : _d(default_device()), _c(_d),
-      _q(_c, _d, queue::enable_out_of_order_execution),
+      _q(_c, _d/*, queue::enable_out_of_order_execution*/),
       _debug(read_debug_env())
 {
 }

@@ -97,8 +97,7 @@ namespace ocl {
 
             std::pair<iterator, bool>
             insert(const void* cookie, const pgm_kernel_lock& v) {
-                return _kmap.insert(std::make_pair(cookie,
-                                                   v));
+                return _kmap.insert(std::make_pair(cookie, v));
             }
 
             void clear() {
@@ -116,7 +115,7 @@ namespace ocl {
             // enqueue a kernel with already bound arguments with
             // size s
             void
-            enqueue_kernel(const pgm_kernel_lock& pk, size_t s);
+            enqueue_kernel(pgm_kernel_lock& pk, size_t s);
 
             // shared, default backend data
             static

@@ -5,7 +5,7 @@
 #include <ocl/expr_kernel.h>
 #include <ocl/impl_type_2_name.h>
 #include <initializer_list>
-#include <vexcl/vexcl.hpp>
+// #include <vexcl/vexcl.hpp>
 #include <atomic>
 
 #if 0
@@ -94,6 +94,7 @@ namespace ocl {
         using mask_type = vector<mask_value_type>;
         // using vector_base::backend_data;
         // using vector_base::buf;
+        ~vector() {}
         // size of the vector
         std::size_t size() const;
         // default constructor.
