@@ -117,7 +117,7 @@ namespace ocl {
     horner(const vector<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
-        const int ELEMENTS=512*1024-1;
+        const int ELEMENTS=4*1024*1024-1;
         void
         test_add12cond(const vector<float>& x);
 

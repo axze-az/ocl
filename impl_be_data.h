@@ -13,10 +13,9 @@ namespace ocl {
 
     namespace impl {
 
-        struct mutex : public std::mutex {
+        struct debug_mutex : public std::mutex {
             using base_type = std::mutex;
             using base_type::base_type;
-#if 0
             void lock() {
                 try {
                     base_type::lock();
@@ -33,8 +32,9 @@ namespace ocl {
                     std::cout << "unlock failed\n";
                 }
             }
-#endif
         };
+
+        using mutex = std::mutex;
 
 
         // for mesa we need the keep the programs

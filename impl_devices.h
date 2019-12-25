@@ -2,9 +2,10 @@
 #define __OCL_IMPL_DEVICES_H__ 1
 
 #include <ocl/config.h>
-#define CL_TARGET_OPENCL_VERSION 220
+#define CL_TARGET_OPENCL_VERSION 110
 #define BOOST_COMPUTE_HAVE_THREAD_LOCAL 1
 #define BOOST_COMPUTE_THREAD_SAFE 1
+#define BOOST_DISABLE_ASSERTS 1
 #include <boost/compute/core.hpp>
 #include <iosfwd>
 #include <stdexcept>

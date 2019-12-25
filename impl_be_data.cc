@@ -30,7 +30,7 @@ enqueue_kernel(pgm_kernel_lock& pk, size_t s)
     event ev=q.enqueue_1d_range_kernel(pk._k,
                                        0,
                                        gs,
-                                       0,
+                                       local_size,
                                        evs);
     q.flush();
     evs.clear();
