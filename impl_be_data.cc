@@ -32,8 +32,11 @@ enqueue_kernel(pgm_kernel_lock& pk, size_t s)
                                        gs,
                                        0,
                                        evs);
+    q.flush();
     evs.clear();
-    evs.insert(ev);
+    // TODO: figure out why we have memory leaks here:
+    // evs.insert(ev);
+    ev.wait();
     if (_debug != 0) {
         std::cout << "execution done" << std::endl;
     }

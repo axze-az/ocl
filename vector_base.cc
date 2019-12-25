@@ -190,8 +190,7 @@ ocl::vector_base::copy_on_device(const vector_base& r)
         impl::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, evs);
         q.flush();
         evs.clear();
-        // evs.insert(ev);
-        ev.wait();
+        evs.insert(ev);
     }
 }
 

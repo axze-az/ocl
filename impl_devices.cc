@@ -262,8 +262,8 @@ ocl::impl::default_device()
 {
     device r;
     try {
-        // r= default_cpu_device();
-        r= default_gpu_device();
+        r= default_cpu_device();
+        // r= default_gpu_device();
     }
     catch (const error& e) {
         try {
