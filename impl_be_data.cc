@@ -8,7 +8,7 @@ ocl::impl::be_data::_init;
 std::shared_ptr<ocl::impl::be_data>
 ocl::impl::be_data::_default;
 
-void
+ocl::impl::event
 ocl::impl::be_data::
 enqueue_kernel(pgm_kernel_lock& pk, size_t s)
 {
@@ -36,12 +36,12 @@ enqueue_kernel(pgm_kernel_lock& pk, size_t s)
     evs.clear();
     // TODO: figure out why we have memory leaks here:
     // evs.insert(ev);
-    ev.wait();
     if (_debug != 0) {
         std::cout << "execution done" << std::endl;
     }
     // q.flush();
     // q.finish();
+    return ev;
 }
 
 ocl::impl::be_data_ptr

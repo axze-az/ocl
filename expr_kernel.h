@@ -40,19 +40,24 @@ ocl::expr_kernel<_RES, _SRC>::
 execute(_RES& res, const _SRC& r, const void* cookie)
     const
 {
-    impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
+    impl::event ev;
+    {
+        impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
 
-    std::unique_lock<impl::pgm_kernel_lock> _l(pk);
-    // bind args
-    std::size_t s(eval_size(res));
-    const auto& sc=s;
-    unsigned arg_num{0};
-    bind_args(pk._k, sc, arg_num);
-    bind_args(pk._k, res, arg_num);
-    bind_args(pk._k, r, arg_num);
-    // execute the kernel
-    impl::be_data_ptr b= res.backend_data();
-    b->enqueue_kernel(pk, s);
+        std::unique_lock<impl::pgm_kernel_lock> _l(pk);
+        // bind args
+        std::size_t s(eval_size(res));
+        const auto& sc=s;
+        unsigned arg_num{0};
+        bind_args(pk._k, sc, arg_num);
+        bind_args(pk._k, res, arg_num);
+        bind_args(pk._k, r, arg_num);
+        // execute the kernel
+        impl::be_data_ptr b= res.backend_data();
+        ev=b->enqueue_kernel(pk, s);
+    }
+    // otherwise we leak memory
+    ev.wait();
 }
 
 template <class _RES, class _SRC>

@@ -114,7 +114,7 @@ namespace ocl {
 
             // enqueue a kernel with already bound arguments with
             // size s
-            void
+            event
             enqueue_kernel(pgm_kernel_lock& pk, size_t s);
 
             // shared, default backend data

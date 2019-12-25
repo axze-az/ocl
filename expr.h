@@ -174,28 +174,26 @@ std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 }
 
 template <class _T>
-void ocl::bind_args(impl::kernel& k,
-                    _T& r,
-                    unsigned& arg_num)
+void
+ocl::bind_args(impl::kernel& k, _T& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
         std::cout << "binding nonconst to arg " << arg_num
                   << std::endl;
     }
-    k.set_arg(arg_num, r);
+    k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;
 }
 
 template <class _T>
-void ocl::bind_args(impl::kernel& k,
-                    const _T& r,
-                    unsigned& arg_num)
+void
+ocl::bind_args(impl::kernel& k, const _T& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
         std::cout << "binding const to arg " << arg_num
                   << std::endl;
     }
-    k.set_arg(arg_num, r);
+    k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;
 }
 

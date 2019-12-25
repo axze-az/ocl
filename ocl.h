@@ -7,6 +7,14 @@
 #include <ocl/impl_be_data.h>
 #include <ocl/vector.h>
 
+namespace cftal {
+    namespace device {
+        class lvec;
+        namespace backend {
+        }
+    }
+}
+
 namespace ocl {
 
 

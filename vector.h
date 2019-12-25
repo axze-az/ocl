@@ -105,6 +105,9 @@ namespace ocl {
         vector(std::size_t n, const _T& i);
         // constructor from initializer list
         vector(std::initializer_list<_T> l);
+        // constructor with size and initializer
+        template <typename _U>
+        vector(std::size_t n, const _U& i);
         // copy constructor
         vector(const vector& v);
         // move constructor
@@ -739,6 +742,17 @@ ocl::vector<_T>::vector(std::size_t s, const _T& i)
 }
 
 template <class _T>
+template <typename _U>
+inline
+ocl::vector<_T>::vector(std::size_t s, const _U& i)
+    : vector_base{s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i);
+    }
+}
+
+template <class _T>
 inline
 ocl::vector<_T>::vector(const vector& r)
     : vector_base(r)
@@ -872,14 +886,13 @@ std::string ocl::eval_results(vector<_T>& r,
 }
 
 template <class _T>
-void ocl::bind_args(impl::kernel& k,
-                    vector<_T>& r,
-                    unsigned& arg_num)
+void
+ocl::bind_args(impl::kernel& k, vector<_T>& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding buffer of size "
+        std::cout << "binding buffer with "
                   << r.size()
-                  << " to arg " << arg_num
+                  << " elements to arg " << arg_num
                   << std::endl;
     }
     k.set_arg(arg_num, r.buf());
@@ -887,14 +900,13 @@ void ocl::bind_args(impl::kernel& k,
 }
 
 template <class _T>
-void ocl::bind_args(impl::kernel& k,
-                    const vector<_T>& r,
-                    unsigned& arg_num)
+void
+ocl::bind_args(impl::kernel& k, const vector<_T>& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding constant buffer of size "
+        std::cout << "binding constant buffer with "
                   << r.size()
-                  << " to arg " << arg_num
+                  << " elements to arg " << arg_num
                   << std::endl;
     }
     k.set_arg(arg_num, r.buf());

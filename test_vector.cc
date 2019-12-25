@@ -1,3 +1,4 @@
+#include <cftal/vec.h>
 #include "ocl.h"
 #include <iostream>
 #include <iomanip>
@@ -78,15 +79,15 @@ namespace {
     }
 }
 
-
 int main()
 {
     try {
-
+        using namespace cftal;
         using namespace ocl;
         using namespace ocl::test;
 
-        using ftype = double;
+        using rtype = double;
+        using ftype = v8f64;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
 
@@ -96,7 +97,7 @@ int main()
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(ftype))/(1024*1024)
                   << "MiB\n";
-        ftype a(ftype(2.0)), b(ftype(3.0));
+        rtype a(rtype(2.0)), b(rtype(3.0));
         vector<ftype> va(SIZE, a);
         std::cout << "vector init done" << std::endl;
         vector<ftype> vb(SIZE, b);
