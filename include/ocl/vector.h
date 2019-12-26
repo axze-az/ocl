@@ -80,17 +80,18 @@ namespace ocl {
     // vector: representation of data on the acceleration device
     template <class _T>
     class vector : public vector_base {
+        using base_type = vector_base;
     public:
         using value_type = _T;
         using mask_value_type = impl::vector_select_mask_value_t<_T>;
         using mask_type = vector<mask_value_type>;
-        // using vector_base::backend_data;
-        // using vector_base::buf;
+        // using base_type::backend_data;
+        // using base_type::buf;
         ~vector() {}
         // size of the vector
         std::size_t size() const;
         // default constructor.
-        vector() : vector_base{} {}
+        vector() : base_type{} {}
         // constructor from memory buffer
         vector(std::size_t n, const _T* s);
         // constructor with size and initializer
@@ -722,7 +723,7 @@ namespace ocl {
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::size_t n, const _T* p)
-    : vector_base{n*sizeof(_T)}
+    : base_type{n*sizeof(_T)}
 {
     copy_from_host(p);
 }
@@ -730,7 +731,7 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::size_t s, const _T& i)
-    : vector_base{s * sizeof(_T)}
+    : base_type{s * sizeof(_T)}
 {
     if (s) {
         execute(*this, i);
@@ -741,7 +742,7 @@ template <class _T>
 template <typename _U>
 inline
 ocl::vector<_T>::vector(std::size_t s, const _U& i)
-    : vector_base{s * sizeof(_T)}
+    : base_type{s * sizeof(_T)}
 {
     if (s) {
         execute(*this, i);
@@ -751,21 +752,21 @@ ocl::vector<_T>::vector(std::size_t s, const _U& i)
 template <class _T>
 inline
 ocl::vector<_T>::vector(const vector& r)
-    : vector_base(r)
+    : base_type(r)
 {
 }
 
 template <class _T>
 inline
 ocl::vector<_T>::vector(vector&& r)
-    : vector_base(std::move(r))
+    : base_type(std::move(r))
 {
 }
 
 template <class _T>
 inline
 ocl::vector<_T>::vector(const std::vector<_T>& r)
-    : vector_base{sizeof(_T) * r.size()}
+    : base_type{sizeof(_T) * r.size()}
 {
     copy_from_host(&r[0]);
 }
@@ -773,7 +774,7 @@ ocl::vector<_T>::vector(const std::vector<_T>& r)
 template <class _T>
 inline
 ocl::vector<_T>::vector(std::initializer_list<_T> l)
-    : vector_base{sizeof(_T) * l.size()}
+    : base_type{sizeof(_T) * l.size()}
 {
     copy_from_host(l.begin());
 }
@@ -783,7 +784,7 @@ template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::
 vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
-    : vector_base{eval_size(r)*sizeof(_T)}
+    : base_type{eval_size(r)*sizeof(_T)}
 {
     if (buffer_size()) {
         execute(*this, r);
@@ -795,7 +796,7 @@ inline
 ocl::vector<_T>&
 ocl::vector<_T>::operator=(const vector& r)
 {
-    vector_base::operator=(r);
+    base_type::operator=(r);
     return *this;
 }
 
@@ -804,7 +805,7 @@ inline
 ocl::vector<_T>&
 ocl::vector<_T>::operator=(vector&& r)
 {
-    vector_base::operator=(std::move(r));
+    base_type::operator=(std::move(r));
     return *this;
 }
 
