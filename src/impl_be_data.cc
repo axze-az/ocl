@@ -89,7 +89,7 @@ ocl::impl::be_data::read_debug_env()
 
 ocl::impl::be_data::be_data()
     : _d(default_device()), _c(_d),
-      _q(_c, _d/*, queue::enable_out_of_order_execution*/),
+      _q(_c, _d, queue::enable_out_of_order_execution),
       _debug(read_debug_env())
 {
 }
