@@ -19,6 +19,30 @@ namespace ocl {
         };
 
         template <>
+        struct type_2_name<char> {
+            static
+            constexpr const char* v() {
+                return "char";
+            }
+        };
+
+        template <>
+        struct type_2_name<signed char> {
+            static
+            constexpr const char* v() {
+                return "char";
+            }
+        };
+
+        template <>
+        struct type_2_name<unsigned char> {
+            static
+            constexpr const char* v() {
+                return "uchar";
+            }
+        };
+
+        template <>
         struct type_2_name<std::int16_t> {
             static
             constexpr const char* v() {
@@ -87,30 +111,12 @@ namespace ocl {
             static_assert(_N <= 16, "invalid vector size for OpenCL");
             static
             const std::string v() {
-                std::string t(type_2_name<_T>::v());
                 std::ostringstream s;
-                s << _N;
-                return  t+s.str();
-            }
-        };
-        
-#if 1
-        template <>
-        struct type_2_name<cftal::v4f32> {
-            static
-            constexpr const char* v() {
-                return "float4";
+                s << type_2_name<_T>::v() <<  _N;
+                return s.str();
             }
         };
 
-        template <>
-        struct type_2_name<cftal::v8f32> {
-            static
-            constexpr const char* v() {
-                return "float8";
-            }
-        };
-#endif
     }
 }
 

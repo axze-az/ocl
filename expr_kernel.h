@@ -8,6 +8,12 @@
 
 namespace ocl {
 
+    namespace impl {
+        // inserts defines/pragmas into the source code
+        void
+        insert_headers(std::ostream& s);
+    }
+
     // Opencl kernel for expressions
     template <class _RES, class _EXPR>
     class expr_kernel {
@@ -71,12 +77,6 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
 
     std::unique_lock<be_data> _l(*b);
     be_data::iterator f(b->find(cookie));
-#if 0
-    if (f != b->end()) {
-        b->erase(f);
-        f = b->end();
-    }
-#endif
     if (f == b->end()) {
         pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
         std::pair<be_data::iterator, bool> ir(
@@ -97,69 +97,67 @@ ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     const
 {
+    const char nl='\n';
     std::ostringstream s;
-    s << "expr_kernel_" << cookie;
+    s << "k_" << cookie;
     std::string k_name(s.str());
     s.str("");
-    s << "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
+    impl::insert_headers(s);
     s << "__kernel void " << k_name
-      << std::endl
-      << "(\n";
-    // buffer length:
-    std::string buf_len=spaces(4) +
+      << "\n(\n";
+    // element count:
+    std::string element_count=spaces(4) +
         impl::type_2_name<unsigned long>::v() + " n";
     // argument generation
     unsigned arg_num{0};
-    s << eval_args(buf_len, res, arg_num, false)
-      << ','
-      << std::endl;
-    s << eval_args("", r, arg_num, true) << std::endl;
-
-    s << ")" << std::endl;
-
+    s << eval_args(element_count, res, arg_num, false)
+      << ",\n";
+    s << eval_args("", r, arg_num, true);
+    s << "\n)\n";
     // begin body
-    s << "{" << std::endl;
+    s << "{\n";
 
     // global id
-    s << spaces(4) << "ulong gid = get_global_id(0);" << std::endl;
-    s << spaces(4) << "if (gid < n) { " << std::endl;
+    s << spaces(4) << "ulong gid = get_global_id(0);\n";
+    s << spaces(4) << "if (gid < n) {\n";
     // temporary variables
     unsigned var_num{1};
     s << eval_vars(r, var_num, true)
-      << std::endl;
+      << nl;
 
     // result variable
     unsigned res_num{0};
     s << eval_vars(res, res_num, false) << "= ";
     // the operations
     unsigned body_num{1};
-    s << eval_ops(r, body_num) << ';'
-      << std::endl;
+    s << eval_ops(r, body_num) << ";\n";
     // write back
     res_num = 0;
     s << eval_results(res, res_num)
-      << std::endl;
+      << nl;
     // end if
-    s << spaces(4) << "}" << std::endl;
+    s << spaces(4) << "}\n";
     // end body
-    s << "}" << std::endl;
+    s << "}\n";
     using namespace impl;
     be_data_ptr bd= res.backend_data();
+    std::string ss(s.str());
     if (bd->debug() != 0) {
         std::cout << "--- source code ------------------\n";
-        std::cout << s.str();
+        std::cout << ss;
     }
-    std::string ss(s.str());
-    program pgm;
+    program pgm=program::create_with_source(ss, bd->c());
     try {
         // pgm=program::build_with_source(ss, bd->c(), "-cl-std=clc++");
-        pgm=program::build_with_source(ss, bd->c(), "-cl-std=CL1.1");
+        // pgm=program::build_with_source(ss, bd->c(), "-cl-std=CL1.1");
+        pgm.build("-cl-std=CL1.1");
     }
     catch (const error& e) {
         std::cerr << "error info: " << e.what() << '\n';
+        std::cerr << pgm.build_log() << std::endl;
         throw;
     }
-    kernel k(pgm, k_name.c_str());
+    kernel k(pgm, k_name);
     if (bd->debug() != 0) {
         std::cout << "-- compiled with success ---------\n";
     }

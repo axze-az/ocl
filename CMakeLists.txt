@@ -121,6 +121,7 @@ include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 set (CSRCS
   impl_devices.cc
   impl_be_data.cc
+  expr_kernel.cc
   random.cc
   vector_base.cc
 )
