@@ -133,6 +133,7 @@ inline
 ocl::impl::be_data_ptr
 ocl::backend_data(const _T& t)
 {
+    static_cast<void>(t);
     return nullptr;
 }
 
