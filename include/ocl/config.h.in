@@ -1,6 +1,10 @@
 #if !defined (__OCL_CONFIG_H__)
 #define __OCL_CONFIG_H__ 1
 
+#define __OCL_MAJOR__ @OCL_VERSION_MAJ@
+#define __OCL_MINOR__ @OCL_VERSION_MIN@
+#define __OCL_PATCHLEVEL__ @OCL_VERSION_PLV@
+
 #if defined (__GNUC__) || defined (__clang__)
 // clang++ -dM -E -x c++ -march=native /dev/null
 // g++ -dM -E -x c++ -march=native /dev/null
