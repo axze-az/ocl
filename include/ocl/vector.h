@@ -8,14 +8,6 @@
 // #include <vexcl/vexcl.hpp>
 #include <atomic>
 
-#if 0
-
-namespace ocl {
-    using vex::vector;
-}
-
-#else
-
 namespace ocl {
 
     // vector base class wrapping an opencl buffer and a
@@ -923,7 +915,7 @@ ocl::bind_args(impl::kernel& k, const vector<_T>& r, unsigned& arg_num)
     k.set_arg(arg_num, r.buf());
     ++arg_num;
 }
-#endif
+
 // Local variables:
 // mode: c++
 // end:
