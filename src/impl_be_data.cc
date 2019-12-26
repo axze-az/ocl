@@ -54,7 +54,7 @@ ocl::impl::be_data::instance()
             _init= true;
         }
     }
-    return _default.get();
+    return _default;
 }
 
 std::shared_ptr<ocl::impl::be_data>

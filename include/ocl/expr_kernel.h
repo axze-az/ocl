@@ -38,12 +38,12 @@ namespace ocl {
         static
         impl::pgm_kernel_lock&
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   impl::be_data_ptr b);
+                   impl::be_data_ptr& b);
         // generate a new kernel for (res, r)
         static
         impl::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   impl::be_data_ptr b);
+                   impl::be_data_ptr& b);
     };
 
     // generate and execute an opencl kernel for an
@@ -95,7 +95,7 @@ template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock&
 ocl::expr_kernel<_RES, _SRC>::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
-           impl::be_data_ptr b)
+           impl::be_data_ptr& b)
 {
     using namespace impl;
     std::unique_lock<be_data> _l(*b);
@@ -118,7 +118,7 @@ template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock
 ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           impl::be_data_ptr b)
+           impl::be_data_ptr& b)
 {
     const char nl='\n';
     std::ostringstream s;

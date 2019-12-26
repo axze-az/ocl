@@ -119,7 +119,7 @@ namespace ocl {
 
             // shared, default backend data
             static
-            be_data*
+            std::shared_ptr<be_data>
             instance();
 
             static
@@ -159,7 +159,7 @@ namespace ocl {
             static std::shared_ptr<be_data> _default;
         };
 
-        typedef be_data* be_data_ptr;
+        typedef std::shared_ptr<be_data> be_data_ptr;
 
 
     }
