@@ -135,6 +135,10 @@ namespace ocl {
         using type = const vector<_T>&;
     };
 
+    // backend_data specialized for vector t
+    template <class _T>
+    impl::be_data_ptr
+    backend_data(const vector<_T>& t);
     // eval_size specialized for vector
     template <class _T>
     std::size_t eval_size(const vector<_T>& t);
@@ -839,10 +843,17 @@ std::size_t ocl::eval_size(const vector<_T>& v)
 }
 
 template <class _T>
-std::string ocl::eval_args(const std::string& p,
-                           const vector<_T>& r,
-                           unsigned& arg_num,
-                           bool ro)
+inline
+ocl::impl::be_data_ptr
+ocl::backend_data(const vector<_T>& v)
+{
+    return v.backend_data();
+}
+
+template <class _T>
+std::string
+ocl::eval_args(const std::string& p, const vector<_T>& r, unsigned& arg_num,
+               bool ro)
 {
     std::ostringstream s;
     if (!p.empty()) {
@@ -859,8 +870,8 @@ std::string ocl::eval_args(const std::string& p,
 }
 
 template <class _T>
-std::string ocl::eval_vars(const vector<_T>& r, unsigned& arg_num,
-                           bool read)
+std::string
+ocl::eval_vars(const vector<_T>& r, unsigned& arg_num, bool read)
 {
     std::ostringstream s;
     s << spaces(8) << impl::type_2_name<_T>::v()

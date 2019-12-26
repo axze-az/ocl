@@ -12,7 +12,9 @@ namespace ocl {
     struct spaces : public std::string {
         spaces(unsigned int n) : std::string(n, ' ') {}
     };
-
+    // return back end data:
+    template <class _T>
+    impl::be_data_ptr backend_data(const _T& t);
     // Eval_size
     template <class _T>
     std::size_t eval_size(const _T& t);
@@ -64,6 +66,12 @@ namespace ocl {
         constexpr expr(const _L& l) : _l{l} {};
     };
 
+    // backend_data specialized for expr
+    template <class _OP, class _L, class _R>
+    impl::be_data_ptr backend_data(const expr<_OP, _L, _R>& a);
+    // and for unary expressions
+    template <class _OP, class _L>
+    impl::be_data_ptr backend_data(const expr<_OP, _L, void>& a);
 
     // eval_size specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -118,6 +126,14 @@ namespace ocl {
                    const expr<_OP, _L, void>& r,
                    unsigned& arg_num);
 
+}
+
+template <class _T>
+inline
+ocl::impl::be_data_ptr
+ocl::backend_data(const _T& t)
+{
+    return nullptr;
 }
 
 template <class _T>
@@ -203,6 +219,24 @@ constexpr
 ocl::expr<_OP, _L, _R>::expr(const _L& l, const _R& r)
     :  _l(l), _r(r)
 {
+}
+
+template <class _OP, class _L, class _R>
+ocl::impl::be_data_ptr
+ocl::backend_data(const expr<_OP, _L, _R>& a)
+{
+    impl::be_data_ptr pl=backend_data(a._l);
+    if (pl != nullptr) {
+        return pl;
+    }
+    return backend_data(a._r);
+}
+
+template <class _OP, class _L>
+ocl::impl::be_data_ptr
+ocl::backend_data(const expr<_OP, _L, void>& a)
+{
+    return backend_data(a._l);
 }
 
 template <class _OP, class _L, class _R>

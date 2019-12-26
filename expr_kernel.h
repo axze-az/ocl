@@ -12,6 +12,12 @@ namespace ocl {
         // inserts defines/pragmas into the source code
         void
         insert_headers(std::ostream& s);
+        // throws an exception because of missing
+        // backend data
+        __attribute__((__noreturn__))
+        void
+        missing_backend_data();
+
     }
 
     // Opencl kernel for expressions
@@ -19,19 +25,25 @@ namespace ocl {
     class expr_kernel {
     public:
         expr_kernel() = default;
+        static
         void
-        execute(_RES& res, const _EXPR& r, const void* addr)
-            const;
+        execute(_RES& res, const _EXPR& r, const void* addr);
     private:
+        // get the backend data pointer
+        static
+        impl::be_data_ptr
+        backend_ptr(const _RES& res, const _EXPR& r);
         // returns a cached kernel for (res, r) or calls gen_kernel
         // and inserts the new kernel into the cache
+        static
         impl::pgm_kernel_lock&
-        get_kernel(_RES& res, const _EXPR& r, const void* addr)
-            const;
+        get_kernel(_RES& res, const _EXPR& r, const void* addr,
+                   impl::be_data_ptr b);
         // generate a new kernel for (res, r)
+        static
         impl::pgm_kernel_lock
-        gen_kernel(_RES& res, const _EXPR& r, const void* addr)
-            const;
+        gen_kernel(_RES& res, const _EXPR& r, const void* addr,
+                   impl::be_data_ptr b);
     };
 
     // generate and execute an opencl kernel for an
@@ -41,15 +53,29 @@ namespace ocl {
 }
 
 template <class _RES, class _SRC>
+ocl::impl::be_data_ptr
+ocl::expr_kernel<_RES, _SRC>::
+backend_ptr(const _RES& res, const _SRC& r)
+{
+    impl::be_data_ptr b=backend_data(res);
+    if (b == nullptr) {
+        b=backend_data(r);
+        if (b == nullptr) {
+            impl::missing_backend_data();
+        }
+    }
+    return b;
+}
+
+template <class _RES, class _SRC>
 void
 ocl::expr_kernel<_RES, _SRC>::
 execute(_RES& res, const _SRC& r, const void* cookie)
-    const
 {
     impl::event ev;
+    impl::be_data_ptr b=backend_ptr(res, r);
+    impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
     {
-        impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie);
-
         std::unique_lock<impl::pgm_kernel_lock> _l(pk);
         // bind args
         std::size_t s(eval_size(res));
@@ -59,7 +85,6 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         bind_args(pk._k, res, arg_num);
         bind_args(pk._k, r, arg_num);
         // execute the kernel
-        impl::be_data_ptr b= res.backend_data();
         ev=b->enqueue_kernel(pk, s);
     }
     // otherwise we leak memory
@@ -69,16 +94,14 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock&
 ocl::expr_kernel<_RES, _SRC>::
-get_kernel(_RES& res, const _SRC& r, const void* cookie)
-    const
+get_kernel(_RES& res, const _SRC& r, const void* cookie,
+           impl::be_data_ptr b)
 {
     using namespace impl;
-    impl::be_data_ptr b= res.backend_data();
-
     std::unique_lock<be_data> _l(*b);
     be_data::iterator f(b->find(cookie));
     if (f == b->end()) {
-        pgm_kernel_lock pkl(gen_kernel(res, r, cookie));
+        pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b));
         std::pair<be_data::iterator, bool> ir(
             b->insert(cookie, pkl));
         f = ir.first;
@@ -94,8 +117,8 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie)
 template <class _RES, class _SRC>
 ocl::impl::pgm_kernel_lock
 ocl::expr_kernel<_RES, _SRC>::
-gen_kernel(_RES& res, const _SRC& r, const void* cookie)
-    const
+gen_kernel(_RES& res, const _SRC& r, const void* cookie,
+           impl::be_data_ptr b)
 {
     const char nl='\n';
     std::ostringstream s;
@@ -140,16 +163,15 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
     // end body
     s << "}\n";
     using namespace impl;
-    be_data_ptr bd= res.backend_data();
     std::string ss(s.str());
-    if (bd->debug() != 0) {
+    if (b->debug() != 0) {
         std::cout << "--- source code ------------------\n";
         std::cout << ss;
     }
-    program pgm=program::create_with_source(ss, bd->c());
+    program pgm=program::create_with_source(ss, b->c());
     try {
-        // pgm=program::build_with_source(ss, bd->c(), "-cl-std=clc++");
-        // pgm=program::build_with_source(ss, bd->c(), "-cl-std=CL1.1");
+        // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
+        // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
         pgm.build("-cl-std=CL1.1");
     }
     catch (const error& e) {
@@ -158,7 +180,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie)
         throw;
     }
     kernel k(pgm, k_name);
-    if (bd->debug() != 0) {
+    if (b->debug() != 0) {
         std::cout << "-- compiled with success ---------\n";
     }
 
@@ -173,8 +195,7 @@ ocl::execute(_RES& res, const _EXPR& r)
     // auto pf=execute<_RES, _EXPR>;
     void (*pf)(_RES&, const _EXPR&) = execute<_RES, _EXPR>  ;
     const void* pv=reinterpret_cast<const void*>(pf);
-    expr_kernel<_RES, _EXPR> k;
-    k.execute(res, r, pv);
+    expr_kernel<_RES, _EXPR>::execute(res, r, pv);
 }
 
 // Local variables:

@@ -14,3 +14,9 @@ ocl::impl::insert_headers(std::ostream& s)
          "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
          "#endif\n\n";
 }
+
+void
+ocl::impl::missing_backend_data()
+{
+    throw std::runtime_error("missing backend data");
+}
