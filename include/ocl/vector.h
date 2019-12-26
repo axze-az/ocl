@@ -847,6 +847,7 @@ std::string
 ocl::eval_args(const std::string& p, const vector<_T>& r, unsigned& arg_num,
                bool ro)
 {
+    static_cast<void>(r);
     std::ostringstream s;
     if (!p.empty()) {
         s << p << ",\n";
@@ -865,6 +866,7 @@ template <class _T>
 std::string
 ocl::eval_vars(const vector<_T>& r, unsigned& arg_num, bool read)
 {
+    static_cast<void>(r);
     std::ostringstream s;
     s << spaces(8) << impl::type_2_name<_T>::v()
       << " v" << arg_num;
@@ -881,6 +883,7 @@ template <class _T>
 std::string ocl::eval_results(vector<_T>& r,
                               unsigned& res_num)
 {
+    static_cast<void>(r);
     std::ostringstream s;
     s << spaces(8) << "arg" << res_num << "[gid]="
       << " v" << res_num << ';';
@@ -893,7 +896,9 @@ void
 ocl::bind_args(impl::kernel& k, vector<_T>& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding buffer with "
+        std::cout << "binding lvec<"
+                  << impl::type_2_name<_T>::v()
+                  << "> with "
                   << r.size()
                   << " elements to arg " << arg_num
                   << std::endl;
@@ -907,8 +912,9 @@ void
 ocl::bind_args(impl::kernel& k, const vector<_T>& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding constant buffer with "
-                  << r.size()
+        std::cout << "binding const lvec<"
+                  << impl::type_2_name<_T>::v()
+                  << "> with "<< r.size()
                   << " elements to arg " << arg_num
                   << std::endl;
     }

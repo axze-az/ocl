@@ -151,6 +151,7 @@ std::string ocl::eval_args(const std::string& p,
                            unsigned& arg_num,
                            bool ro)
 {
+    static_cast<void>(r);
     static_cast<void>(ro);
     std::ostringstream s;
     if (!p.empty()) {
@@ -167,6 +168,7 @@ template <class _T>
 std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
                            bool read)
 {
+    static_cast<void>(r);
     std::ostringstream s;
     s << spaces(8) << impl::type_2_name<_T>::v()
       << " v" << arg_num;
@@ -182,6 +184,7 @@ std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
 template <class _T>
 std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 {
+    static_cast<void>(r);
     std::ostringstream s;
     s << "v" << arg_num;
     std::string a(s.str());
@@ -194,7 +197,9 @@ void
 ocl::bind_args(impl::kernel& k, _T& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding nonconst to arg " << arg_num
+        std::cout << "binding "
+                  << impl::type_2_name<_T>::v()
+                  << " to arg " << arg_num
                   << std::endl;
     }
     k.set_arg(arg_num, sizeof(_T), &r);
@@ -206,7 +211,9 @@ void
 ocl::bind_args(impl::kernel& k, const _T& r, unsigned& arg_num)
 {
     if (impl::be_data::instance()->debug() != 0) {
-        std::cout << "binding const to arg " << arg_num
+        std::cout << "binding const "
+                  << impl::type_2_name<_T>::v()
+                  << " to arg " << arg_num
                   << std::endl;
     }
     k.set_arg(arg_num, sizeof(_T), &r);
@@ -274,7 +281,6 @@ std::string ocl::eval_args(const std::string& p,
     return left;
 }
 
-
 template <class _OP, class _L, class _R>
 std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
                            bool read)
@@ -292,7 +298,6 @@ std::string ocl::eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
     return std::string(l + "\n");
 }
 
-
 template <class _OP, class _L, class _R>
 std::string ocl::eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num)
 {
@@ -309,7 +314,6 @@ std::string ocl::eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num)
     std::string t(_OP::body(l));
     return std::string("(") + t + std::string(")");
 }
-
 
 template <class _OP, class _L, class _R>
 void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, _R>& r,
