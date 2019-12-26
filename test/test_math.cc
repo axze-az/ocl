@@ -2,7 +2,7 @@
 #include <cftal/math/elem_func.h>
 #include <cftal/math/elem_func_core_f32.h>
 #include <cftal/d_real.h>
-#include <ocl/vector.h>
+#include "ocl/vector.h"
 // #include <vexcl/vexcl.hpp>
 #include <chrono>
 #include <thread>
