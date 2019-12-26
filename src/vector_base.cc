@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "ocl/vector.h"
 #include <iomanip>
 
 #define DEBUG_VECTOR_BASE 0
@@ -95,8 +95,10 @@ ocl::vector_base::vector_base(std::size_t s)
 }
 
 ocl::vector_base::vector_base(const vector_base& r)
-    : _bed{impl::be_data::instance()},
-      _b{_bed->c(), r.buffer_size()}
+    : _bed{r._bed},
+      _b(_bed != nullptr ?
+         impl::buffer(_bed->c(), r.buffer_size()) :
+         impl::buffer())
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_r(&r, r._b);

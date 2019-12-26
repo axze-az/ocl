@@ -1,4 +1,4 @@
-#include "expr_kernel.h"
+#include "ocl/expr_kernel.h"
 
 void
 ocl::impl::insert_headers(std::ostream& s)

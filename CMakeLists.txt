@@ -1,10 +1,9 @@
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.9)
 
 if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message( FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt.")
 endif()
 
-add_subdirectory(../cftal cftal)
 
 # configurations
 if(CMAKE_CONFIGURATION_TYPES)
@@ -112,76 +111,37 @@ option(OCL_STATIC_LIB "create static libcftal.a" OFF)
 # Full test ?
 option(OCL_FULL_TEST "perform a full test with long compile times" OFF)
 
-include_directories(..)
+
+include_directories(include)
+include_directories(test/include)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include/ocl)
+include_directories(${PROJECT_BINARY_DIR}/include)
+
+configure_file("include/ocl/config.h.in"
+               "${PROJECT_BINARY_DIR}/include/ocl/config.h")
+
+include_directories(../cftal/gcc9/include)
 include_directories(../cftal/include)
 include_directories(../cftal/test/include)
-include_directories(../../vexcl)
-include_directories(${PROJECT_BINARY_DIR}/cftal/include)
+#include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
-set (CSRCS
-  impl_devices.cc
-  impl_be_data.cc
-  expr_kernel.cc
-  random.cc
-  vector_base.cc
-)
-
-if (OCL_STATIC_LIB)
-    add_library (ocl STATIC ${CSRCS} ${HDRS})
-    install(TARGETS ocl
-        DESTINATION lib LIBRARY
-        COMPONENT devel)
+find_package(Threads REQUIRED)
+find_package(Boost REQUIRED)
+if(${Boost_FOUND})
+    #message ("${Boost_FOUND}")
+    #message ("${Boost_INCLUDE_DIRS}")
+    include_directories(${Boost_INCLUDE_DIRS})
 endif()
-
-#set_target_properties(ocl PROPERTIES OUTPUT_NAME "ocl")
-add_library (ocl-so SHARED ${CSRCS})
-set_property(TARGET ocl-so
-  PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
-set_property(TARGET ocl-so
-  PROPERTY OUTPUT_NAME ocl)
-set_target_properties(ocl-so PROPERTIES SOVERSION "${OCL_VERSION_MAJ}"
-  VERSION "${OCL_VERSION_MAJ}.${OCL_VERSION_MIN}")
-
 find_library(LIBOPENCL OpenCL)
 message("open cl library: ${LIBOPENCL}")
-if (LIBOPENCL)
-  target_link_libraries(ocl-so ${LIBOPENCL})
-endif()
-find_package(Threads REQUIRED)
-target_link_libraries(ocl-so Threads::Threads)
-
 find_library(LIBM m)
-if (LIBM)
-  target_link_libraries(ocl-so ${LIBM})
-endif(LIBM)
-
 find_library(LIB_BOOST_SYSTEM boost_system)
 
-function(target_add_libs arg1)
-    target_link_libraries(${arg1} ${LIB_BOOST_SYSTEM})
-    target_link_libraries(${arg1} ocl-so)
-    target_link_libraries(${arg1} Threads::Threads)
-endfunction()
+#add_subdirectory(../cftal cftal)
+add_subdirectory(src)
+add_subdirectory(test)
 
-# test_be_data
-add_executable(test_be_data test_be_data.cc)
-target_add_libs(test_be_data)
-# test_ocl
-add_executable(test_ocl testocl.cc)
-target_add_libs(test_ocl)
-# test_vector
-add_executable(test_vector test_vector.cc)
-target_add_libs(test_vector)
-# test_rnd
-add_executable(test_rnd test_rnd.cc)
-target_add_libs(test_rnd)
-# test_reduce
-add_executable(test_reduce test_reduce.cc)
-target_add_libs(test_reduce)
-
-# test_math
-add_executable(test_math test_math.cc)
-target_add_libs(test_math)
 
 enable_testing()
 

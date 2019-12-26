@@ -1,5 +1,5 @@
-#include "ocl.h"
-#include "impl_devices.h"
+#include "ocl/ocl.h"
+#include "ocl/impl_devices.h"
 #include <boost/compute/system.hpp>
 #include <iostream>
 

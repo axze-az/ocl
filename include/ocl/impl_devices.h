@@ -15,10 +15,9 @@
 
 namespace ocl {
 
-    namespace bc= boost::compute;
-
     namespace impl {
 
+        namespace bc= boost::compute;
         using const_str_ref = std::basic_string_view<char>;
 
         using error = bc::opencl_error;

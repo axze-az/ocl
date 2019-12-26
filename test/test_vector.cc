@@ -1,5 +1,5 @@
 #include <cftal/vec.h>
-#include "ocl.h"
+#include <ocl/ocl.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>

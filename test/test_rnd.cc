@@ -1,4 +1,4 @@
-#include "ocl.h"
+#include <ocl/ocl.h>
 #include <ocl/random.h>
 #include <iostream>
 #include <iomanip>

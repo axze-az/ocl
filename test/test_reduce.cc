@@ -1,4 +1,4 @@
-#include "ocl.h"
+#include <ocl/ocl.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -62,7 +62,7 @@ int main()
         if (ao != true || no != false || so != true) {
             throw std::runtime_error("xxx_of failed.");
         }
-        
+
         impl::be_data::instance()->clear();
     }
     catch (const ocl::impl::error& e) {
