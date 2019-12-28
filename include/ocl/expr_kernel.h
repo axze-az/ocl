@@ -85,9 +85,10 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     // rest of arguments later
     bind_non_buffer_args(r, ab);
     ab.pad_to_multiple_of<128>();
+    auto ab_size=ab.size();
     auto& dcq=b->dcq();
     auto& c=dcq.c();
-    be::buffer dev_ab(c, ab.size());
+    be::buffer dev_ab(c, ab_size);
     auto& q=dcq.q();
     auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
@@ -95,7 +96,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     {
         std::unique_lock<be::mutex> _lq(dcq_mtx);
         cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
-                                            ab.size(),
+                                            ab_size,
                                             ab.data());
         wl.insert(cpy_ev);
     }
@@ -106,13 +107,14 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         bind_buffer_args(r, buf_num, pk._k);
         pk._k.set_arg(buf_num++, dev_ab);
         if (b->debug() != 0) {
-            std::cout << "binding argument buffer of size " << ab.size()
-                      << '\n';
+            std::cout << "binding argument buffer of size "
+                      << ab_size << '\n';
         }
-        pk._k.set_arg(buf_num, ab.size(), nullptr);
+        /* create local memory: */
+        pk._k.set_arg(buf_num, ab_size, nullptr);
         if (b->debug() != 0) {
-            std::cout << "binding local buffer of size " << ab.size()
-                      << '\n';
+            std::cout << "binding local buffer of size "
+                      << ab_size << '\n';
         }
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
