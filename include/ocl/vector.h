@@ -135,6 +135,29 @@ namespace ocl {
     // eval_size specialized for vector
     template <class _T>
     std::size_t eval_size(const vector<_T>& t);
+    // decl_non_nuffer_args specialized for be::buffer
+    std::string
+    decl_non_buffer_args(const be::buffer& b, unsigned& arg_num);
+    // decl_non_buffer_args specialized for vectors
+    template <typename _T>
+    std::string
+    decl_non_buffer_args(const vector<_T>& t, unsigned& arg_num);
+
+    // decl_buffer_args specialized for vectors
+    template <typename _T>
+    std::string
+    decl_buffer_args(const vector<_T>& t, unsigned& arg_num, bool ro);
+
+    // fetch_args specialized for vectors
+    template <typename _T>
+    std::string
+    fetch_args(const vector<_T>& t, var_counters& c);
+
+    // fetch_args specialized for vectors
+    template <typename _T>
+    std::string
+    store_result(vector<_T>& t, var_counters& c);
+
     // eval_args specialized for vector
     template <class _T>
     std::string
@@ -841,6 +864,69 @@ ocl::be::data_ptr
 ocl::backend_data(const vector<_T>& v)
 {
     return v.backend_data();
+}
+
+inline
+std::string
+ocl::decl_non_buffer_args(const be::buffer& r, unsigned& arg_num)
+{
+    static_cast<void>(r);
+    static_cast<void>(arg_num);
+    return std::string();
+}
+
+template <typename _T>
+std::string
+ocl::decl_non_buffer_args(const vector<_T>& r, unsigned& arg_num)
+{
+    static_cast<void>(r);
+    static_cast<void>(arg_num);
+    return std::string();
+}
+
+
+template <typename _T>
+std::string
+ocl::decl_buffer_args(const vector<_T>& r, unsigned& arg_num, bool ro)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << spaces(4) << "__global ";
+    if (ro) {
+        s << "const ";
+    }
+    s << be::type_2_name<_T>::v()
+      << "* arg" << arg_num << ",\n";
+    ++arg_num;
+    return s.str();
+}
+
+template <typename _T>
+std::string
+ocl::fetch_args(const vector<_T>& r, var_counters& c)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << spaces(8) << "const " << be::type_2_name<_T>::v()
+      << " v" << c._var_num
+      << " = arg" << c._buf_num << "[gid];\n";
+    ++c._var_num;
+    ++c._buf_num;
+    return s.str();
+}
+
+template <typename _T>
+std::string
+ocl::store_result(vector<_T>& r, var_counters& c)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << spaces(8)
+      << "arg" << c._buf_num
+      << "[gid] =";
+    ++c._var_num;
+    ++c._buf_num;
+    return s.str();
 }
 
 template <class _T>

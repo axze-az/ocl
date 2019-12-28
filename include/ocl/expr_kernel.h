@@ -125,7 +125,36 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << "k_" << cookie;
     std::string k_name(s.str());
     s.str("");
+    s << "arg_" << cookie;
+    std::string k_arg_name(s.str());
+    s.str("");
     impl::insert_headers(s);
+
+    unsigned decl_nb_args(0);
+    // argument structure with the scalar arguments
+    s << "struct " << k_arg_name << " {\n"
+         "    ulong _n __attribute__((aligned("
+         << alignof(int64_t) <<")));\n"
+      << decl_non_buffer_args(r, decl_nb_args) << "};\n\n";
+    // kernel argument
+    unsigned buf_args(0);
+    s << "__kernel void __" << k_name
+      << "\n(\n";
+    s << decl_buffer_args(res, buf_args, false);
+    s << decl_buffer_args(r, buf_args, true);
+    s << spaces(4) << "__global const struct " << k_arg_name << "* pa\n)\n";
+    s << "{\n"
+         "    ulong gid = get_global_id(0);\n"
+         "    if (gid < pa->_n) {\n";
+    var_counters c{1};
+    s << fetch_args(r, c);
+    var_counters cr{0};
+    s << store_result(res, cr);
+    s << eval_ops(r, cr._var_num) << ";\n";
+    s << "    }\n"
+         "}\n\n";
+
+    // the real kernel follows now
     s << "__kernel void " << k_name
       << "\n(\n";
     // element count:

@@ -15,9 +15,35 @@ namespace ocl {
     // return back end data:
     template <class _T>
     be::data_ptr backend_data(const _T& t);
-    // Eval_size
+    // evaluate the size of an expression
     template <class _T>
     std::size_t eval_size(const _T& t);
+
+    // generate the declarations for the members of the structure
+    // with the scalar arguments, must increment arg_num if something
+    // was generated
+    template <typename _T>
+    std::string
+    decl_non_buffer_args(const _T& p, unsigned& arg_num);
+
+    // declare buffer arguments, must increment arg_num if something
+    // generated
+    template <typename _T>
+    std::string
+    decl_buffer_args(const _T& p, unsigned& arg_num, bool read_only);
+
+    struct var_counters {
+        unsigned _var_num;
+        unsigned _buf_num;
+        unsigned _scalar_num;
+        var_counters() = default;
+        var_counters(unsigned buf_offs)
+            : _var_num(buf_offs), _buf_num(buf_offs), _scalar_num(0) {};
+    };
+    template <typename _T>
+    std::string
+    fetch_args(const _T& r, var_counters& c);
+
     // eval_args, returns the opencl source code
     // for all arguments of generated from r,
     // increments arg_num.
@@ -79,6 +105,36 @@ namespace ocl {
 
     template <class _OP, class _L>
     std::size_t eval_size(const expr<_OP, _L, void>& a);
+
+    // decl_non_buffer_args specialized for expressions
+    template <class _OP, class _L, class _R>
+    std::string
+    decl_non_buffer_args(const expr<_OP, _L, _R>& r,
+                         unsigned& arg_num);
+
+    template <class _OP, class _L>
+    std::string
+    decl_non_buffer_args(const expr<_OP, _L, void>& r,
+                         unsigned& arg_num);
+
+    // decl_non_buffer_args specialized for expressions
+    template <class _OP, class _L, class _R>
+    std::string
+    decl_buffer_args(const expr<_OP, _L, _R>& r,
+                     unsigned& arg_num, bool read_only);
+
+    template <class _OP, class _L>
+    std::string
+    decl_buffer_args(const expr<_OP, _L, void>& r,
+                     unsigned& arg_num, bool read_only);
+
+    template <class _OP, class _L, class _R>
+    std::string
+    fetch_args(const expr<_OP, _L, _R>& e, var_counters& c);
+
+    template <class _OP, class _L>
+    std::string
+    fetch_args(const expr<_OP, _L, void>& e, var_counters& c);
 
     // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -144,6 +200,43 @@ ocl::eval_size(const _T& t)
 {
     static_cast<void>(t);
     return 1;
+}
+
+template <class _T>
+std::string
+ocl::decl_non_buffer_args(const _T& r, unsigned& arg_num)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << spaces(4) << be::type_2_name<_T>::v()
+      << " _a" << arg_num
+      << " __attribute__((aligned(" << alignof(_T) << ")));\n";
+    ++arg_num;
+    return s.str();
+}
+
+template <class _T>
+std::string
+ocl::decl_buffer_args(const _T& r, unsigned& arg_num, bool read_only)
+{
+    static_cast<void>(r);
+    static_cast<void>(arg_num);
+    static_cast<void>(read_only);
+    return std::string();
+}
+
+template <class _T>
+std::string
+ocl::fetch_args(const _T& r, var_counters& c)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << spaces(8) << "const " << be::type_2_name<_T>::v()
+      << " v" << c._var_num
+      << " = pa->_a" << c._scalar_num << ";\n";
+    ++c._var_num;
+    ++c._scalar_num;
+    return s.str();
 }
 
 template <class _T>
@@ -261,6 +354,63 @@ std::size_t ocl::eval_size(const expr<_OP, _L, void>& a)
     std::size_t l=eval_size(a._l);
     return l;
 }
+
+template <class _OP, class _L, class _R>
+std::string
+ocl::
+decl_non_buffer_args(const expr<_OP, _L, _R>& e, unsigned& arg_num)
+{
+    std::string l=decl_non_buffer_args(e._l, arg_num);
+    std::string r=decl_non_buffer_args(e._r, arg_num);
+    return l+r;
+}
+
+template <class _OP, class _L>
+std::string
+ocl::
+decl_non_buffer_args(const expr<_OP, _L, void>& e, unsigned& arg_num)
+{
+    return decl_non_buffer_args(e._l, arg_num);
+}
+
+template <class _OP, class _L, class _R>
+std::string
+ocl::
+decl_buffer_args(const expr<_OP, _L, _R>& e,
+                 unsigned& arg_num, bool read_only)
+{
+    std::string l=decl_buffer_args(e._l, arg_num, read_only);
+    std::string r=decl_buffer_args(e._r, arg_num, read_only);
+    return l+r;
+}
+
+template <class _OP, class _L>
+std::string
+ocl::
+decl_buffer_args(const expr<_OP, _L, void>& e,
+                 unsigned& arg_num, bool read_only)
+{
+    return decl_buffer_args(e._l, arg_num, read_only);
+}
+
+template <class _OP, class _L>
+std::string
+ocl::
+fetch_args(const expr<_OP, _L, void>& e, var_counters& c)
+{
+    return fetch_args(e._l, c);
+}
+
+template <class _OP, class _L, class _R>
+std::string
+ocl::
+fetch_args(const expr<_OP, _L, _R>& e, var_counters& c)
+{
+    std::string l=fetch_args(e._l, c);
+    std::string r=fetch_args(e._r, c);
+    return l+r;
+}
+
 
 template <class _OP, class _L, class _R>
 std::string ocl::eval_args(const std::string& p,
