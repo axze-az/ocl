@@ -4,6 +4,9 @@
 #include <ocl/config.h>
 #include <ocl/be/data.h>
 #include <ocl/be/type_2_name.h>
+
+#include <ocl/be/argument_buffer.h>
+
 #include <iostream>
 #include <sstream>
 
@@ -43,6 +46,16 @@ namespace ocl {
     template <typename _T>
     std::string
     fetch_args(const _T& r, var_counters& c);
+
+    // bind non buffer arguments
+    template <typename _T>
+    void
+    bind_non_buffer_args(const _T& t, be::argument_buffer& a);
+
+    // bind buffer arguments
+    template <typename _T>
+    void
+    bind_buffer_args(const _T& t, unsigned& buf_num, be::kernel& k);
 
     // eval_args, returns the opencl source code
     // for all arguments of generated from r,
@@ -135,6 +148,28 @@ namespace ocl {
     template <class _OP, class _L>
     std::string
     fetch_args(const expr<_OP, _L, void>& e, var_counters& c);
+
+    // bind_non_buffer_args specialized for expr<>
+    template <class _OP, class _L, class _R>
+    void
+    bind_non_buffer_args(const expr<_OP, _L, _R>& e,
+                         be::argument_buffer& a);
+    template <class _OP, class _L>
+    void
+    bind_non_buffer_args(const expr<_OP, _L, void>& e,
+                         be::argument_buffer& a);
+
+    // bind_buffer_args specialized for expr<>
+    template <class _OP, class _L, class _R>
+    void
+    bind_buffer_args(const expr<_OP, _L, _R>& r,
+                     unsigned& buf_num,
+                     be::kernel& k);
+    template <class _OP, class _L>
+    void
+    bind_buffer_args(const expr<_OP, _L, void>& r,
+                     unsigned& buf_num,
+                     be::kernel& k);
 
     // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -237,6 +272,21 @@ ocl::fetch_args(const _T& r, var_counters& c)
     ++c._var_num;
     ++c._scalar_num;
     return s.str();
+}
+
+template <typename _T>
+void
+ocl::bind_non_buffer_args(const _T& t, be::argument_buffer& a)
+{
+    a.insert(t);
+}
+
+template <typename _T>
+void
+ocl::bind_buffer_args(const _T& t, unsigned& buf_num, be::kernel& k)
+{
+    static_cast<void>(t);
+    static_cast<void>(buf_num);
 }
 
 template <class _T>
@@ -464,6 +514,44 @@ std::string ocl::eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num)
     auto l=eval_ops(a._l, arg_num);
     std::string t(_OP::body(l));
     return std::string("(") + t + std::string(")");
+}
+
+// bind_non_buffer_args specialized for expr<>
+template <class _OP, class _L, class _R>
+void
+ocl::bind_non_buffer_args(const expr<_OP, _L, _R>& e,
+                          be::argument_buffer& a)
+{
+    bind_non_buffer_args(e._l, a);
+    bind_non_buffer_args(e._r, a);
+}
+
+template <class _OP, class _L>
+void
+ocl::bind_non_buffer_args(const expr<_OP, _L, void>& e,
+                        be::argument_buffer& a)
+{
+    bind_non_buffer_args(e._l, a);
+}
+
+// bind_buffer_args specialized for expr<>
+template <class _OP, class _L, class _R>
+void
+ocl::bind_buffer_args(const expr<_OP, _L, _R>& e,
+                      unsigned& buf_num,
+                      be::kernel& k)
+{
+    bind_buffer_args(e._l, buf_num, k);
+    bind_buffer_args(e._r, buf_num, k);
+}
+
+template <class _OP, class _L>
+void
+ocl::bind_buffer_args(const expr<_OP, _L, void>& e,
+                      unsigned& buf_num,
+                      be::kernel& k)
+{
+    bind_buffer_args(e._l, buf_num, k);
 }
 
 template <class _OP, class _L, class _R>

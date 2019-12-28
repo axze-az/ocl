@@ -153,10 +153,26 @@ namespace ocl {
     std::string
     fetch_args(const vector<_T>& t, var_counters& c);
 
+    // bind non buffer arguments
+    template <typename _T>
+    void
+    bind_non_buffer_args(const vector<_T>& t, be::argument_buffer& a);
+
+    // bind buffer arguments
+    template <typename _T>
+    void
+    bind_buffer_args(const vector<_T>& t, unsigned& buf_num, be::kernel& k);
+
+    // bind buffer arguments
+    template <typename _T>
+    void
+    bind_buffer_args(vector<_T>& t, unsigned& buf_num, be::kernel& k);
+
     // fetch_args specialized for vectors
     template <typename _T>
     std::string
     store_result(vector<_T>& t, var_counters& c);
+
 
     // eval_args specialized for vector
     template <class _T>
@@ -913,6 +929,48 @@ ocl::fetch_args(const vector<_T>& r, var_counters& c)
     ++c._var_num;
     ++c._buf_num;
     return s.str();
+}
+
+template <typename _T>
+void
+ocl::bind_non_buffer_args(const vector<_T>& t, be::argument_buffer& a)
+{
+    static_cast<void>(t);
+    static_cast<void>(a);
+}
+
+template <typename _T>
+void
+ocl::
+bind_buffer_args(const vector<_T>& r, unsigned& buf_num, be::kernel& k)
+{
+    if (r.backend_data()->debug() != 0) {
+        std::cout << "binding const lvec<"
+                  << be::type_2_name<_T>::v()
+                  << "> with "
+                  << r.size()
+                  << " elements to arg " << buf_num
+                  << std::endl;
+    }
+    k.set_arg(buf_num, r.buf());
+    ++buf_num;
+}
+
+template <typename _T>
+void
+ocl::
+bind_buffer_args(vector<_T>& r, unsigned& buf_num, be::kernel& k)
+{
+    if (r.backend_data()->debug() != 0) {
+        std::cout << "binding lvec<"
+                  << be::type_2_name<_T>::v()
+                  << "> with "
+                  << r.size()
+                  << " elements to arg " << buf_num
+                  << std::endl;
+    }
+    k.set_arg(buf_num, r.buf());
+    ++buf_num;
 }
 
 template <typename _T>

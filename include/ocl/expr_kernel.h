@@ -6,6 +6,8 @@
 #include <thread>
 #include <chrono>
 
+#define USE_ARG_BUFFER 1
+
 namespace ocl {
 
     namespace impl {
@@ -75,6 +77,38 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     be::event ev;
     be::data_ptr b=backend_ptr(res, r);
     be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
+#if USE_ARG_BUFFER > 0
+    be::argument_buffer ab;
+    std::size_t s(eval_size(res));
+    // size argument first
+    bind_non_buffer_args(s, ab);
+    // rest of arguments later
+    bind_non_buffer_args(r, ab);
+    auto& dcq=b->dcq();
+    auto& c=dcq.c();
+    be::buffer dev_ab(c, ab.size());
+    auto& q=dcq.q();
+    auto& wl=dcq.wl();
+    auto& dcq_mtx=dcq.mtx();
+    {
+        std::unique_lock<be::mutex> _lq(dcq_mtx);
+        be::event cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
+                                                      ab.size(),
+                                                      ab.data());
+        wl.insert(cpy_ev);
+    }
+    {
+        std::unique_lock<be::pgm_kernel_lock> _lk(pk);
+        unsigned buf_num=0;
+        bind_buffer_args(res, buf_num, pk._k);
+        bind_buffer_args(r, buf_num, pk._k);
+        pk._k.set_arg(buf_num, dev_ab);
+        {
+            std::unique_lock<be::mutex> _lq(dcq_mtx);
+            ev=b->enqueue_kernel(pk, s);
+        }
+    }
+#else
     {
         std::unique_lock<be::pgm_kernel_lock> _l(pk);
         // bind args
@@ -87,6 +121,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         // execute the kernel
         ev=b->enqueue_kernel(pk, s);
     }
+#endif
     // otherwise we leak memory
     ev.wait();
 }
@@ -120,7 +155,6 @@ ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
            be::data_ptr& b)
 {
-    const char nl='\n';
     std::ostringstream s;
     s << "k_" << cookie;
     std::string k_name(s.str());
@@ -130,6 +164,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s.str("");
     impl::insert_headers(s);
 
+#if USE_ARG_BUFFER > 0
     unsigned decl_nb_args(0);
     // argument structure with the scalar arguments
     s << "struct " << k_arg_name << " {\n"
@@ -138,7 +173,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << decl_non_buffer_args(r, decl_nb_args) << "};\n\n";
     // kernel argument
     unsigned buf_args(0);
-    s << "__kernel void __" << k_name
+    s << "__kernel void " << k_name
       << "\n(\n";
     s << decl_buffer_args(res, buf_args, false);
     s << decl_buffer_args(r, buf_args, true);
@@ -153,7 +188,8 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << eval_ops(r, cr._var_num) << ";\n";
     s << "    }\n"
          "}\n\n";
-
+#else
+    const char nl='\n';
     // the real kernel follows now
     s << "__kernel void " << k_name
       << "\n(\n";
@@ -191,6 +227,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << spaces(4) << "}\n";
     // end body
     s << "}\n";
+#endif
     using namespace impl;
     std::string ss(s.str());
     if (b->debug() != 0) {
