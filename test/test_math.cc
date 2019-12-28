@@ -306,12 +306,11 @@ int main()
             // std::this_thread::sleep_for(s4);
         }
         // ocl::test::test_horner();
-        ocl::impl::be_data::instance()->q().finish();
     }
-    catch (const ocl::impl::error& e) {
+    catch (const ocl::be::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()
                   << '\n'
-                  << ocl::impl::err2str(e)
+                  << e.error_string()
                   << std::endl;
     }
     catch (const std::runtime_error& e) {

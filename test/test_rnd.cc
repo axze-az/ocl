@@ -267,12 +267,11 @@ int main()
 #endif
 
         std::cout << std::endl << dst << std::endl;
-        impl::be_data::instance()->clear();
     }
-    catch (const ocl::impl::error& e) {
+    catch (const ocl::be::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()
                   << '\n'
-                  << ocl::impl::err2str(e)
+                  << e.error_string()
                   << std::endl;
     }
     catch (const std::runtime_error& e) {

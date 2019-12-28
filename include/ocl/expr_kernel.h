@@ -31,19 +31,19 @@ namespace ocl {
     private:
         // get the backend data pointer
         static
-        impl::be_data_ptr
+        be::data_ptr
         backend_ptr(const _RES& res, const _EXPR& r);
         // returns a cached kernel for (res, r) or calls gen_kernel
         // and inserts the new kernel into the cache
         static
-        impl::pgm_kernel_lock&
+        be::pgm_kernel_lock&
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   impl::be_data_ptr& b);
+                   be::data_ptr& b);
         // generate a new kernel for (res, r)
         static
-        impl::pgm_kernel_lock
+        be::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   impl::be_data_ptr& b);
+                   be::data_ptr& b);
     };
 
     // generate and execute an opencl kernel for an
@@ -53,11 +53,11 @@ namespace ocl {
 }
 
 template <class _RES, class _SRC>
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::expr_kernel<_RES, _SRC>::
 backend_ptr(const _RES& res, const _SRC& r)
 {
-    impl::be_data_ptr b=backend_data(res);
+    be::data_ptr b=backend_data(res);
     if (b == nullptr) {
         b=backend_data(r);
         if (b == nullptr) {
@@ -72,11 +72,11 @@ void
 ocl::expr_kernel<_RES, _SRC>::
 execute(_RES& res, const _SRC& r, const void* cookie)
 {
-    impl::event ev;
-    impl::be_data_ptr b=backend_ptr(res, r);
-    impl::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
+    be::event ev;
+    be::data_ptr b=backend_ptr(res, r);
+    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
     {
-        std::unique_lock<impl::pgm_kernel_lock> _l(pk);
+        std::unique_lock<be::pgm_kernel_lock> _l(pk);
         // bind args
         std::size_t s(eval_size(res));
         const auto& sc=s;
@@ -92,18 +92,18 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 }
 
 template <class _RES, class _SRC>
-ocl::impl::pgm_kernel_lock&
+ocl::be::pgm_kernel_lock&
 ocl::expr_kernel<_RES, _SRC>::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
-           impl::be_data_ptr& b)
+           be::data_ptr& b)
 {
-    using namespace impl;
-    std::unique_lock<be_data> _l(*b);
-    be_data::iterator f(b->find(cookie));
-    if (f == b->end()) {
-        pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b));
-        std::pair<be_data::iterator, bool> ir(
-            b->insert(cookie, pkl));
+    auto& kc=b->kcache();
+    std::unique_lock<be::mutex> _l(kc.mtx());
+    be::kernel_cache::iterator f(kc.find(cookie));
+    if (f == kc.end()) {
+        be::pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b));
+        std::pair<be::kernel_cache::iterator, bool> ir(
+            kc.insert(cookie, pkl));
         f = ir.first;
     } else {
         if (b->debug() != 0) {
@@ -115,10 +115,10 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
 }
 
 template <class _RES, class _SRC>
-ocl::impl::pgm_kernel_lock
+ocl::be::pgm_kernel_lock
 ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           impl::be_data_ptr& b)
+           be::data_ptr& b)
 {
     const char nl='\n';
     std::ostringstream s;
@@ -130,7 +130,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << "\n(\n";
     // element count:
     std::string element_count=spaces(4) +
-        impl::type_2_name<unsigned long>::v() + " n";
+        be::type_2_name<unsigned long>::v() + " n";
     // argument generation
     unsigned arg_num{0};
     s << eval_args(element_count, res, arg_num, false)
@@ -168,23 +168,23 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
         std::cout << "--- source code ------------------\n";
         std::cout << ss;
     }
-    program pgm=program::create_with_source(ss, b->c());
+    be::program pgm=be::program::create_with_source(ss, b->dcq().c());
     try {
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
         pgm.build("-cl-std=CL1.1");
     }
-    catch (const error& e) {
+    catch (const be::error& e) {
         std::cerr << "error info: " << e.what() << '\n';
         std::cerr << pgm.build_log() << std::endl;
         throw;
     }
-    kernel k(pgm, k_name);
+    be::kernel k(pgm, k_name);
     if (b->debug() != 0) {
         std::cout << "-- compiled with success ---------\n";
     }
 
-    pgm_kernel_lock pkl(pgm, k);
+    be::pgm_kernel_lock pkl(pgm, k);
     return pkl;
 }
 

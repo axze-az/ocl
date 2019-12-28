@@ -7,7 +7,7 @@ namespace {
 
 #if DEBUG_VECTOR_BASE>0
     void
-    print_this(const void* p, const  ocl::impl::buffer& b) {
+    print_this(const void* p, const  ocl::be::buffer& b) {
         auto bb=b.get();
         std::cout << "this: " << p << ' ';
         if (bb != nullptr) {
@@ -23,7 +23,7 @@ namespace {
     }
 
     void
-    print_r(const void* p, const  ocl::impl::buffer& b) {
+    print_r(const void* p, const  ocl::be::buffer& b) {
         auto bb=b.get();
         std::cout << "   r: " << p << ' ';
         if (bb != nullptr) {
@@ -53,13 +53,13 @@ namespace {
     };
 #else
     void
-    print_this(const void* p, const  ocl::impl::buffer& b) {
+    print_this(const void* p, const  ocl::be::buffer& b) {
         static_cast<void>(p);
         static_cast<void>(b);
     }
 
     void
-    print_r(const void* p, const  ocl::impl::buffer& b) {
+    print_r(const void* p, const  ocl::be::buffer& b) {
         static_cast<void>(p);
         static_cast<void>(b);
     }
@@ -87,8 +87,8 @@ ocl::vector_base::vector_base()
 }
 
 ocl::vector_base::vector_base(std::size_t s)
-    : _bed{impl::be_data::instance()},
-      _b{_bed->c(), s}
+    : _bed{be::data::instance()},
+      _b{_bed->dcq().c(), s}
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_this(this, _b);
@@ -97,8 +97,8 @@ ocl::vector_base::vector_base(std::size_t s)
 ocl::vector_base::vector_base(const vector_base& r)
     : _bed{r._bed},
       _b(_bed != nullptr ?
-         impl::buffer(_bed->c(), r.buffer_size()) :
-         impl::buffer())
+         be::buffer(_bed->dcq().c(), r.buffer_size()) :
+         be::buffer())
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_r(&r, r._b);
@@ -162,20 +162,20 @@ ocl::vector_base::buffer_size()
     return s;
 }
 
-const ocl::impl::buffer&
+const ocl::be::buffer&
 ocl::vector_base::buf()
     const
 {
     return _b;
 }
 
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::vector_base::backend_data()
 {
     return _bed;
 }
 
-const ocl::impl::be_data_ptr
+const ocl::be::data_ptr
 ocl::vector_base::backend_data()
     const
 {
@@ -187,12 +187,12 @@ ocl::vector_base::copy_on_device(const vector_base& r)
 {
     size_t s =r.buffer_size();
     if (__likely(s)) {
-        impl::queue& q= _bed->q();
-        auto& evs=_bed->evs();
-        impl::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, evs);
+        be::queue& q= _bed->dcq().q();
+        auto& wl=_bed->dcq().wl();
+        be::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, wl);
         q.flush();
-        evs.clear();
-        evs.insert(ev);
+        wl.clear();
+        wl.insert(ev);
     }
 }
 
@@ -201,11 +201,11 @@ ocl::vector_base::copy_from_host(const void* p)
 {
     std::size_t s=buffer_size();
     if (__likely(s)) {
-        impl::queue& q= _bed->q();
-        auto& evs=_bed->evs();
-        impl::event ev=q.enqueue_write_buffer(_b, 0, s, p, evs);
+        be::queue& q= _bed->dcq().q();
+        auto& wl=_bed->dcq().wl();
+        be::event ev=q.enqueue_write_buffer(_b, 0, s, p, wl);
         q.flush();
-        evs.clear();
+        wl.clear();
         ev.wait();
     }
 }
@@ -216,11 +216,11 @@ ocl::vector_base::copy_to_host(void* p)
 {
     std::size_t s=buffer_size();
     if (__likely(s)) {
-        impl::queue& q= _bed->q();
-        auto& evs= _bed->evs();
-        impl::event ev= q.enqueue_read_buffer(_b, 0, s, p, evs);
+        be::queue& q= _bed->dcq().q();
+        auto& wl=_bed->dcq().wl();
+        be::event ev= q.enqueue_read_buffer(_b, 0, s, p, wl);
         q.flush();
-        evs.clear();
+        wl.clear();
         ev.wait();
     }
 }

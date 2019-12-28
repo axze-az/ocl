@@ -1,0 +1,167 @@
+#include "ocl/ocl.h"
+#include "ocl/be/devices.h"
+#include <boost/compute/system.hpp>
+#include <iostream>
+
+std::ostream&
+ocl::be::operator<<(std::ostream& s, const device_info& dd)
+{
+    const device& d= dd._d;
+    std::string n=d.name();
+    s << "device name: " << n << '\n';
+    n = d.vendor();
+    s << "device vendor: " << n << '\n';
+    n = d.driver_version();
+    s << "driver version: " << n << '\n';
+    cl_device_type dt=d.get_info<cl_device_type>(CL_DEVICE_TYPE);
+    s << "device type: ";
+    switch (dt) {
+    case CL_DEVICE_TYPE_CPU:
+        s << "cpu\n" ;
+        break;
+    case CL_DEVICE_TYPE_GPU:
+        s << "gpu\n";
+        break;
+    default:
+        s << "unknown\n";
+        break;
+    }
+    cl_uint t=d.get_info<cl_uint>(CL_DEVICE_VENDOR_ID);
+    s << "vendor id: " << t << '\n';
+
+    cl_command_queue_properties cqp(
+        d.get_info<cl_command_queue_properties>(CL_DEVICE_QUEUE_PROPERTIES));
+    s << "device queue properties:";
+    bool comma(false);
+    if ((cqp & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)==
+        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+        s << " out of order execution";
+        comma = true;
+    }
+    if ((cqp & CL_QUEUE_PROFILING_ENABLE) ==
+        CL_QUEUE_PROFILING_ENABLE) {
+        if (comma)
+            s << ',';
+        s << " profiling";
+    }
+    s << '\n';
+    auto ve = d.extensions();
+    s << "device extensions:\n";
+    for (const auto& ei : ve) {
+        s << "   " << ei << '\n';
+    }
+    t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+    s << "max freq: " << t << " MHz\n";
+    t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+    s << "max compute units: " << t << '\n';
+
+    return s;
+}
+
+std::vector<ocl::be::device>
+ocl::be::devices()
+{
+    return bc::system::devices();
+}
+
+std::vector<ocl::be::device>
+ocl::be::filter_devices(const std::vector<device>& v,
+                          device_type::type dt)
+{
+    std::vector<device> r;
+    for (std::size_t i=0; i< v.size(); ++i) {
+        const device& d= v[i];
+        cl_device_type t(d.get_info<cl_device_type>(CL_DEVICE_TYPE));
+        if ((t & static_cast<cl_device_type>(dt)) ==
+            static_cast<cl_device_type>(dt))
+            r.push_back(d);
+    }
+    return r;
+}
+
+std::vector<ocl::be::device>
+ocl::be::gpu_devices(const std::vector<device>& v)
+{
+    return filter_devices(v, device_type::gpu);
+}
+
+std::vector<ocl::be::device>
+ocl::be::gpu_devices()
+{
+    std::vector<device> all_devs(devices());
+    return gpu_devices(all_devs);
+}
+
+std::vector<ocl::be::device>
+ocl::be::cpu_devices(const std::vector<device>& v)
+{
+    return filter_devices(v, device_type::cpu);
+}
+
+std::vector<ocl::be::device>
+ocl::be::cpu_devices()
+{
+    std::vector<device> all_devs(devices());
+    return cpu_devices(all_devs);
+}
+
+ocl::be::device
+ocl::be::device_with_max_freq_x_units(const std::vector<device>& v)
+{
+    if (v.empty()) {
+        throw error(CL_DEVICE_NOT_FOUND);
+    }
+    device r;
+    double p(-1);
+    for (std::size_t i=0; i<v.size(); ++i) {
+        const device& d= v[i];
+        cl_uint t= d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+        double pi(t);
+        t= d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+        pi *= double(t);
+        if (pi> p) {
+            r=d;
+            p=pi;
+        }
+    }
+    return r;
+}
+
+ocl::be::device
+ocl::be::default_gpu_device()
+{
+    std::vector<device> gpu_devs(gpu_devices());
+    if (gpu_devs.empty()) {
+        throw error(CL_DEVICE_NOT_FOUND);
+    }
+    return device_with_max_freq_x_units(gpu_devs);
+}
+
+ocl::be::device
+ocl::be::default_cpu_device()
+{
+    std::vector<device> cpu_devs(cpu_devices());
+    if (cpu_devs.empty()) {
+        throw error(CL_DEVICE_NOT_FOUND);
+    }
+    return device_with_max_freq_x_units(cpu_devs);
+}
+
+ocl::be::device
+ocl::be::default_device()
+{
+    device r;
+    try {
+        // r= default_cpu_device();
+        r= default_gpu_device();
+    }
+    catch (const error& e) {
+        try {
+            r= default_cpu_device();
+        }
+        catch (const error& e) {
+            throw error(CL_DEVICE_NOT_FOUND);
+        }
+    }
+    return r;
+}

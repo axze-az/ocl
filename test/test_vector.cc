@@ -151,10 +151,10 @@ int main()
         impl::be_data::instance()->clear();
 #endif
     }
-    catch (const ocl::impl::error& e) {
+    catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
                   << '\n'
-                  << ocl::impl::err2str(e)
+                  << e.error_string()
                   << std::endl;
     }
     catch (const std::runtime_error& e) {

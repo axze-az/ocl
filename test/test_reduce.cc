@@ -62,13 +62,11 @@ int main()
         if (ao != true || no != false || so != true) {
             throw std::runtime_error("xxx_of failed.");
         }
-
-        impl::be_data::instance()->clear();
     }
-    catch (const ocl::impl::error& e) {
+    catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
                   << '\n'
-                  << ocl::impl::err2str(e)
+                  << e.error_string()
                   << std::endl;
     }
     catch (const std::exception& e) {

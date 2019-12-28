@@ -3,7 +3,7 @@
 
 #include <ocl/config.h>
 #include <ocl/expr_kernel.h>
-#include <ocl/impl_type_2_name.h>
+#include <ocl/be/type_2_name.h>
 #include <initializer_list>
 // #include <vexcl/vexcl.hpp>
 #include <atomic>
@@ -14,9 +14,9 @@ namespace ocl {
     // (shared) pointer to opencl backend data
     class vector_base {
         // shared pointer to the backend data
-        impl::be_data_ptr _bed;
+        be::data_ptr _bed;
         // backend buffer object
-        impl::buffer _b;
+        be::buffer _b;
     protected:
         // destructor
         ~vector_base();
@@ -45,12 +45,12 @@ namespace ocl {
         // return the size of the vector in bytes
         std::size_t buffer_size() const;
         // return the underlying opencl buffer
-        const impl::buffer& buf() const;
+        const be::buffer& buf() const;
         // return the opencl backend information
-        impl::be_data_ptr
+        be::data_ptr
         backend_data();
         // return the opencl backend information
-        const impl::be_data_ptr
+        const be::data_ptr
         backend_data() const;
     };
 
@@ -130,7 +130,7 @@ namespace ocl {
 
     // backend_data specialized for vector t
     template <class _T>
-    impl::be_data_ptr
+    be::data_ptr
     backend_data(const vector<_T>& t);
     // eval_size specialized for vector
     template <class _T>
@@ -153,11 +153,11 @@ namespace ocl {
     // bind_args for non const arguments
     template <class _T>
     void
-    bind_args(impl::kernel& k, vector<_T>& r,  unsigned& arg_num);
+    bind_args(be::kernel& k, vector<_T>& r,  unsigned& arg_num);
     // bind_args for const arguments
     template <class _T>
     void
-    bind_args(impl::kernel& k, const vector<_T>& r,  unsigned& arg_num);
+    bind_args(be::kernel& k, const vector<_T>& r,  unsigned& arg_num);
 
     namespace ops {
 
@@ -340,7 +340,7 @@ namespace ocl {
                 std::string res("((");
                 // I AM BUGGY:
                 // res += "int"; // impl::type_2_name<_D>::v();
-                res += impl::type_2_name<_D>::v();
+                res += be::type_2_name<_D>::v();
                 res += ")";
                 res += l;
                 res += ")";
@@ -354,7 +354,7 @@ namespace ocl {
             static
             std::string body(const std::string& l) {
                 std::string res("convert_");
-                res += impl::type_2_name<_D>::v();
+                res += be::type_2_name<_D>::v();
                 res += "_rtz(";
                 res += l;
                 res += ")";
@@ -374,7 +374,7 @@ namespace ocl {
             std::string body(const std::string& l) {
                 std::string res("(");
                 res += "as_";
-                res += impl::type_2_name<_D>::v();
+                res += be::type_2_name<_D>::v();
                 res += "(";
                 res += l;
                 res += "))";
@@ -837,7 +837,7 @@ std::size_t ocl::eval_size(const vector<_T>& v)
 
 template <class _T>
 inline
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::backend_data(const vector<_T>& v)
 {
     return v.backend_data();
@@ -857,7 +857,7 @@ ocl::eval_args(const std::string& p, const vector<_T>& r, unsigned& arg_num,
     if (ro) {
         s<< "const ";
     }
-    s << impl::type_2_name<_T>::v()
+    s << be::type_2_name<_T>::v()
       << "* arg"  << arg_num;
     ++arg_num;
     return s.str();
@@ -869,7 +869,7 @@ ocl::eval_vars(const vector<_T>& r, unsigned& arg_num, bool read)
 {
     static_cast<void>(r);
     std::ostringstream s;
-    s << spaces(8) << impl::type_2_name<_T>::v()
+    s << spaces(8) << be::type_2_name<_T>::v()
       << " v" << arg_num;
     if (read== true) {
         s << " = arg"
@@ -894,11 +894,11 @@ std::string ocl::eval_results(vector<_T>& r,
 
 template <class _T>
 void
-ocl::bind_args(impl::kernel& k, vector<_T>& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, vector<_T>& r, unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {
+    if (r.backend_data()->debug() != 0) {
         std::cout << "binding lvec<"
-                  << impl::type_2_name<_T>::v()
+                  << be::type_2_name<_T>::v()
                   << "> with "
                   << r.size()
                   << " elements to arg " << arg_num
@@ -910,11 +910,11 @@ ocl::bind_args(impl::kernel& k, vector<_T>& r, unsigned& arg_num)
 
 template <class _T>
 void
-ocl::bind_args(impl::kernel& k, const vector<_T>& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, const vector<_T>& r, unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {
+    if (r.backend_data()->debug() != 0) {
         std::cout << "binding const lvec<"
-                  << impl::type_2_name<_T>::v()
+                  << be::type_2_name<_T>::v()
                   << "> with "<< r.size()
                   << " elements to arg " << arg_num
                   << std::endl;

@@ -2,8 +2,8 @@
 #define __OCL_EXPR_H__ 1
 
 #include <ocl/config.h>
-#include <ocl/impl_be_data.h>
-#include <ocl/impl_type_2_name.h>
+#include <ocl/be/data.h>
+#include <ocl/be/type_2_name.h>
 #include <iostream>
 #include <sstream>
 
@@ -14,7 +14,7 @@ namespace ocl {
     };
     // return back end data:
     template <class _T>
-    impl::be_data_ptr backend_data(const _T& t);
+    be::data_ptr backend_data(const _T& t);
     // Eval_size
     template <class _T>
     std::size_t eval_size(const _T& t);
@@ -39,11 +39,11 @@ namespace ocl {
 
     // bind_args for const arguments
     template <class _T>
-    void bind_args(impl::kernel& k, const _T& r,  unsigned& arg_num);
+    void bind_args(be::kernel& k, const _T& r,  unsigned& arg_num);
 
     // bind_args for const arguments
     template <class _T>
-    void bind_args(impl::kernel& k, _T& r,  unsigned& arg_num);
+    void bind_args(be::kernel& k, _T& r,  unsigned& arg_num);
 
     // default expression traits for simple/unspecialized
     // types
@@ -68,10 +68,10 @@ namespace ocl {
 
     // backend_data specialized for expr
     template <class _OP, class _L, class _R>
-    impl::be_data_ptr backend_data(const expr<_OP, _L, _R>& a);
+    be::data_ptr backend_data(const expr<_OP, _L, _R>& a);
     // and for unary expressions
     template <class _OP, class _L>
-    impl::be_data_ptr backend_data(const expr<_OP, _L, void>& a);
+    be::data_ptr backend_data(const expr<_OP, _L, void>& a);
 
     // eval_size specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -117,12 +117,12 @@ namespace ocl {
 
     // bind_args specialized for expr<>
     template <class _OP, class _L, class _R>
-    void bind_args(impl::kernel& k,
+    void bind_args(be::kernel& k,
                    const expr<_OP, _L, _R>& r,
                    unsigned& arg_num);
 
     template <class _OP, class _L>
-    void bind_args(impl::kernel& k,
+    void bind_args(be::kernel& k,
                    const expr<_OP, _L, void>& r,
                    unsigned& arg_num);
 
@@ -130,7 +130,7 @@ namespace ocl {
 
 template <class _T>
 inline
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::backend_data(const _T& t)
 {
     static_cast<void>(t);
@@ -159,7 +159,7 @@ std::string ocl::eval_args(const std::string& p,
         s << p << ",\n";
     }
     s << spaces(4) ;
-    s << impl::type_2_name<_T>::v()
+    s << be::type_2_name<_T>::v()
       << " arg"  << arg_num;
     ++arg_num;
     return s.str();
@@ -171,7 +171,7 @@ std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
 {
     static_cast<void>(r);
     std::ostringstream s;
-    s << spaces(8) << impl::type_2_name<_T>::v()
+    s << spaces(8) << be::type_2_name<_T>::v()
       << " v" << arg_num;
     if (read== true) {
         s << " = arg"
@@ -195,11 +195,11 @@ std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 
 template <class _T>
 void
-ocl::bind_args(impl::kernel& k, _T& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, _T& r, unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {
+    if (be::data::instance()->debug() != 0) {
         std::cout << "binding "
-                  << impl::type_2_name<_T>::v()
+                  << be::type_2_name<_T>::v()
                   << " to arg " << arg_num
                   << std::endl;
     }
@@ -209,11 +209,11 @@ ocl::bind_args(impl::kernel& k, _T& r, unsigned& arg_num)
 
 template <class _T>
 void
-ocl::bind_args(impl::kernel& k, const _T& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, const _T& r, unsigned& arg_num)
 {
-    if (impl::be_data::instance()->debug() != 0) {
+    if (be::data::instance()->debug() != 0) {
         std::cout << "binding const "
-                  << impl::type_2_name<_T>::v()
+                  << be::type_2_name<_T>::v()
                   << " to arg " << arg_num
                   << std::endl;
     }
@@ -230,10 +230,10 @@ ocl::expr<_OP, _L, _R>::expr(const _L& l, const _R& r)
 }
 
 template <class _OP, class _L, class _R>
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::backend_data(const expr<_OP, _L, _R>& a)
 {
-    impl::be_data_ptr pl=backend_data(a._l);
+    be::data_ptr pl=backend_data(a._l);
     if (pl != nullptr) {
         return pl;
     }
@@ -241,7 +241,7 @@ ocl::backend_data(const expr<_OP, _L, _R>& a)
 }
 
 template <class _OP, class _L>
-ocl::impl::be_data_ptr
+ocl::be::data_ptr
 ocl::backend_data(const expr<_OP, _L, void>& a)
 {
     return backend_data(a._l);
@@ -317,7 +317,7 @@ std::string ocl::eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num)
 }
 
 template <class _OP, class _L, class _R>
-void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, _R>& r,
+void ocl::bind_args(be::kernel& k, const expr<_OP, _L, _R>& r,
                     unsigned& arg_num)
 {
     bind_args(k, r._l, arg_num);
@@ -325,7 +325,7 @@ void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, _R>& r,
 }
 
 template <class _OP, class _L>
-void ocl::bind_args(impl::kernel& k, const expr<_OP, _L, void>& r,
+void ocl::bind_args(be::kernel& k, const expr<_OP, _L, void>& r,
                     unsigned& arg_num)
 {
     bind_args(k, r._l, arg_num);

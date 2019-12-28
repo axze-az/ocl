@@ -6,8 +6,8 @@ set(has_ipo, FALSE)
 #check_ipo_support(RESULT has_ipo)
 
 set (CSRCS
-  impl_devices.cc
-  impl_be_data.cc
+  be_devices.cc
+  be_data.cc
   expr_kernel.cc
   random.cc
   vector_base.cc

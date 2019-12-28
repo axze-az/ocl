@@ -1,35 +1,35 @@
 #include "ocl/ocl.h"
-#include "ocl/impl_devices.h"
-#include "ocl/impl_be_data.h"
+#include "ocl/be/devices.h"
+#include "ocl/be/data.h"
 
 int main()
 {
     int r;
     try {
 
-        std::vector<ocl::impl::device> v(ocl::impl::devices());
+        std::vector<ocl::be::device> v(ocl::be::devices());
         std::cout << std::string(60, '-') << std::endl;
         std::cout << "count of devices: " << v.size() << std::endl;
         for (std::size_t i = 0; i< v.size(); ++i) {
             std::cout << std::string(60, '-') << std::endl;
-            std::cout << ocl::impl::device_info(v[i]);
+            std::cout << ocl::be::device_info(v[i]);
         }
-        ocl::impl::device dd(ocl::impl::default_device());
+        ocl::be::device dd(ocl::be::default_device());
         std::cout << std::string(60, '-') << std::endl;
         std::cout << "selected device: \n";
-        std::cout << ocl::impl::device_info(dd);
+        std::cout << ocl::be::device_info(dd);
 
-        const ocl::impl::device& bed =
-            ocl::impl::be_data::instance()->d();
+        const ocl::be::device& bed =
+            ocl::be::data::instance()->dcq().d();
         std::cout << std::string(60, '-') << std::endl;
         std::cout << "selected backend device: \n";
-        std::cout << ocl::impl::device_info(bed);
+        std::cout << ocl::be::device_info(bed);
         r = 0;
     }
-    catch (const ocl::impl::error& e) {
+    catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
                   << '\n'
-                  << ocl::impl::err2str(e)
+                  << e.error_string()
                   << std::endl;
         r = 3;
     }

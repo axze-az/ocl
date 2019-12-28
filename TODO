@@ -1,4 +1,5 @@
 
+- finish the locking of the queue + kernel cache
 - test subnormals
 - test vector kernels
 - select implementation
