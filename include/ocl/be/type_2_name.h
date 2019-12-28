@@ -7,7 +7,7 @@
 
 namespace ocl {
 
-    namespace impl {
+    namespace be {
 
         template <typename _T>
         struct type_2_name {
