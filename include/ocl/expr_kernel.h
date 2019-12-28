@@ -84,6 +84,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     bind_non_buffer_args(s, ab);
     // rest of arguments later
     bind_non_buffer_args(r, ab);
+    ab.pad_to_multiple_of<128>();
     auto& dcq=b->dcq();
     auto& c=dcq.c();
     be::buffer dev_ab(c, ab.size());
@@ -103,7 +104,16 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         unsigned buf_num=0;
         bind_buffer_args(res, buf_num, pk._k);
         bind_buffer_args(r, buf_num, pk._k);
-        pk._k.set_arg(buf_num, dev_ab);
+        pk._k.set_arg(buf_num++, dev_ab);
+        if (b->debug() != 0) {
+            std::cout << "binding argument buffer of size " << ab.size()
+                      << '\n';
+        }
+        pk._k.set_arg(buf_num, ab.size(), nullptr);
+        if (b->debug() != 0) {
+            std::cout << "binding local buffer of size " << ab.size()
+                      << '\n';
+        }
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
             ev=b->enqueue_kernel(pk, s);
@@ -179,8 +189,23 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << "\n(\n";
     s << decl_buffer_args(res, buf_args, false);
     s << decl_buffer_args(r, buf_args, true);
-    s << spaces(4) << "__global const struct " << k_arg_name << "* pa\n)\n";
+    s << spaces(4) << "__global const struct " << k_arg_name << "* pg,\n";
+    s << spaces(4) << "__local const struct " << k_arg_name << "* pa\n)\n";
     s << "{\n"
+         "    /* copy arguments into pa */\n"
+         "    uint lid = get_local_id(0);\n"
+         "    uint lsz = get_local_size(0);\n"
+         "    __global const uint* ps=(__global const uint*)pg;\n"
+         "    __local uint* pd=(__local uint*)pa;\n"
+         "    const int arg_size=sizeof(*pa);\n"
+         "    const int cpy_size=(arg_size+3) >> 2;\n"
+         "    for (uint i=0; i<cpy_size; i+= lsz) {\n"
+         "        uint idx=i*lsz + lid;\n"
+         "        uint tidx= idx < cpy_size ? idx : cpy_size-1;\n"
+         "        pd[tidx]=ps[tidx];\n"
+         "    }\n"
+         "    barrier(CLK_LOCAL_MEM_FENCE);\n"
+         "    /* start execution */\n"
          "    ulong gid = get_global_id(0);\n"
          "    if (gid < pa->_n) {\n";
     var_counters c{1};

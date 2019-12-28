@@ -40,6 +40,24 @@ namespace ocl {
                 _T* d=reinterpret_cast<_T*>(cd);
                 *d = t;
             }
+            // align the end of the buffer to an multiple of x
+            template <std::size_t _N>
+            void
+            pad_to_multiple_of() {
+                constexpr size_t at=_N;
+                constexpr size_t atm1=at-1;
+                static_assert((at & atm1) == 0,
+                              "type with non power of 2 alignment?");
+                const size_t s=_v.size();
+                // how many bytes are used from the last alignment?
+                const size_t m=s&atm1;
+                // const size_t pad = m ? at - m : 0;
+                const size_t pad= (at - m) & atm1;
+                if (pad != 0) {
+                    const size_t ns=s+pad;
+                    _v.resize(ns, char(0xff));
+                }
+            }
         };
     }
 }
