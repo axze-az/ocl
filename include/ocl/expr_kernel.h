@@ -90,11 +90,12 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     auto& q=dcq.q();
     auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
+    be::event cpy_ev;
     {
         std::unique_lock<be::mutex> _lq(dcq_mtx);
-        be::event cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
-                                                      ab.size(),
-                                                      ab.data());
+        cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
+                                            ab.size(),
+                                            ab.data());
         wl.insert(cpy_ev);
     }
     {
@@ -108,6 +109,7 @@ execute(_RES& res, const _SRC& r, const void* cookie)
             ev=b->enqueue_kernel(pk, s);
         }
     }
+    cpy_ev.wait();
 #else
     {
         std::unique_lock<be::pgm_kernel_lock> _l(pk);
@@ -238,7 +240,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     try {
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
-        pgm.build("-cl-std=CL1.1");
+        pgm.build("-cl-std=CL1.1 -cl-mad-enable");
     }
     catch (const be::error& e) {
         std::cerr << "error info: " << e.what() << '\n';

@@ -187,12 +187,16 @@ ocl::vector_base::copy_on_device(const vector_base& r)
 {
     size_t s =r.buffer_size();
     if (__likely(s)) {
-        be::queue& q= _bed->dcq().q();
-        auto& wl=_bed->dcq().wl();
-        be::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, wl);
-        q.flush();
-        wl.clear();
-        wl.insert(ev);
+        auto& dcq=_bed->dcq();
+        auto& q= dcq.q();
+        auto& wl=dcq.wl();
+        {
+            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::event ev= q.enqueue_copy_buffer(_b, r._b,0, 0, s, wl);
+            q.flush();
+            wl.clear();
+            wl.insert(ev);
+        }
     }
 }
 
@@ -201,11 +205,16 @@ ocl::vector_base::copy_from_host(const void* p)
 {
     std::size_t s=buffer_size();
     if (__likely(s)) {
-        be::queue& q= _bed->dcq().q();
-        auto& wl=_bed->dcq().wl();
-        be::event ev=q.enqueue_write_buffer(_b, 0, s, p, wl);
-        q.flush();
-        wl.clear();
+        auto& dcq=_bed->dcq();
+        auto& q= dcq.q();
+        auto& wl=dcq.wl();
+        be::event ev;
+        {
+            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            ev=q.enqueue_write_buffer(_b, 0, s, p, wl);
+            q.flush();
+            wl.clear();
+        }
         ev.wait();
     }
 }
@@ -216,11 +225,16 @@ ocl::vector_base::copy_to_host(void* p)
 {
     std::size_t s=buffer_size();
     if (__likely(s)) {
-        be::queue& q= _bed->dcq().q();
-        auto& wl=_bed->dcq().wl();
-        be::event ev= q.enqueue_read_buffer(_b, 0, s, p, wl);
-        q.flush();
-        wl.clear();
+        auto& dcq=_bed->dcq();
+        auto& q= dcq.q();
+        auto& wl=dcq.wl();
+        be::event ev;
+        {
+            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            ev= q.enqueue_read_buffer(_b, 0, s, p, wl);
+            q.flush();
+            wl.clear();
+        }
         ev.wait();
     }
 }

@@ -6,7 +6,7 @@
 #include <ocl/be/type_2_name.h>
 #include <initializer_list>
 // #include <vexcl/vexcl.hpp>
-#include <atomic>
+// #include <atomic>
 
 namespace ocl {
 
@@ -34,6 +34,8 @@ namespace ocl {
         vector_base& operator=(vector_base&& r);
         // swap two vector base objects
         vector_base& swap(vector_base& r);
+        // fill pattern p with pattern length into this (OPENCL 1.2)
+        // void fill_on_device(const void* p, size_t ps);
         // device device copy
         void copy_on_device(const vector_base& r);
         // host device copy

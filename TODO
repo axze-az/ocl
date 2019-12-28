@@ -1,6 +1,6 @@
 
-- finish the locking of the queue + kernel cache
-- test subnormals
+- finish the locking of the queue + kernel cache (DONE)
+- test subnormals (DONE)
 - test vector kernels
 - select implementation
 - reduction
