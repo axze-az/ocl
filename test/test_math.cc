@@ -271,7 +271,7 @@ ocl::test::test_horner(const dvec<float>& x)
         log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
         log_c3,  log_c2,  log_c1
     };
-    for (int i=0; i<1; ++i) {
+    for (int i=0; i<32; ++i) {
         vf_type y0=horner(x,
                           log_c23, log_c22, log_c21, log_c20, log_c19,
                           log_c18, log_c17, log_c16, log_c15, log_c14,

@@ -40,12 +40,12 @@ namespace ocl {
         static
         be::pgm_kernel_lock&
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr& b);
+                   be::data_ptr& b, size_t lmem_size=0);
         // generate a new kernel for (res, r)
         static
         be::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr& b);
+                   be::data_ptr& b, size_t lmem_size=0);
     };
 
     // generate and execute an opencl kernel for an
@@ -76,7 +76,6 @@ execute(_RES& res, const _SRC& r, const void* cookie)
 {
     be::event ev;
     be::data_ptr b=backend_ptr(res, r);
-    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
 #if USE_ARG_BUFFER > 0
     be::argument_buffer ab;
     std::size_t s(eval_size(res));
@@ -84,8 +83,8 @@ execute(_RES& res, const _SRC& r, const void* cookie)
     bind_non_buffer_args(s, ab);
     // rest of arguments later
     bind_non_buffer_args(r, ab);
-    ab.pad_to_multiple_of<128>();
-    auto ab_size=ab.size();
+    ab.pad_to_multiple_of<4>();
+    size_t ab_size=ab.size();
     auto& dcq=b->dcq();
     auto& c=dcq.c();
     be::buffer dev_ab(c, ab_size);
@@ -98,8 +97,11 @@ execute(_RES& res, const _SRC& r, const void* cookie)
         cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
                                             ab_size,
                                             ab.data());
-        wl.insert(cpy_ev);
+        // insert the event before we queue the kernel
+        // into the wait list
     }
+    size_t lmem_size=be::request_local_mem(dcq.d(), ab_size);
+    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b, lmem_size);
     {
         std::unique_lock<be::pgm_kernel_lock> _lk(pk);
         unsigned buf_num=0;
@@ -110,19 +112,26 @@ execute(_RES& res, const _SRC& r, const void* cookie)
             std::cout << "binding argument buffer of size "
                       << ab_size << '\n';
         }
-        /* create local memory: */
-        pk._k.set_arg(buf_num, ab_size, nullptr);
-        if (b->debug() != 0) {
-            std::cout << "binding local buffer of size "
-                      << ab_size << '\n';
+#if 0
+        if (lmem_size != 0) {
+            /* create local memory: */
+            pk._k.set_arg(buf_num, ab_size, nullptr);
+            if (b->debug() != 0) {
+                std::cout << "binding local buffer of size "
+                        << ab_size << '\n';
+            }
         }
+#endif
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
+            // wait also for the argument buffer
+            wl.insert(cpy_ev);
             ev=b->enqueue_kernel(pk, s);
         }
     }
     cpy_ev.wait();
 #else
+    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
     {
         std::unique_lock<be::pgm_kernel_lock> _l(pk);
         // bind args
@@ -144,13 +153,13 @@ template <class _RES, class _SRC>
 ocl::be::pgm_kernel_lock&
 ocl::expr_kernel<_RES, _SRC>::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr& b)
+           be::data_ptr& b, size_t lmem_size)
 {
     auto& kc=b->kcache();
     std::unique_lock<be::mutex> _l(kc.mtx());
     be::kernel_cache::iterator f(kc.find(cookie));
     if (f == kc.end()) {
-        be::pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b));
+        be::pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b, lmem_size));
         std::pair<be::kernel_cache::iterator, bool> ir(
             kc.insert(cookie, pkl));
         f = ir.first;
@@ -167,7 +176,7 @@ template <class _RES, class _SRC>
 ocl::be::pgm_kernel_lock
 ocl::expr_kernel<_RES, _SRC>::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr& b)
+           be::data_ptr& b, size_t lmem_size)
 {
     std::ostringstream s;
     s << "k_" << cookie;
@@ -191,24 +200,38 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << "\n(\n";
     s << decl_buffer_args(res, buf_args, false);
     s << decl_buffer_args(r, buf_args, true);
-    s << spaces(4) << "__global const struct " << k_arg_name << "* pg,\n";
-    s << spaces(4) << "__local const struct " << k_arg_name << "* pa\n)\n";
-    s << "{\n"
-         "    /* copy arguments into pa */\n"
-         "    uint lid = get_local_id(0);\n"
-         "    uint lsz = get_local_size(0);\n"
-         "    __global const uint* ps=(__global const uint*)pg;\n"
-         "    __local uint* pd=(__local uint*)pa;\n"
-         "    const int arg_size=sizeof(*pa);\n"
-         "    const int cpy_size=(arg_size+3) >> 2;\n"
-         "    __attribute__((opencl_unroll_hint(4)))\n"
-         "    for (uint i=0; i<cpy_size; i+= lsz) {\n"
-         "        uint idx=i*lsz + lid;\n"
-         "        uint tidx= idx < cpy_size ? idx : 0;\n"
-         "        pd[tidx]=ps[tidx];\n"
-         "    }\n"
-         "    barrier(CLK_LOCAL_MEM_FENCE);\n"
-         "    /* start execution */\n"
+    if (lmem_size == 0) {
+        s << spaces(4) << "__global const struct "
+          << k_arg_name << "* pa\n)\n";
+        s << "{\n";
+    } else {
+        s << spaces(4) << "__global const struct "
+        << k_arg_name << "* pg\n)\n";
+        const size_t uints_to_cpy=((lmem_size + 3) >>2);
+        s << "{\n"
+             "    /* copy arguments into __args: */\n"
+             "    __local union {\n";
+        s << "       struct " << k_arg_name << " _a;\n"
+             "       uint _u[" << uints_to_cpy << "];\n"
+             "    } __args;\n"
+             "    {\n"
+             "        uint lid= get_local_id(0);\n"
+             "        uint lsz= get_local_size(0);\n"
+             "        __global const uint* ps= (__global const uint*)pg;\n"
+             "        __local uint* pd= __args._u;\n"
+             "        const int cpy_size= " << uints_to_cpy << ";\n"
+             "        __attribute__((opencl_unroll_hint()))\n"
+             "        for (uint i= 0; i<cpy_size; i+= lsz) {\n"
+             "            uint idx= i*lsz + lid;\n"
+             "            uint tidx= idx < cpy_size ? idx : 0;\n"
+             "            pd[tidx]= ps[tidx];\n"
+             "        }\n"
+             "        barrier(CLK_LOCAL_MEM_FENCE);\n"
+             "    }\n"
+             "    __local const struct "
+          << k_arg_name << "* pa= &__args._a;\n";
+    }
+    s << "    /* start execution */\n"
          "    ulong gid = get_global_id(0);\n"
          "    if (gid < pa->_n) {\n";
     var_counters c{1};

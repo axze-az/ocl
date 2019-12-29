@@ -45,10 +45,12 @@ namespace ocl {
             device _d;
             device_info(const device& d) : _d(d) {}
         };
+        std::ostream&
+        operator<<(std::ostream& s, const device_info& d);
 
-        std::ostream& operator <<(std::ostream& s,
-                                  const device_info& d);
-
+        // returns 0 if the request can not be satisfied
+        size_t
+        request_local_mem(const device& d, size_t lmem_req);
 
         std::vector<device>
         filter_devices(const std::vector<device>& devs,
