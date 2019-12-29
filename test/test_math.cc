@@ -7,6 +7,9 @@
 #include <chrono>
 #include <thread>
 
+// debugging with clover
+// CLOVER_DEBUG_FILE=clover_dump CLOVER_DEBUG=clc,llvm,asm OCL_DEBUG=1
+// ./test/test_math
 
 namespace cftal {
 
