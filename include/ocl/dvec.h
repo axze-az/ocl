@@ -947,7 +947,7 @@ ocl::
 bind_buffer_args(const dvec<_T>& r, unsigned& buf_num, be::kernel& k)
 {
     if (r.backend_data()->debug() != 0) {
-        std::cout << "binding const lvec<"
+        std::cout << "binding const dvec<"
                   << be::type_2_name<_T>::v()
                   << "> with "
                   << r.size()
@@ -964,7 +964,7 @@ ocl::
 bind_buffer_args(dvec<_T>& r, unsigned& buf_num, be::kernel& k)
 {
     if (r.backend_data()->debug() != 0) {
-        std::cout << "binding lvec<"
+        std::cout << "binding dvec<"
                   << be::type_2_name<_T>::v()
                   << "> with "
                   << r.size()
@@ -1043,7 +1043,7 @@ void
 ocl::bind_args(be::kernel& k, dvec<_T>& r, unsigned& arg_num)
 {
     if (r.backend_data()->debug() != 0) {
-        std::cout << "binding lvec<"
+        std::cout << "binding dvec<"
                   << be::type_2_name<_T>::v()
                   << "> with "
                   << r.size()
@@ -1059,7 +1059,7 @@ void
 ocl::bind_args(be::kernel& k, const dvec<_T>& r, unsigned& arg_num)
 {
     if (r.backend_data()->debug() != 0) {
-        std::cout << "binding const lvec<"
+        std::cout << "binding const dvec<"
                   << be::type_2_name<_T>::v()
                   << "> with "<< r.size()
                   << " elements to arg " << arg_num
