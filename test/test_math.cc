@@ -13,6 +13,7 @@ You can dump the list of kernels and the LLVM IR when a program runs by
 doing the following:
 CLOVER_DEBUG_FILE=clover_dump CLOVER_DEBUG=clc,llvm,asm
 PATH_TO_YOUR_TEST_PROGRAM
+--> use native instead of asm
 
 That'll generate a set of files called clover_dump.cl, clover_dump.ll,
 clover_dump.asm with:
