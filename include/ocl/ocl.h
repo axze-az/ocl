@@ -5,7 +5,7 @@
 #include <ocl/be/devices.h>
 #include <ocl/be/type_2_name.h>
 #include <ocl/be/data.h>
-#include <ocl/vector.h>
+#include <ocl/dvec.h>
 
 #if 0
 namespace cftal {

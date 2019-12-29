@@ -10,7 +10,7 @@ set (CSRCS
   be_data.cc
   expr_kernel.cc
   random.cc
-  vector_base.cc
+  dvec_base.cc
 )
 
 # only for ides

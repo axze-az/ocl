@@ -1,11 +1,11 @@
-#include "ocl/vector.h"
+#include "ocl/dvec.h"
 #include <iomanip>
 
-#define DEBUG_VECTOR_BASE 0
+#define DEBUG_dvec_base 0
 
 namespace {
 
-#if DEBUG_VECTOR_BASE>0
+#if DEBUG_dvec_base>0
     void
     print_this(const void* p, const  ocl::be::buffer& b) {
         auto bb=b.get();
@@ -73,20 +73,20 @@ namespace {
 #endif
 }
 
-ocl::vector_base::~vector_base()
+ocl::dvec_base::~dvec_base()
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_this(this, _b);
 }
 
-ocl::vector_base::vector_base()
+ocl::dvec_base::dvec_base()
     : _bed{}, _b{}
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_this(this, _b);
 }
 
-ocl::vector_base::vector_base(std::size_t s)
+ocl::dvec_base::dvec_base(std::size_t s)
     : _bed{be::data::instance()},
       _b{_bed->dcq().c(), s}
 {
@@ -94,7 +94,7 @@ ocl::vector_base::vector_base(std::size_t s)
     print_this(this, _b);
 }
 
-ocl::vector_base::vector_base(const vector_base& r)
+ocl::dvec_base::dvec_base(const dvec_base& r)
     : _bed{r._bed},
       _b(_bed != nullptr ?
          be::buffer(_bed->dcq().c(), r.buffer_size()) :
@@ -106,7 +106,7 @@ ocl::vector_base::vector_base(const vector_base& r)
     print_this(this, _b);
 }
 
-ocl::vector_base::vector_base(vector_base&& r)
+ocl::dvec_base::dvec_base(dvec_base&& r)
     : _bed(), _b()
 {
     trace t(__PRETTY_FUNCTION__, this);
@@ -115,8 +115,8 @@ ocl::vector_base::vector_base(vector_base&& r)
     print_this(this, _b);
 }
 
-ocl::vector_base&
-ocl::vector_base::operator=(const vector_base& r)
+ocl::dvec_base&
+ocl::dvec_base::operator=(const dvec_base& r)
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_r(&r, r._b);
@@ -124,7 +124,7 @@ ocl::vector_base::operator=(const vector_base& r)
         if (buffer_size() == r.buffer_size()) {
             copy_on_device(r);
         } else {
-            vector_base t(r);
+            dvec_base t(r);
             swap(t);
         }
     }
@@ -132,8 +132,8 @@ ocl::vector_base::operator=(const vector_base& r)
     return *this;
 }
 
-ocl::vector_base&
-ocl::vector_base::operator=(vector_base&& r)
+ocl::dvec_base&
+ocl::dvec_base::operator=(dvec_base&& r)
 {
     trace t(__PRETTY_FUNCTION__, this);
     print_r(&r, r._b);
@@ -141,8 +141,8 @@ ocl::vector_base::operator=(vector_base&& r)
     return swap(r);
 }
 
-ocl::vector_base&
-ocl::vector_base::swap(vector_base& r)
+ocl::dvec_base&
+ocl::dvec_base::swap(dvec_base& r)
 {
     trace t(__PRETTY_FUNCTION__, this);
     std::swap(_bed, r._bed);
@@ -153,7 +153,7 @@ ocl::vector_base::swap(vector_base& r)
 }
 
 std::size_t
-ocl::vector_base::buffer_size()
+ocl::dvec_base::buffer_size()
     const
 {
     size_t s=0;
@@ -163,27 +163,27 @@ ocl::vector_base::buffer_size()
 }
 
 const ocl::be::buffer&
-ocl::vector_base::buf()
+ocl::dvec_base::buf()
     const
 {
     return _b;
 }
 
 ocl::be::data_ptr
-ocl::vector_base::backend_data()
+ocl::dvec_base::backend_data()
 {
     return _bed;
 }
 
 const ocl::be::data_ptr
-ocl::vector_base::backend_data()
+ocl::dvec_base::backend_data()
     const
 {
     return _bed;
 }
 
 void
-ocl::vector_base::copy_on_device(const vector_base& r)
+ocl::dvec_base::copy_on_device(const dvec_base& r)
 {
     size_t s =r.buffer_size();
     if (__likely(s)) {
@@ -201,7 +201,7 @@ ocl::vector_base::copy_on_device(const vector_base& r)
 }
 
 void
-ocl::vector_base::copy_from_host(const void* p)
+ocl::dvec_base::copy_from_host(const void* p)
 {
     std::size_t s=buffer_size();
     if (__likely(s)) {
@@ -220,7 +220,7 @@ ocl::vector_base::copy_from_host(const void* p)
 }
 
 void
-ocl::vector_base::copy_to_host(void* p)
+ocl::dvec_base::copy_to_host(void* p)
     const
 {
     std::size_t s=buffer_size();

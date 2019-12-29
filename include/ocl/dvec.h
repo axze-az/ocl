@@ -1,5 +1,5 @@
-#if !defined (__OCL_VECTOR_H__)
-#define __OCL_VECTOR_H__ 1
+#if !defined (__OCL_DVEC_H__)
+#define __OCL_DVEC_H__ 1
 
 #include <ocl/config.h>
 #include <ocl/expr_kernel.h>
@@ -10,41 +10,41 @@
 
 namespace ocl {
 
-    // vector base class wrapping an opencl buffer and a
+    // dvec base class wrapping an opencl buffer and a
     // (shared) pointer to opencl backend data
-    class vector_base {
+    class dvec_base {
         // shared pointer to the backend data
         be::data_ptr _bed;
         // backend buffer object
         be::buffer _b;
     protected:
         // destructor
-        ~vector_base();
+        ~dvec_base();
         // default constructor
-        vector_base();
+        dvec_base();
         // constructor, with size
-        explicit vector_base(std::size_t s);
+        explicit dvec_base(std::size_t s);
         // copy constructor
-        vector_base(const vector_base& r);
+        dvec_base(const dvec_base& r);
         // move constructor
-        vector_base(vector_base&& r);
+        dvec_base(dvec_base&& r);
         // assignment operator
-        vector_base& operator=(const vector_base& r);
+        dvec_base& operator=(const dvec_base& r);
         // move assignment operator
-        vector_base& operator=(vector_base&& r);
-        // swap two vector base objects
-        vector_base& swap(vector_base& r);
+        dvec_base& operator=(dvec_base&& r);
+        // swap two dvec base objects
+        dvec_base& swap(dvec_base& r);
         // fill pattern p with pattern length into this (OPENCL 1.2)
         // void fill_on_device(const void* p, size_t ps);
         // device device copy
-        void copy_on_device(const vector_base& r);
+        void copy_on_device(const dvec_base& r);
         // host device copy
         void copy_from_host(const void* src);
         // device host copy
         void copy_to_host(void* dst)
             const;
     public:
-        // return the size of the vector in bytes
+        // return the size of the dvec in bytes
         std::size_t buffer_size() const;
         // return the underlying opencl buffer
         const be::buffer& buf() const;
@@ -59,146 +59,146 @@ namespace ocl {
     namespace impl {
 
         template <typename _T>
-        struct vector_select_mask_value {
+        struct dvec_select_mask_value {
             using type = _T;
         };
 
         template <>
-        struct vector_select_mask_value<double> {
+        struct dvec_select_mask_value<double> {
             using type = std::int64_t;
         };
 
         template <>
-        struct vector_select_mask_value<float> {
+        struct dvec_select_mask_value<float> {
             using type = std::int32_t;
         };
 
         template <typename _T>
-        using vector_select_mask_value_t =
-            typename vector_select_mask_value<_T>::type;
+        using dvec_select_mask_value_t =
+            typename dvec_select_mask_value<_T>::type;
 
     }
 
-    // vector: representation of data on the acceleration device
+    // dvec: representation of data on the acceleration device
     template <class _T>
-    class vector : public vector_base {
-        using base_type = vector_base;
+    class dvec : public dvec_base {
+        using base_type = dvec_base;
     public:
         using value_type = _T;
-        using mask_value_type = impl::vector_select_mask_value_t<_T>;
-        using mask_type = vector<mask_value_type>;
+        using mask_value_type = impl::dvec_select_mask_value_t<_T>;
+        using mask_type = dvec<mask_value_type>;
         // using base_type::backend_data;
         // using base_type::buf;
-        ~vector() {}
-        // size of the vector
+        ~dvec() {}
+        // size of the dvec
         std::size_t size() const;
         // default constructor.
-        vector() : base_type{} {}
+        dvec() : base_type{} {}
         // constructor from memory buffer
-        vector(std::size_t n, const _T* s);
+        dvec(std::size_t n, const _T* s);
         // constructor with size and initializer
-        vector(std::size_t n, const _T& i);
+        dvec(std::size_t n, const _T& i);
         // constructor from initializer list
-        vector(std::initializer_list<_T> l);
+        dvec(std::initializer_list<_T> l);
         // constructor with size and initializer
         template <typename _U>
-        vector(std::size_t n, const _U& i);
+        dvec(std::size_t n, const _U& i);
         // copy constructor
-        vector(const vector& v);
+        dvec(const dvec& v);
         // move constructor
-        vector(vector&& v);
+        dvec(dvec&& v);
         // construction from std::vector, forces move of data
         // from host to device
-        vector(const std::vector<_T>& v);
-        // assignment operator from vector
-        vector& operator=(const vector& v);
+        dvec(const std::vector<_T>& v);
+        // assignment operator from dvec
+        dvec& operator=(const dvec& v);
         // move assignment
-        vector& operator=(vector&& v);
+        dvec& operator=(dvec&& v);
         // assignment from scalar
-        vector& operator=(const _T& i);
+        dvec& operator=(const _T& i);
         // template constructor for evaluation of expressions
         template <template <class _V> class _OP,
                   class _L, class _R>
-        vector(const expr<_OP<vector<_T> >, _L, _R>& r);
+        dvec(const expr<_OP<dvec<_T> >, _L, _R>& r);
         // conversion operator to std::vector, forces move of
         // data to host
         explicit operator std::vector<_T> () const;
     };
 
     template <class _T>
-    struct expr_traits<vector<_T> > {
-        using type = const vector<_T>&;
+    struct expr_traits<dvec<_T> > {
+        using type = const dvec<_T>&;
     };
 
-    // backend_data specialized for vector t
+    // backend_data specialized for dvec t
     template <class _T>
     be::data_ptr
-    backend_data(const vector<_T>& t);
-    // eval_size specialized for vector
+    backend_data(const dvec<_T>& t);
+    // eval_size specialized for dvec
     template <class _T>
-    std::size_t eval_size(const vector<_T>& t);
+    std::size_t eval_size(const dvec<_T>& t);
     // decl_non_nuffer_args specialized for be::buffer
     std::string
     decl_non_buffer_args(const be::buffer& b, unsigned& arg_num);
-    // decl_non_buffer_args specialized for vectors
+    // decl_non_buffer_args specialized for dvecs
     template <typename _T>
     std::string
-    decl_non_buffer_args(const vector<_T>& t, unsigned& arg_num);
+    decl_non_buffer_args(const dvec<_T>& t, unsigned& arg_num);
 
-    // decl_buffer_args specialized for vectors
+    // decl_buffer_args specialized for dvecs
     template <typename _T>
     std::string
-    decl_buffer_args(const vector<_T>& t, unsigned& arg_num, bool ro);
+    decl_buffer_args(const dvec<_T>& t, unsigned& arg_num, bool ro);
 
-    // fetch_args specialized for vectors
+    // fetch_args specialized for dvecs
     template <typename _T>
     std::string
-    fetch_args(const vector<_T>& t, var_counters& c);
+    fetch_args(const dvec<_T>& t, var_counters& c);
 
     // bind non buffer arguments
     template <typename _T>
     void
-    bind_non_buffer_args(const vector<_T>& t, be::argument_buffer& a);
+    bind_non_buffer_args(const dvec<_T>& t, be::argument_buffer& a);
 
     // bind buffer arguments
     template <typename _T>
     void
-    bind_buffer_args(const vector<_T>& t, unsigned& buf_num, be::kernel& k);
+    bind_buffer_args(const dvec<_T>& t, unsigned& buf_num, be::kernel& k);
 
     // bind buffer arguments
     template <typename _T>
     void
-    bind_buffer_args(vector<_T>& t, unsigned& buf_num, be::kernel& k);
+    bind_buffer_args(dvec<_T>& t, unsigned& buf_num, be::kernel& k);
 
-    // fetch_args specialized for vectors
+    // fetch_args specialized for dvecs
     template <typename _T>
     std::string
-    store_result(vector<_T>& t, var_counters& c);
+    store_result(dvec<_T>& t, var_counters& c);
 
 
-    // eval_args specialized for vector
+    // eval_args specialized for dvec
     template <class _T>
     std::string
-    eval_args(const std::string& p, const vector<_T>& r,
+    eval_args(const std::string& p, const dvec<_T>& r,
               unsigned& arg_num, bool ro);
-    // eval_vars specialized for vector
+    // eval_vars specialized for dvec
     template <class _T>
     std::string
-    eval_vars(const vector<_T>& r, unsigned& arg_num, bool read);
+    eval_vars(const dvec<_T>& r, unsigned& arg_num, bool read);
 
-    // store the results into a vector
+    // store the results into a dvec
     template <class _T>
     std::string
-    eval_results(vector<_T>& r, unsigned& res_num);
+    eval_results(dvec<_T>& r, unsigned& res_num);
 
     // bind_args for non const arguments
     template <class _T>
     void
-    bind_args(be::kernel& k, vector<_T>& r,  unsigned& arg_num);
+    bind_args(be::kernel& k, dvec<_T>& r,  unsigned& arg_num);
     // bind_args for const arguments
     template <class _T>
     void
-    bind_args(be::kernel& k, const vector<_T>& r,  unsigned& arg_num);
+    bind_args(be::kernel& k, const dvec<_T>& r,  unsigned& arg_num);
 
     namespace ops {
 
@@ -272,7 +272,7 @@ namespace ocl {
         struct abs : public unary_func<names::abs, false>{};
 
         template <>
-        struct abs< vector<float> > {
+        struct abs< dvec<float> > {
             static
             std::string body(const std::string& l) {
                 std::string res("fabs(");
@@ -284,7 +284,7 @@ namespace ocl {
         // public unary_func<names::fabs, false>{};
 
         template <>
-        struct abs< vector<double> >  {
+        struct abs< dvec<double> >  {
             static
             std::string body(const std::string& l) {
                 std::string res("fabs(");
@@ -391,7 +391,7 @@ namespace ocl {
         };
 
         template <class _D>
-        struct cvt_to<vector<_D> > {
+        struct cvt_to<dvec<_D> > {
             static
             std::string body(const std::string& l) {
                 std::string res("convert_");
@@ -410,7 +410,7 @@ namespace ocl {
         };
 
         template <class _D>
-        struct as<vector<_D> > {
+        struct as<dvec<_D> > {
             static
             std::string body(const std::string& l) {
                 std::string res("(");
@@ -443,9 +443,9 @@ namespace ocl {
     // abs(V)
     template <class _T>
     inline
-    expr<ops::abs<vector<_T> >, vector<_T>, void>
-    abs(const vector<_T>& t) {
-        return expr<ops::abs<vector<_T> >, vector<_T>, void>(t);
+    expr<ops::abs<dvec<_T> >, dvec<_T>, void>
+    abs(const dvec<_T>& t) {
+        return expr<ops::abs<dvec<_T> >, dvec<_T>, void>(t);
     }
 
     // abs(expr)
@@ -453,24 +453,24 @@ namespace ocl {
               template <class _T1> class _OP,
               class _L, class _R>
     inline
-    expr<ops::abs<vector<_T> >,
-         expr<_OP<vector<_T> >, _L, _R>,
+    expr<ops::abs<dvec<_T> >,
+         expr<_OP<dvec<_T> >, _L, _R>,
          void>
-    abs(const expr<_OP<vector<_T> >, _L, _R>& v) {
-        return expr<ops::abs<vector<_T> >,
-                    expr<_OP<vector<_T> >, _L, _R>,
+    abs(const expr<_OP<dvec<_T> >, _L, _R>& v) {
+        return expr<ops::abs<dvec<_T> >,
+                    expr<_OP<dvec<_T> >, _L, _R>,
                     void>(v);
     }
 
     // min(V)
     template <class _T, class _S>
     inline
-    expr<ops::min_func<vector<_T> >,
-         vector<_T>, _S>
-    min(const vector<_T>& a, const _S& b)
+    expr<ops::min_func<dvec<_T> >,
+         dvec<_T>, _S>
+    min(const dvec<_T>& a, const _S& b)
     {
-        return expr<ops::min_func<vector<_T> >,
-                    vector<_T>, _S >(a, b);
+        return expr<ops::min_func<dvec<_T> >,
+                    dvec<_T>, _S >(a, b);
     }
 
     // min(V)
@@ -479,13 +479,13 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<ops::min_func<vector<_T> >,
-         expr<_OP<vector<_T> >, _L, _R>,
+    expr<ops::min_func<dvec<_T> >,
+         expr<_OP<dvec<_T> >, _L, _R>,
          _S >
-    min(const expr<_OP<vector<_T> >, _L, _R>& a, const _S& b)
+    min(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
     {
-        return expr<ops::min_func<vector<_T> >,
-                    expr<_OP<vector<_T> >, _L, _R>,
+        return expr<ops::min_func<dvec<_T> >,
+                    expr<_OP<dvec<_T> >, _L, _R>,
                     _S >(a, b);
     }
 
@@ -495,25 +495,25 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<ops::min_func<vector<_T> >,
+    expr<ops::min_func<dvec<_T> >,
          _S,
-         expr<_OP<vector<_T> >, _L, _R> >
-    min(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
+         expr<_OP<dvec<_T> >, _L, _R> >
+    min(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
     {
-        return expr<ops::min_func<vector<_T> >,
+        return expr<ops::min_func<dvec<_T> >,
                     _S,
-                    expr<_OP<vector<_T> >, _L, _R> >(a, b);
+                    expr<_OP<dvec<_T> >, _L, _R> >(a, b);
     }
 
     // max(V)
     template <class _T, class _S>
     inline
-    expr<ops::max_func<vector<_T> >,
-         vector<_T>, _S>
-    max(const vector<_T>& a, const _S& b)
+    expr<ops::max_func<dvec<_T> >,
+         dvec<_T>, _S>
+    max(const dvec<_T>& a, const _S& b)
     {
-        return expr<ops::max_func<vector<_T> >,
-                    vector<_T>, _S >(a, b);
+        return expr<ops::max_func<dvec<_T> >,
+                    dvec<_T>, _S >(a, b);
     }
 
     // max(V)
@@ -522,13 +522,13 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<ops::max_func<vector<_T> >,
-         expr<_OP<vector<_T> >, _L, _R>,
+    expr<ops::max_func<dvec<_T> >,
+         expr<_OP<dvec<_T> >, _L, _R>,
          _S >
-    max(const expr<_OP<vector<_T> >, _L, _R>& a, const _S& b)
+    max(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
     {
-        return expr<ops::max_func<vector<_T> >,
-                    expr<_OP<vector<_T> >, _L, _R>,
+        return expr<ops::max_func<dvec<_T> >,
+                    expr<_OP<dvec<_T> >, _L, _R>,
                     _S >(a, b);
     }
 
@@ -538,14 +538,14 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<ops::max_func<vector<_T> >,
+    expr<ops::max_func<dvec<_T> >,
          _S,
-         expr<_OP<vector<_T> >, _L, _R> >
-    max(const _S& b, const expr<_OP<vector<_T> >, _L, _R>& a)
+         expr<_OP<dvec<_T> >, _L, _R> >
+    max(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
     {
-        return expr<ops::max_func<vector<_T> >,
+        return expr<ops::max_func<dvec<_T> >,
                     _S,
-                    expr<_OP<vector<_T> >, _L, _R> >(a, b);
+                    expr<_OP<dvec<_T> >, _L, _R> >(a, b);
     }
 
     // unary plus
@@ -559,42 +559,42 @@ namespace ocl {
     // unary minus V
     template <class _T>
     inline
-    expr<ops::neg<vector<_T> >, vector<_T>, void>
-    operator-(const vector<_T>& v) {
-        return expr<ops::neg<vector<_T> >, vector<_T>, void>(v);
+    expr<ops::neg<dvec<_T> >, dvec<_T>, void>
+    operator-(const dvec<_T>& v) {
+        return expr<ops::neg<dvec<_T> >, dvec<_T>, void>(v);
     };
     // unary minus expr
     template <class _T,
               template <class _T1> class _OP,
               class _L, class _R>
     inline
-    expr<ops::neg<vector<_T> >,
-         expr<_OP<vector<_T> >, _L, _R>,
+    expr<ops::neg<dvec<_T> >,
+         expr<_OP<dvec<_T> >, _L, _R>,
          void>
-    operator-(const expr<_OP<vector<_T> >, _L, _R>& v) {
-        return expr<ops::neg<vector<_T> >,
-                    expr<_OP<vector<_T> >, _L, _R>,
+    operator-(const expr<_OP<dvec<_T> >, _L, _R>& v) {
+        return expr<ops::neg<dvec<_T> >,
+                    expr<_OP<dvec<_T> >, _L, _R>,
                     void>(v);
     }
 
     // unary not V
     template <class _T>
     inline
-    expr<ops::bit_not<vector<_T> >, vector<_T>, void>
-    operator~(const vector<_T>& v) {
-        return expr<ops::bit_not<vector<_T> >, vector<_T>, void>(v);
+    expr<ops::bit_not<dvec<_T> >, dvec<_T>, void>
+    operator~(const dvec<_T>& v) {
+        return expr<ops::bit_not<dvec<_T> >, dvec<_T>, void>(v);
     };
     // unary not expr
     template <class _T,
               template <class _T1> class _OP,
               class _L, class _R>
     inline
-    expr<ops::bit_not<vector<_T> >,
-         expr<_OP<vector<_T> >, _L, _R>,
+    expr<ops::bit_not<dvec<_T> >,
+         expr<_OP<dvec<_T> >, _L, _R>,
          void>
-    operator~(const expr<_OP<vector<_T> >, _L, _R>& v) {
-        return expr<ops::bit_not<vector<_T> >,
-                    expr<_OP<vector<_T> >, _L, _R>,
+    operator~(const expr<_OP<dvec<_T> >, _L, _R>& v) {
+        return expr<ops::bit_not<dvec<_T> >,
+                    expr<_OP<dvec<_T> >, _L, _R>,
                     void>(v);
     }
 
@@ -603,97 +603,97 @@ namespace ocl {
     /* operator op(V, V) */                                             \
     template <class _T>                                                 \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >, vector<_T>, vector<_T> >           \
-    operator op (const vector<_T>& a, const vector<_T>& b) {            \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    vector<_T>, vector<_T> >(a,b);                      \
+    expr<ops:: op_name<dvec<_T> >, dvec<_T>, dvec<_T> >           \
+    operator op (const dvec<_T>& a, const dvec<_T>& b) {            \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    dvec<_T>, dvec<_T> >(a,b);                      \
     }                                                                   \
     /* operator op(V, _T) */                                            \
     template <class _T, class _S>                                       \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >, vector<_T>, _S>                    \
-    operator op (const vector<_T>& a, const _S& b) {                    \
-        return expr<ops:: op_name<vector<_T> >, vector<_T>, _S>(a,b);   \
+    expr<ops:: op_name<dvec<_T> >, dvec<_T>, _S>                    \
+    operator op (const dvec<_T>& a, const _S& b) {                    \
+        return expr<ops:: op_name<dvec<_T> >, dvec<_T>, _S>(a,b);   \
     }                                                                   \
     /* operator op(_T, V) */                                            \
     template <class _T, class _S>                                       \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >, _S, vector<_T> >                   \
-    operator op (const _S& a, const vector<_T>& b) {                    \
-        return expr<ops:: op_name<vector<_T> >, _S, vector<_T> >(a,b);  \
+    expr<ops:: op_name<dvec<_T> >, _S, dvec<_T> >                   \
+    operator op (const _S& a, const dvec<_T>& b) {                    \
+        return expr<ops:: op_name<dvec<_T> >, _S, dvec<_T> >(a,b);  \
     }                                                                   \
     /* operator op(V, expr) */                                          \
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >,                                    \
-         vector<_T>,                                                    \
-         expr<_OP<vector<_T> >, _L, _R> >                               \
-    operator op (const vector<_T>& a,                                   \
-                 const expr<_OP<vector<_T> >, _L, _R>& b) {             \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    vector<_T>,                                         \
-                    expr<_OP<vector<_T>>, _L, _R> >(a, b);              \
+    expr<ops:: op_name<dvec<_T> >,                                    \
+         dvec<_T>,                                                    \
+         expr<_OP<dvec<_T> >, _L, _R> >                               \
+    operator op (const dvec<_T>& a,                                   \
+                 const expr<_OP<dvec<_T> >, _L, _R>& b) {             \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    dvec<_T>,                                         \
+                    expr<_OP<dvec<_T>>, _L, _R> >(a, b);              \
     }                                                                   \
     /* operator op(_S, expr) */                                         \
     template <class _T, class _S,                                       \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >, _S,                                \
-         expr<_OP<vector<_T> >, _L, _R> >                               \
+    expr<ops:: op_name<dvec<_T> >, _S,                                \
+         expr<_OP<dvec<_T> >, _L, _R> >                               \
     operator op (const _S& a,                                           \
-                 const expr<_OP<vector<_T> >, _L, _R>& b) {             \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    _S, expr<_OP<vector<_T> >, _L, _R> >(a, b);         \
+                 const expr<_OP<dvec<_T> >, _L, _R>& b) {             \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    _S, expr<_OP<dvec<_T> >, _L, _R> >(a, b);         \
     }                                                                   \
     /* operator op(expr, V) */                                          \
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vector<_T>>,                                     \
-         expr<_OP<vector<_T> >, _L, _R>, vector<_T> >                   \
-    operator op (const expr<_OP<vector<_T> >, _L, _R>& a,               \
-                 const vector<_T>& b) {                                 \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    expr<_OP<vector<_T> >, _L, _R>,                     \
-                    vector<_T> >(a, b);                                 \
+    expr<ops:: op_name<dvec<_T>>,                                     \
+         expr<_OP<dvec<_T> >, _L, _R>, dvec<_T> >                   \
+    operator op (const expr<_OP<dvec<_T> >, _L, _R>& a,               \
+                 const dvec<_T>& b) {                                 \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    expr<_OP<dvec<_T> >, _L, _R>,                     \
+                    dvec<_T> >(a, b);                                 \
     }                                                                   \
     /* operator op(expr, _S) */                                         \
     template <class _T, class _S,                                       \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >,                                    \
-         expr<_OP<vector<_T> >, _L, _R>, _S>                            \
-    operator op (const expr<_OP<vector<_T> >,                           \
+    expr<ops:: op_name<dvec<_T> >,                                    \
+         expr<_OP<dvec<_T> >, _L, _R>, _S>                            \
+    operator op (const expr<_OP<dvec<_T> >,                           \
                  _L, _R>& a, const _S& b) {                             \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    expr<_OP<vector<_T> >, _L, _R>, _S>(a, b);          \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    expr<_OP<dvec<_T> >, _L, _R>, _S>(a, b);          \
     }                                                                   \
     /* operator op(expr, expr)  */                                      \
     template <class _T,                                                 \
               template <class _V> class _OP1, class _L1, class _R1,     \
               template <class _V> class _OP2, class _L2, class _R2>     \
     inline                                                              \
-    expr<ops:: op_name<vector<_T> >,                                    \
-         expr<_OP1<vector<_T> >, _L1, _R1>,                             \
-         expr<_OP2<vector<_T> >, _L2, _R2> >                            \
-    operator op(const expr<_OP1<vector<_T> >, _L1, _R1>& a,             \
-                const expr<_OP2<vector<_T> >, _L2, _R2>& b) {           \
-        return expr<ops:: op_name<vector<_T> >,                         \
-                    expr<_OP1<vector<_T> >, _L1, _R1>,                  \
-                    expr<_OP2<vector<_T> >, _L2, _R2> > (a, b);         \
+    expr<ops:: op_name<dvec<_T> >,                                    \
+         expr<_OP1<dvec<_T> >, _L1, _R1>,                             \
+         expr<_OP2<dvec<_T> >, _L2, _R2> >                            \
+    operator op(const expr<_OP1<dvec<_T> >, _L1, _R1>& a,             \
+                const expr<_OP2<dvec<_T> >, _L2, _R2>& b) {           \
+        return expr<ops:: op_name<dvec<_T> >,                         \
+                    expr<_OP1<dvec<_T> >, _L1, _R1>,                  \
+                    expr<_OP2<dvec<_T> >, _L2, _R2> > (a, b);         \
     }                                                                   \
     /* operator eq_op V */                                              \
     template <class _T>                                                 \
     inline                                                              \
-    vector<_T>& operator eq_op(vector<_T>& a, const vector<_T>& r) {    \
+    dvec<_T>& operator eq_op(dvec<_T>& a, const dvec<_T>& r) {    \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
     /* operator eq_op _T */                                             \
     template <class _T>                                                 \
     inline                                                              \
-    vector<_T>& operator eq_op(vector<_T>& a, const _T& r) {            \
+    dvec<_T>& operator eq_op(dvec<_T>& a, const _T& r) {            \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
@@ -701,9 +701,9 @@ namespace ocl {
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    vector<_T>&                                                         \
-    operator eq_op(vector<_T>& a,                                       \
-                   const expr<_OP<vector<_T> >, _L, _R>& r) {           \
+    dvec<_T>&                                                         \
+    operator eq_op(dvec<_T>& a,                                       \
+                   const expr<_OP<dvec<_T> >, _L, _R>& r) {           \
         a = a op r;                                                     \
         return a;                                                       \
     }
@@ -726,27 +726,27 @@ namespace ocl {
     // TODO: more overloads also for (vec, expr), (expr, vec), (expr, expr)
 #define DEFINE_OCLVEC_CMP_OPERATOR(op, op_name )                        \
     template <typename _T>                                              \
-    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
-         _T, vector<_T> >                                               \
-    operator op(const _T& a, const vector<_T>& b) {                     \
-        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
-                    _T, vector<_T> >(a, b);                             \
+    expr<ops:: op_name<typename dvec<_T>::mask_type >,                \
+         _T, dvec<_T> >                                               \
+    operator op(const _T& a, const dvec<_T>& b) {                     \
+        return expr<ops:: op_name <typename dvec<_T>::mask_type>,     \
+                    _T, dvec<_T> >(a, b);                             \
     }                                                                   \
                                                                         \
     template <typename _T>                                              \
-    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
-         vector<_T>, vector<_T> >                                       \
-    operator op(const vector<_T>& a, const vector<_T>& b) {             \
-        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
-                    vector<_T>, vector<_T> >(a, b);                     \
+    expr<ops:: op_name<typename dvec<_T>::mask_type >,                \
+         dvec<_T>, dvec<_T> >                                       \
+    operator op(const dvec<_T>& a, const dvec<_T>& b) {             \
+        return expr<ops:: op_name <typename dvec<_T>::mask_type>,     \
+                    dvec<_T>, dvec<_T> >(a, b);                     \
     }                                                                   \
                                                                         \
     template <typename _T>                                              \
-    expr<ops:: op_name<typename vector<_T>::mask_type >,                \
-         vector<_T>, _T>                                                \
-    operator op(const vector<_T>& a, const _T& b) {                     \
-        return expr<ops:: op_name <typename vector<_T>::mask_type>,     \
-                    vector<_T>, _T>(a, b);                              \
+    expr<ops:: op_name<typename dvec<_T>::mask_type >,                \
+         dvec<_T>, _T>                                                \
+    operator op(const dvec<_T>& a, const _T& b) {                     \
+        return expr<ops:: op_name <typename dvec<_T>::mask_type>,     \
+                    dvec<_T>, _T>(a, b);                              \
     }
 
     DEFINE_OCLVEC_CMP_OPERATOR(<, lt)
@@ -763,7 +763,7 @@ namespace ocl {
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(std::size_t n, const _T* p)
+ocl::dvec<_T>::dvec(std::size_t n, const _T* p)
     : base_type{n*sizeof(_T)}
 {
     copy_from_host(p);
@@ -771,7 +771,7 @@ ocl::vector<_T>::vector(std::size_t n, const _T* p)
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(std::size_t s, const _T& i)
+ocl::dvec<_T>::dvec(std::size_t s, const _T& i)
     : base_type{s * sizeof(_T)}
 {
     if (s) {
@@ -782,7 +782,7 @@ ocl::vector<_T>::vector(std::size_t s, const _T& i)
 template <class _T>
 template <typename _U>
 inline
-ocl::vector<_T>::vector(std::size_t s, const _U& i)
+ocl::dvec<_T>::dvec(std::size_t s, const _U& i)
     : base_type{s * sizeof(_T)}
 {
     if (s) {
@@ -792,21 +792,21 @@ ocl::vector<_T>::vector(std::size_t s, const _U& i)
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(const vector& r)
+ocl::dvec<_T>::dvec(const dvec& r)
     : base_type(r)
 {
 }
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(vector&& r)
+ocl::dvec<_T>::dvec(dvec&& r)
     : base_type(std::move(r))
 {
 }
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(const std::vector<_T>& r)
+ocl::dvec<_T>::dvec(const std::vector<_T>& r)
     : base_type{sizeof(_T) * r.size()}
 {
     copy_from_host(&r[0]);
@@ -814,7 +814,7 @@ ocl::vector<_T>::vector(const std::vector<_T>& r)
 
 template <class _T>
 inline
-ocl::vector<_T>::vector(std::initializer_list<_T> l)
+ocl::dvec<_T>::dvec(std::initializer_list<_T> l)
     : base_type{sizeof(_T) * l.size()}
 {
     copy_from_host(l.begin());
@@ -824,7 +824,7 @@ template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::
-vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
+dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
     : base_type{eval_size(r)*sizeof(_T)}
 {
     if (buffer_size()) {
@@ -834,8 +834,8 @@ vector<_T>::vector(const expr<_OP<vector<_T> >, _L, _R>& r)
 
 template <class _T>
 inline
-ocl::vector<_T>&
-ocl::vector<_T>::operator=(const vector& r)
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(const dvec& r)
 {
     base_type::operator=(r);
     return *this;
@@ -843,8 +843,8 @@ ocl::vector<_T>::operator=(const vector& r)
 
 template <class _T>
 inline
-ocl::vector<_T>&
-ocl::vector<_T>::operator=(vector&& r)
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(dvec&& r)
 {
     base_type::operator=(std::move(r));
     return *this;
@@ -852,7 +852,7 @@ ocl::vector<_T>::operator=(vector&& r)
 
 template <class _T>
 inline
-ocl::vector<_T>::operator std::vector<_T> ()
+ocl::dvec<_T>::operator std::vector<_T> ()
     const
 {
     std::size_t n(this->size());
@@ -864,14 +864,14 @@ ocl::vector<_T>::operator std::vector<_T> ()
 template <class _T>
 inline
 std::size_t
-ocl::vector<_T>::size() const
+ocl::dvec<_T>::size() const
 {
     return buffer_size()/sizeof(_T);
 }
 
 template <class _T>
 inline
-std::size_t ocl::eval_size(const vector<_T>& v)
+std::size_t ocl::eval_size(const dvec<_T>& v)
 {
     return v.size();
 }
@@ -879,7 +879,7 @@ std::size_t ocl::eval_size(const vector<_T>& v)
 template <class _T>
 inline
 ocl::be::data_ptr
-ocl::backend_data(const vector<_T>& v)
+ocl::backend_data(const dvec<_T>& v)
 {
     return v.backend_data();
 }
@@ -895,7 +895,7 @@ ocl::decl_non_buffer_args(const be::buffer& r, unsigned& arg_num)
 
 template <typename _T>
 std::string
-ocl::decl_non_buffer_args(const vector<_T>& r, unsigned& arg_num)
+ocl::decl_non_buffer_args(const dvec<_T>& r, unsigned& arg_num)
 {
     static_cast<void>(r);
     static_cast<void>(arg_num);
@@ -905,7 +905,7 @@ ocl::decl_non_buffer_args(const vector<_T>& r, unsigned& arg_num)
 
 template <typename _T>
 std::string
-ocl::decl_buffer_args(const vector<_T>& r, unsigned& arg_num, bool ro)
+ocl::decl_buffer_args(const dvec<_T>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
     std::ostringstream s;
@@ -921,7 +921,7 @@ ocl::decl_buffer_args(const vector<_T>& r, unsigned& arg_num, bool ro)
 
 template <typename _T>
 std::string
-ocl::fetch_args(const vector<_T>& r, var_counters& c)
+ocl::fetch_args(const dvec<_T>& r, var_counters& c)
 {
     static_cast<void>(r);
     std::ostringstream s;
@@ -935,7 +935,7 @@ ocl::fetch_args(const vector<_T>& r, var_counters& c)
 
 template <typename _T>
 void
-ocl::bind_non_buffer_args(const vector<_T>& t, be::argument_buffer& a)
+ocl::bind_non_buffer_args(const dvec<_T>& t, be::argument_buffer& a)
 {
     static_cast<void>(t);
     static_cast<void>(a);
@@ -944,7 +944,7 @@ ocl::bind_non_buffer_args(const vector<_T>& t, be::argument_buffer& a)
 template <typename _T>
 void
 ocl::
-bind_buffer_args(const vector<_T>& r, unsigned& buf_num, be::kernel& k)
+bind_buffer_args(const dvec<_T>& r, unsigned& buf_num, be::kernel& k)
 {
     if (r.backend_data()->debug() != 0) {
         std::cout << "binding const lvec<"
@@ -961,7 +961,7 @@ bind_buffer_args(const vector<_T>& r, unsigned& buf_num, be::kernel& k)
 template <typename _T>
 void
 ocl::
-bind_buffer_args(vector<_T>& r, unsigned& buf_num, be::kernel& k)
+bind_buffer_args(dvec<_T>& r, unsigned& buf_num, be::kernel& k)
 {
     if (r.backend_data()->debug() != 0) {
         std::cout << "binding lvec<"
@@ -977,7 +977,7 @@ bind_buffer_args(vector<_T>& r, unsigned& buf_num, be::kernel& k)
 
 template <typename _T>
 std::string
-ocl::store_result(vector<_T>& r, var_counters& c)
+ocl::store_result(dvec<_T>& r, var_counters& c)
 {
     static_cast<void>(r);
     std::ostringstream s;
@@ -991,7 +991,7 @@ ocl::store_result(vector<_T>& r, var_counters& c)
 
 template <class _T>
 std::string
-ocl::eval_args(const std::string& p, const vector<_T>& r, unsigned& arg_num,
+ocl::eval_args(const std::string& p, const dvec<_T>& r, unsigned& arg_num,
                bool ro)
 {
     static_cast<void>(r);
@@ -1011,7 +1011,7 @@ ocl::eval_args(const std::string& p, const vector<_T>& r, unsigned& arg_num,
 
 template <class _T>
 std::string
-ocl::eval_vars(const vector<_T>& r, unsigned& arg_num, bool read)
+ocl::eval_vars(const dvec<_T>& r, unsigned& arg_num, bool read)
 {
     static_cast<void>(r);
     std::ostringstream s;
@@ -1027,7 +1027,7 @@ ocl::eval_vars(const vector<_T>& r, unsigned& arg_num, bool read)
 }
 
 template <class _T>
-std::string ocl::eval_results(vector<_T>& r,
+std::string ocl::eval_results(dvec<_T>& r,
                               unsigned& res_num)
 {
     static_cast<void>(r);
@@ -1040,7 +1040,7 @@ std::string ocl::eval_results(vector<_T>& r,
 
 template <class _T>
 void
-ocl::bind_args(be::kernel& k, vector<_T>& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, dvec<_T>& r, unsigned& arg_num)
 {
     if (r.backend_data()->debug() != 0) {
         std::cout << "binding lvec<"
@@ -1056,7 +1056,7 @@ ocl::bind_args(be::kernel& k, vector<_T>& r, unsigned& arg_num)
 
 template <class _T>
 void
-ocl::bind_args(be::kernel& k, const vector<_T>& r, unsigned& arg_num)
+ocl::bind_args(be::kernel& k, const dvec<_T>& r, unsigned& arg_num)
 {
     if (r.backend_data()->debug() != 0) {
         std::cout << "binding const lvec<"

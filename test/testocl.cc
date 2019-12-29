@@ -65,24 +65,24 @@ int main()
                   << "MiB\n";
         float a(2.0f), b(3.0f);
 
-        vector<float> v0(SIZE, a);
+        dvec<float> v0(SIZE, a);
         // std::vector<float> vha(SIZE, a);
-        vector<float> va(v0);
+        dvec<float> va(v0);
         std::vector<float> vhb(SIZE, 3.0f);
-        vector<float> vb(vhb);
-        vector<float> vc= test_func(va, vb);
-        vector<float> vd= test_func(va, vb, vc);
-        vector<float> vd2= test_func(va, vb, vc);
+        dvec<float> vb(vhb);
+        dvec<float> vc= test_func(va, vb);
+        dvec<float> vd= test_func(va, vb, vc);
+        dvec<float> vd2= test_func(va, vb, vc);
 
         float c= test_func(a, b);
         float d= test_func(a, b, c);
 
         std::vector<float> res(vd);
 #if 0
-        vector<cftal::v8f32> vva(SIZE/8, a);
-        vector<cftal::v8f32> vvb(SIZE/8, b);
-        vector<cftal::v8f32> vvc(SIZE/8, c);
-        vector<cftal::v8f32> vres(test_func(vva, vvb, vvc));
+        dvec<cftal::v8f32> vva(SIZE/8, a);
+        dvec<cftal::v8f32> vvb(SIZE/8, b);
+        dvec<cftal::v8f32> vvc(SIZE/8, c);
+        dvec<cftal::v8f32> vres(test_func(vva, vvb, vvc));
 #endif
         if (SIZE <= 4096) {
             for (std::size_t i=0; i< res.size(); ++i) {

@@ -34,19 +34,19 @@ namespace ocl {
 #endif
 #if 0
     class srand {
-        vector<std::uint32_t> _next;
+        dvec<std::uint32_t> _next;
     public:
         srand() : _next() {}
-        srand(const vector<uint32_t>& gid) : _next{gid} {}
+        srand(const dvec<uint32_t>& gid) : _next{gid} {}
         void
-        seed(const vector<uint64_t>& gid){
-            _next = cvt_to<vector<uint32_t> >(gid);
+        seed(const dvec<uint64_t>& gid){
+            _next = cvt_to<dvec<uint32_t> >(gid);
         }
         void
-        seed(const vector<uint32_t>& gid){
+        seed(const dvec<uint32_t>& gid){
             _next = gid;
         }
-        // vector<uint32_t>
+        // dvec<uint32_t>
         auto
         next() {
             _next = (_next * 1103515245 + 12345);
@@ -54,14 +54,14 @@ namespace ocl {
         }
         auto
         nextf() {
-            return (cvt_to<vector<float>>(next()) * (1.0f/32768.f));
+            return (cvt_to<dvec<float>>(next()) * (1.0f/32768.f));
         }
     };
 #endif
 
     // template <class _T>
     class rand48 {
-        vector<std::uint64_t> _state;
+        dvec<std::uint64_t> _state;
 
         static const std::uint64_t A;
         static const std::uint64_t C;
@@ -77,37 +77,37 @@ namespace ocl {
     public:
         // returns non negative numbers between 0 and 2^31
         inline
-        vector<std::int32_t>
+        dvec<std::int32_t>
         lrand48() {
             next();
-            return cvt_to<vector<std::int32_t> >(_state) & (0x7fffffff);
+            return cvt_to<dvec<std::int32_t> >(_state) & (0x7fffffff);
         }
 
         // returns non negative numbers between -2^31 and 2^31
         inline
-        vector<std::int32_t>
+        dvec<std::int32_t>
         mrand48() {
             next();
-            return cvt_to<vector<std::int32_t> >(_state);
+            return cvt_to<dvec<std::int32_t> >(_state);
         }
 
         // returns floating point variables in interval [0, 1.0)
         inline
-        vector<float>
+        dvec<float>
         drand48() {
             next();
-            return cvt_to<vector<float> >(_state);
+            return cvt_to<dvec<float> >(_state);
         }
 
         void
-        seed(const vector<uint64_t>& gid){
+        seed(const dvec<uint64_t>& gid){
             _state = ((gid * 65536) | 0x330E) & MM;
         }
 
-        vector<float>
+        dvec<float>
         nextf() {
-            vector<float> t=cvt_to<vector<float> >(drand48()) * REC;
-            vector<float> r=max(min(t, 1.0f), 0.0f);
+            dvec<float> t=cvt_to<dvec<float> >(drand48()) * REC;
+            dvec<float> r=max(min(t, 1.0f), 0.0f);
             return r;
         }
     };
@@ -221,13 +221,13 @@ int main()
         std::vector<std::uint64_t> gid(_N, 0ull);
         for (std::size_t i=0; i<gid.size(); ++i)
             gid[i] = i;
-        vector<std::uint64_t> dg=gid;
+        dvec<std::uint64_t> dg=gid;
         //ocl::rand48 t;
         ocl::srand t;
         t.seed(dg);
 
         ocl::rnd_distribution<float, 25> dst(0, 1.0);
-        vector<float> f;
+        dvec<float> f;
 
         for (int i=0; i<20000; ++i) {
             f=t.nextf();

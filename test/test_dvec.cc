@@ -98,31 +98,31 @@ int main()
                   << double(SIZE*sizeof(ftype))/(1024*1024)
                   << "MiB\n";
         rtype a(rtype(2.0)), b(rtype(3.0));
-        vector<ftype> va(SIZE, a);
-        std::cout << "vector init done" << std::endl;
-        vector<ftype> vb(SIZE, b);
+        dvec<ftype> va(SIZE, a);
+        std::cout << "dvec init done" << std::endl;
+        dvec<ftype> vb(SIZE, b);
         ftype c= test_func(a, b);
         std::cout << "c: " << c << std::endl;
-        vector<ftype> vc=test_func(va, vb);
+        dvec<ftype> vc=test_func(va, vb);
         std::cout << dump_from(vb, vc);
 #if 0
         std::vector<ftype> vhb(SIZE, ftype(3.0));
-        vector<ftype> vb(vhb);
-        vector<ftype> vc= test_func(va, test_func(va, vb));
-        vector<ftype> vd(test_func(va, vb, vc));
-        vector<ftype> vd2= test_func(va, vb, vc);
+        dvec<ftype> vb(vhb);
+        dvec<ftype> vc= test_func(va, test_func(va, vb));
+        dvec<ftype> vd(test_func(va, vb, vc));
+        dvec<ftype> vd2= test_func(va, vb, vc);
 
-        vector<int32_t> tgt= vc < vd;
+        dvec<int32_t> tgt= vc < vd;
 
         ftype c= test_func(a, test_func(a, b));
         ftype d= test_func(a, b, c);
 
         std::vector<ftype> res(vd);
 
-        vector<v8fXX> vva(SIZE/8, a);
-        vector<v8fXX> vvb(SIZE/8, b);
-        vector<v8fXX> vvc(SIZE/8, c);
-        vector<v8fXX> vres(test_func(vva, vvb, vvc));
+        dvec<v8fXX> vva(SIZE/8, a);
+        dvec<v8fXX> vvb(SIZE/8, b);
+        dvec<v8fXX> vvc(SIZE/8, c);
+        dvec<v8fXX> vres(test_func(vva, vvb, vvc));
 
         if (SIZE <= 4096) {
             for (std::size_t i=0; i< res.size(); ++i) {
@@ -143,10 +143,10 @@ int main()
         }
         std::cout << "scalar " << d << std::endl;
 
-        vector<ftype> cvt_dst = -vd2;
-        vector<ftype> abs_dst = abs(cvt_dst);
-        vector<itype> iv= ~(cvt_to<vector<itype> >(cvt_dst)*2);
-        vector<ftype> ivf= as<vector<ftype> >(iv);
+        dvec<ftype> cvt_dst = -vd2;
+        dvec<ftype> abs_dst = abs(cvt_dst);
+        dvec<itype> iv= ~(cvt_to<dvec<itype> >(cvt_dst)*2);
+        dvec<ftype> ivf= as<dvec<ftype> >(iv);
 
         impl::be_data::instance()->clear();
 #endif

@@ -2,7 +2,7 @@
 #include <cftal/math/elem_func.h>
 #include <cftal/math/elem_func_core_f32.h>
 #include <cftal/d_real.h>
-#include "ocl/vector.h"
+#include "ocl/dvec.h"
 // #include <vexcl/vexcl.hpp>
 #include <chrono>
 #include <thread>
@@ -11,10 +11,10 @@
 namespace cftal {
 
     template <>
-    struct d_real_traits<ocl::vector<float> > {
+    struct d_real_traits<ocl::dvec<float> > {
         constexpr static const bool fma=true;
-        using cmp_result_type = typename ocl::vector<int32_t>;
-        using int_type = ocl::vector<int32_t>;
+        using cmp_result_type = typename ocl::dvec<int32_t>;
+        using int_type = ocl::dvec<int32_t>;
 
         static
         bool any_of_v(const cmp_result_type& b) {
@@ -32,23 +32,23 @@ namespace cftal {
         }
 
         static
-        ocl::vector<float>
+        ocl::dvec<float>
         sel (const cmp_result_type& s,
-             const ocl::vector<float>& on_true,
-             const ocl::vector<float>& on_false) {
+             const ocl::dvec<float>& on_true,
+             const ocl::dvec<float>& on_false) {
             // return select(s, on_true, on_false);
             return on_true;
         }
 
         static
         void
-        split(const ocl::vector<float> & a,
-              ocl::vector<float>& h,
-              ocl::vector<float>& l) {
+        split(const ocl::dvec<float> & a,
+              ocl::dvec<float>& h,
+              ocl::dvec<float>& l) {
 #if 0
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
-            using vi_type = ocl::vector<int32_t>;
+            using vi_type = ocl::dvec<int32_t>;
             vi_type& hi=reinterpret_cast<vi_type&>(h);
             const vi_type& ai=reinterpret_cast<const vi_type&>(a);
             hi = ai & msk;
@@ -56,8 +56,8 @@ namespace cftal {
 #else
             const int32_t msk=
                 const_u32<0xfffff000U>::v.s32();
-            using vi_type = ocl::vector<int32_t>;
-            using vf_type = ocl::vector<float>;
+            using vi_type = ocl::dvec<int32_t>;
+            using vf_type = ocl::dvec<float>;
             using ocl::as;
             h=as<vf_type>(as<vi_type>(a) & msk);
             l=a - h;
@@ -114,7 +114,7 @@ namespace ocl {
 
     template <typename _T, typename _C, size_t _N>
     auto
-    horner(const vector<_T>& x, const _C(&ci)[_N]);
+    horner(const dvec<_T>& x, const _C(&ci)[_N]);
 
     namespace test {
 
@@ -122,23 +122,23 @@ namespace ocl {
 
         const int ELEMENTS=((4*1024*1024)/VEC_SIZE)-1;
         void
-        test_add12cond(const vector<float>& x);
+        test_add12cond(const dvec<float>& x);
 
         void
-        test_mul12(const vector<float>& x);
+        test_mul12(const dvec<float>& x);
 
         void
-        test_horner(const vector<float>& x);
+        test_horner(const dvec<float>& x);
     }
 };
 
 template <typename _T, typename _C, size_t _N>
 auto
-ocl::horner(const vector<_T>& x, const _C(&a)[_N])
+ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
 {
     static_assert(_N > 0, "invalid call to horner(x, array)");
     const _C* pa=a;
-    using _T_t= const vector<_T>&;
+    using _T_t= const dvec<_T>&;
     return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa);
 }
 
@@ -161,9 +161,9 @@ ocl::horner(const _X& x, const _CN& cn,
 }
 
 void
-ocl::test::test_add12cond(const vector<float>& x)
+ocl::test::test_add12cond(const dvec<float>& x)
 {
-    using vf_type = vector<float>;
+    using vf_type = dvec<float>;
 
     vf_type a=x, b=x;
     using d_ops=cftal::d_real_ops<vf_type, false>;
@@ -175,9 +175,9 @@ ocl::test::test_add12cond(const vector<float>& x)
 }
 
 void
-ocl::test::test_mul12(const vector<float>& x)
+ocl::test::test_mul12(const dvec<float>& x)
 {
-    using vf_type = vector<float>;
+    using vf_type = dvec<float>;
     vf_type a=x, b=x;
     using d_ops=cftal::d_real_ops<vf_type, false>;
     vf_type h, l;
@@ -186,14 +186,14 @@ ocl::test::test_mul12(const vector<float>& x)
     d_ops::sqr22(hh, ll, h, l);
     d_ops::div22(hh, ll, hh, ll, h, l);
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
-    // std::vector<float> hh(h), hl(l);
+    // std::dvec<float> hh(h), hl(l);
 }
 
 void
-ocl::test::test_horner(const vector<float>& x)
+ocl::test::test_horner(const dvec<float>& x)
 {
-    using vf_type = vector<float>;
-    // using vi_type = vector<int32_t>;
+    using vf_type = dvec<float>;
+    // using vi_type = dvec<int32_t>;
     constexpr
     const float log_c1=+1.0000000000000000000000e+00;
     // x^2 : -0x8p-4
@@ -293,10 +293,10 @@ int main()
 #if 0
         vex::Context ctx( vex::Filter::GPU);
         std::vector<float> xh(ocl::test::ELEMENTS, 1.1235f);
-        ocl::vector<float> x(ctx, ocl::test::ELEMENTS);
+        ocl::dvec<float> x(ctx, ocl::test::ELEMENTS);
         vex::copy(xh, x);
 #endif
-        ocl::vector<float> x(ocl::test::ELEMENTS, 1.1235f);
+        ocl::dvec<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
         for (int i=0; i<count; ++i) {
             ocl::test::test_mul12(x);

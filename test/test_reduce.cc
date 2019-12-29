@@ -14,25 +14,25 @@ namespace ocl {
     class custom_kernel {
     };
 
-    bool any_of(const vector<int32_t>& v);
-    bool all_of(const vector<int32_t>& v);
-    bool none_of(const vector<int32_t>& v);
+    bool any_of(const dvec<int32_t>& v);
+    bool all_of(const dvec<int32_t>& v);
+    bool none_of(const dvec<int32_t>& v);
 }
 
 bool
-ocl::any_of(const vector<int32_t>& v)
+ocl::any_of(const dvec<int32_t>& v)
 {
     return false;
 }
 
 bool
-ocl::all_of(const vector<int32_t>& v)
+ocl::all_of(const dvec<int32_t>& v)
 {
     return false;
 }
 
 bool
-ocl::none_of(const vector<int32_t>& v)
+ocl::none_of(const dvec<int32_t>& v)
 {
     return false;
 }
@@ -51,9 +51,9 @@ int main()
                   << "MiB\n";
         float a(2.0f), b(3.0f);
 
-        vector<float> va(SIZE, a);
-        vector<float> vb(SIZE, b);
-        vector<int32_t> tgt= va == vb;
+        dvec<float> va(SIZE, a);
+        dvec<float> vb(SIZE, b);
+        dvec<int32_t> tgt= va == vb;
 
         bool ao = all_of(tgt);
         bool no = none_of(tgt);

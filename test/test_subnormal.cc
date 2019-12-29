@@ -1,4 +1,4 @@
-#include "ocl/vector.h"
+#include "ocl/dvec.h"
 #include <cftal/math/func_constants.h>
 #include <cftal/cast.h>
 #include <vector>
@@ -18,9 +18,9 @@ void ocl::test::subnormals()
         float f=cftal::as<float>(i);
         vh.push_back(f);
     }
-    std::cout << "created a vector with " << vh.size() << " elements\n";
-    vector<float> v0(vh);
-    vector<float> v1=(v0*2.0f)*0.5f;
+    std::cout << "created a dvec with " << vh.size() << " elements\n";
+    dvec<float> v0(vh);
+    dvec<float> v1=(v0*2.0f)*0.5f;
     std::vector<float> vr(v1);
     size_t cnt=0;
     for (size_t i=0; i< vr.size(); ++i) {
