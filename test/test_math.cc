@@ -7,9 +7,28 @@
 #include <chrono>
 #include <thread>
 
-// debugging with clover
-// CLOVER_DEBUG_FILE=clover_dump CLOVER_DEBUG=clc,llvm,asm OCL_DEBUG=1
-// ./test/test_math
+
+/*
+You can dump the list of kernels and the LLVM IR when a program runs by
+doing the following:
+CLOVER_DEBUG_FILE=clover_dump CLOVER_DEBUG=clc,llvm,asm
+PATH_TO_YOUR_TEST_PROGRAM
+
+That'll generate a set of files called clover_dump.cl, clover_dump.ll,
+clover_dump.asm with:
+a) The CL source that the program tried to compile
+b) The LLVM IR for the CL source.
+c) The generated machine code for the LLVM IR on your card.
+
+If the CL source is missing built-in function implementations, libclc (
+libclc.llvm.org) will gladly accept patches to implement them.
+
+If you want to just do a test-compile of the CL source, I use the following
+command (with libclc/llvm/mesa all in /usr/local/):
+clang -S -emit-llvm -o $1.ll -include /usr/local/include/clc/clc.h
+-I/usr/local/include/ -Dcl_clang_storage_class_specifiers -target amdgcn--
+-mcpu=pitcairn -c $1
+*/
 
 namespace cftal {
 
