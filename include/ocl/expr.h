@@ -529,7 +529,7 @@ ocl::bind_non_buffer_args(const expr<_OP, _L, _R>& e,
 template <class _OP, class _L>
 void
 ocl::bind_non_buffer_args(const expr<_OP, _L, void>& e,
-                        be::argument_buffer& a)
+                          be::argument_buffer& a)
 {
     bind_non_buffer_args(e._l, a);
 }

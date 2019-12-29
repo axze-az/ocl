@@ -4,17 +4,28 @@
 #include <ocl/config.h>
 #include <cftal/vec.h>
 #include <sstream>
+#include <typeinfo>
 
 namespace ocl {
 
     namespace be {
 
+        inline
+        std::string demangle( const char* mangled_name ) {
+
+            std::size_t len = 0 ;
+            int status = 0 ;
+            std::unique_ptr< char, decltype(&std::free) > ptr(
+                        __cxxabiv1::__cxa_demangle( mangled_name, nullptr, &len, &status ), &std::free ) ;
+            return ptr.get() ;
+        }
+
         template <typename _T>
         struct type_2_name {
             static
-            constexpr const char* v() {
+            constexpr std::string v() {
                 // static_assert(0, "specialization required");
-                return "missing type_2_name";
+                return demangle(typeid(_T).name());
             }
         };
 
