@@ -32,6 +32,16 @@ namespace ocl {
         using dvec_select_mask_value_t =
             typename dvec_select_mask_value<_T>::type;
 
+        template <size_t _N>
+        constexpr inline size_t const_log2() {
+            static_assert(_N != 0 && (_N & (_N-1))==0,
+                         "Value is not a valid power of 2");
+            return 1 + const_log2<_N/2>();
+        }
+        template <>
+        constexpr inline size_t const_log2<1>() {
+            return 0;
+        }
     }
     // dvec: representation of data on the acceleration device
     template <class _T>
@@ -113,7 +123,7 @@ ocl::dvec<_T>::dvec(std::size_t s, const _T& i)
     : base_type{s * sizeof(_T)}
 {
     if (s) {
-        execute(*this, i);
+        execute(*this, i, backend_data(), s);
     }
 }
 
@@ -124,7 +134,7 @@ ocl::dvec<_T>::dvec(std::size_t s, const _U& i)
     : base_type{s * sizeof(_T)}
 {
     if (s) {
-        execute(*this, i);
+        execute(*this, i, backend_data(), s);
     }
 }
 
@@ -165,8 +175,9 @@ ocl::
 dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
     : base_type{ocl::backend_data(r), eval_size(r)*sizeof(_T)}
 {
-    if (buffer_size()) {
-        execute(*this, r);
+    size_t s=size();
+    if (s) {
+        execute(*this, r, backend_data(), s);
     }
 }
 
@@ -178,10 +189,13 @@ ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
 {
     size_t s=eval_size(r);
     if (s == size()) {
-        execute(*this, r);
+        execute(*this, r, backend_data(), s);
     } else {
-        dvec t(ocl::backend_data(r), s);
-        execute(t, r);
+        be::data_ptr p=backend_data();
+        if (p==nullptr)
+            p=ocl::backend_data(r);
+        dvec t(p, s);
+        execute(t, r, p, s);
         swap(t);
     }
     return *this;
@@ -221,7 +235,15 @@ inline
 std::size_t
 ocl::dvec<_T>::size() const
 {
-    return buffer_size()/sizeof(_T);
+    constexpr const size_t st=sizeof(_T);
+    std::size_t s=buffer_size();
+    if constexpr ((st & (st-1))==0) {
+        constexpr size_t shift=impl::const_log2<st>();
+        s >>= shift;
+    } else {
+        s /= st;
+    }
+    return s;
 }
 
 // Local variables:

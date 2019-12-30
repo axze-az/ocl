@@ -20,6 +20,7 @@ namespace ocl {
     be::data_ptr backend_data(const _T& t);
     // evaluate the size of an expression
     template <class _T>
+    constexpr
     std::size_t eval_size(const _T& t);
 
     // generate the declarations for the members of the structure
@@ -230,6 +231,7 @@ ocl::backend_data(const _T& t)
 
 template <class _T>
 inline
+constexpr
 std::size_t
 ocl::eval_size(const _T& t)
 {

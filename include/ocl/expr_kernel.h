@@ -29,7 +29,9 @@ namespace ocl {
         expr_kernel() = default;
         static
         void
-        execute(_RES& res, const _EXPR& r, const void* addr);
+        execute(_RES& res, const _EXPR& r,
+                be::data_ptr b, size_t s,
+                const void* addr);
     private:
         // get the backend data pointer
         static
@@ -51,7 +53,7 @@ namespace ocl {
     // generate and execute an opencl kernel for an
     // expression
     template <class _RES, class _EXPR>
-    void execute(_RES& res, const _EXPR& r);
+    void execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
 }
 
 template <class _RES, class _SRC>
@@ -72,13 +74,13 @@ backend_ptr(const _RES& res, const _SRC& r)
 template <class _RES, class _SRC>
 void
 ocl::expr_kernel<_RES, _SRC>::
-execute(_RES& res, const _SRC& r, const void* cookie)
+execute(_RES& res, const _SRC& r,
+        be::data_ptr b, size_t s,
+        const void* cookie)
 {
     be::event ev;
-    be::data_ptr b=backend_ptr(res, r);
 #if USE_ARG_BUFFER > 0
     be::argument_buffer ab;
-    std::size_t s(eval_size(res));
     // size argument first
     bind_non_buffer_args(s, ab);
     // rest of arguments later
@@ -312,12 +314,13 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
 
 template <class _RES, class _EXPR>
 void
-ocl::execute(_RES& res, const _EXPR& r)
+ocl::execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
 {
     // auto pf=execute<_RES, _EXPR>;
-    void (*pf)(_RES&, const _EXPR&) = execute<_RES, _EXPR>  ;
+    void (*pf)(_RES&, const _EXPR&, be::data_ptr, size_t) =
+        execute<_RES, _EXPR>;
     const void* pv=reinterpret_cast<const void*>(pf);
-    expr_kernel<_RES, _EXPR>::execute(res, r, pv);
+    expr_kernel<_RES, _EXPR>::execute(res, r, b, s, pv);
 }
 
 // Local variables:
