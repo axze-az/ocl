@@ -5,7 +5,25 @@
 
 namespace ocl {
     namespace impl {
-        using ck_body = std::string;
+        class ck_body {
+            std::string _name;
+            std::string _body;
+        public:
+            ck_body(const std::string& n,
+                    const std::string& b)
+                : _name(n), _body(b) {}
+            const std::string& name() const { return _name; }
+            const std::string& body() const { return _body; }
+        };
+
+        bool
+        operator==(const ck_body& a, const ck_body& b);
+        
+        class ck_state {
+            std::set<std::string> _f_names;
+        public:
+            ck_state() : _f_names() {}
+        };
     }
 
     namespace be {
@@ -83,11 +101,14 @@ namespace ocl {
         template <class _T>
         struct ck_komma : public binary_func<names::komma, true> {};
     }
-
+    
+    // scalar_kernel_func
+    // kernel_func
+    
     template <typename _T>
     std::string
     custom_kernel_func(const _T& e);
-
+    
     template <typename _T, typename _R>
     std::string
     custom_kernel_func(
@@ -95,7 +116,9 @@ namespace ocl {
 
     template <typename _T, typename _S>
     expr<dop::ck_func<dvec<_T> >, impl::ck_body, _S>
-    custom_kernel(const std::string& body, const _S& r);
+    custom_kernel(const std::string& name,
+                  const std::string& body,
+                  const _S& r);
 
 #if 0
     template <typename _T, typename _S1, typename _S2>
@@ -134,9 +157,11 @@ custom_kernel_func(
            (args.back() == '\n' || args.back() == ',')) {
         args.pop_back();
     }
+    const impl::ck_body& ck=e._l;
     s << "// custom_kernel_func: \n";
-    s << be::type_2_name<_T>::v() << " f\n(\n" << args << "\n)\n{\n";
-    s << e._l << "\n}\n";
+    s << be::type_2_name<_T>::v() << " " << ck.name() << "\n(\n"
+      << args << "\n)\n{\n";
+    s << ck.body() << "\n}\n";
     s << "// eval body: \n";
     arg_num=1;
     s << "f(" << eval_ops(e._r, arg_num) << ")\n";
@@ -145,9 +170,12 @@ custom_kernel_func(
 
 template <typename _T, typename _S>
 ocl::expr<ocl::dop::ck_func<ocl::dvec<_T> >, ocl::impl::ck_body, _S>
-ocl::custom_kernel(const std::string& body, const _S& r)
+ocl::custom_kernel(const std::string& fn,
+                   const std::string& body,
+                   const _S& r)
 {
-    expr<dop::ck_func<dvec<_T> >, impl::ck_body, _S> e(body, r);
+    const impl::ck_body ck(fn, body);
+    expr<dop::ck_func<dvec<_T> >, impl::ck_body, _S> e(ck, r);
     return e;
 }
 
@@ -158,14 +186,17 @@ ocl::test::test_custom_kernel()
     float v1=1.2f;
     dvec<float> v2(8, 2.4f);
     auto k0=custom_kernel<float>(
+        "k0",
         "return v1 > 0.0f ? -v1 : v1;", v1);
     std::cout << custom_kernel_func(k0);
     std::cout << be::demangle(typeid(k0).name()) << "\n";
 
     auto k1=custom_kernel<float>(
+        "k1",
         "return v1 > 0.0f ? v1 : -v1;", v1+v2);
     std::cout << custom_kernel_func(k1);
     auto k2=custom_kernel<float>(
+        "k2",
         "return v1 > 0.0f ? 2.0f*v1 : -v1;", v1+v1);
     std::cout << custom_kernel_func(k2);
 }

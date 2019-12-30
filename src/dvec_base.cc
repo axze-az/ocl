@@ -86,6 +86,14 @@ ocl::dvec_base::dvec_base()
     print_this(this, _b);
 }
 
+ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s)
+    : _bed{pbe},
+      _b{_bed->dcq().c(), s}
+{
+    trace t(__PRETTY_FUNCTION__, this);
+    print_this(this, _b);
+}
+
 ocl::dvec_base::dvec_base(std::size_t s)
     : _bed{be::data::instance()},
       _b{_bed->dcq().c(), s}

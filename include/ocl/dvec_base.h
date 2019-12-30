@@ -20,6 +20,8 @@ namespace ocl {
         dvec_base();
         // constructor, with size
         explicit dvec_base(std::size_t s);
+        // constructor with backend data ptr
+        dvec_base(be::data_ptr pbe, std::size_t s);
         // copy constructor
         dvec_base(const dvec_base& r);
         // move constructor

@@ -48,6 +48,8 @@ namespace ocl {
         std::size_t size() const;
         // default constructor.
         dvec() : base_type{} {}
+        // constructor from backend data and size.
+        dvec(be::data_ptr pbe, std::size_t s);
         // constructor from memory buffer
         dvec(std::size_t n, const _T* s);
         // constructor with size and initializer
@@ -74,6 +76,10 @@ namespace ocl {
         template <template <class _V> class _OP,
                   class _L, class _R>
         dvec(const expr<_OP<dvec<_T> >, _L, _R>& r);
+        // assignment from scalar
+        template <template <class _V> class _OP,
+                  class _L, class _R>
+        dvec& operator=(const expr<_OP<dvec<_T> >, _L, _R>& r);
         // conversion operator to std::vector, forces move of
         // data to host
         explicit operator std::vector<_T> () const;
@@ -84,6 +90,13 @@ namespace ocl {
         using type = const dvec<_T>&;
     };
 
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t n)
+    : base_type{pbe, n*sizeof(_T)}
+{
 }
 
 template <class _T>
@@ -150,11 +163,28 @@ template <template <class _V> class _OP, class _L, class _R>
 inline
 ocl::
 dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
-    : base_type{eval_size(r)*sizeof(_T)}
+    : base_type{ocl::backend_data(r), eval_size(r)*sizeof(_T)}
 {
     if (buffer_size()) {
         execute(*this, r);
     }
+}
+
+template <class _T>
+template <template <class _V> class _OP, class _L, class _R>
+inline
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
+{
+    size_t s=eval_size(r);
+    if (s == size()) {
+        execute(*this, r);
+    } else {
+        dvec t(ocl::backend_data(r), s);
+        execute(t, r);
+        swap(t);
+    }
+    return *this;
 }
 
 template <class _T>
