@@ -188,15 +188,16 @@ ocl::dvec<_T>&
 ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
 {
     size_t s=eval_size(r);
-    if (s == size()) {
-        execute(*this, r, backend_data(), s);
-    } else {
-        be::data_ptr p=backend_data();
-        if (p==nullptr)
-            p=ocl::backend_data(r);
-        dvec t(p, s);
-        execute(t, r, p, s);
-        swap(t);
+    if (s) {
+        be::data_ptr p=ocl::backend_data(r);
+        be::data_ptr pm=backend_data();
+        if (s == size() && pm==p) {
+            execute(*this, r, p, s);
+        } else {
+            dvec t(p, s);
+            execute(t, r, p, s);
+            swap(t);
+        }
     }
     return *this;
 }
