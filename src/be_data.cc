@@ -87,8 +87,11 @@ enqueue_kernel(pgm_kernel_lock& pk, size_t s)
     if (debug() != 0) {
         std::cout << "executing kernel" << std::endl;
     }
-    std::size_t local_size(
+    std::size_t k_local_size(
         pk._k.get_work_group_info<size_t>(d, CL_KERNEL_WORK_GROUP_SIZE));
+    std::size_t local_size=calc_local_size(dev_info(d),
+                                           s,
+                                           k_local_size);
     std::size_t gs= ((s+local_size-1)/local_size)*local_size;
     if (_debug != 0) {
         std::cout << "kernel: size: " << s

@@ -64,6 +64,18 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
     return s;
 }
 
+ocl::be::dev_info::dev_info(const device& d)
+    : _max_compute_units(d.compute_units()),
+      _max_workgroup_size(d.max_work_group_size()),
+      _max_local_memory(d.local_memory_size())
+{
+    cl_device_local_mem_type lt=
+        d.get_info<cl_device_local_mem_type>(CL_DEVICE_LOCAL_MEM_TYPE);
+    bool has_local_mem= lt == CL_LOCAL;
+    if (has_local_mem == false)
+        _max_local_memory=0;
+}
+
 std::size_t
 ocl::be::request_local_mem(const device& d, size_t lmem_req)
 {
@@ -75,6 +87,31 @@ ocl::be::request_local_mem(const device& d, size_t lmem_req)
     size_t lmem_size=d.local_memory_size();
     // allow maximum of a 1/8 of the local device memory:
     return ((lmem_req << 3) < lmem_size) ? lmem_req : 0;
+}
+
+std::size_t
+ocl::be::request_local_mem(const dev_info& di, size_t lmem_req)
+{
+    size_t lmem_size=di._max_local_memory;
+    // allow maximum of a 1/8 of the local device memory:
+    return ((lmem_req << 3) < lmem_size) ? lmem_req : 0;
+}
+
+std::size_t
+ocl::be::calc_local_size(const dev_info& di,
+                         size_t global_size,
+                         size_t k_local_size)
+{
+    size_t cu=di._max_compute_units;
+    size_t ls=1;
+    size_t local_size = std::min(k_local_size, di._max_workgroup_size);
+    // we want to have work on all cu's:
+    // ls * cu < global_size
+    size_t ls2;
+    while ((ls * cu < global_size) & ((ls2=ls<<1) <= local_size)) {
+        ls = ls2;
+    }
+    return ls;
 }
 
 std::vector<ocl::be::device>
