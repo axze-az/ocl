@@ -85,9 +85,8 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
             (d, CL_KERNEL_COMPILE_WORK_GROUP_SIZE);
     std::size_t local_size=k_req_local_size[0];
     if (local_size == 0) {
-        size_t k_local_size(
-            k.get_work_group_info<size_t>
-                (d, CL_KERNEL_WORK_GROUP_SIZE));
+        size_t k_local_size(k.get_work_group_info<size_t>
+            (d, CL_KERNEL_WORK_GROUP_SIZE));
         local_size=calc_local_size(dev_info(d),
                                    s,
                                    k_local_size);
