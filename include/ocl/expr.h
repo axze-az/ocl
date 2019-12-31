@@ -4,11 +4,10 @@
 #include <ocl/config.h>
 #include <ocl/be/data.h>
 #include <ocl/be/type_2_name.h>
-
 #include <ocl/be/argument_buffer.h>
-
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 namespace ocl {
 
@@ -345,11 +344,12 @@ ocl::bind_args(be::kernel& k, _T& r, unsigned& arg_num)
     if (be::data::instance()->debug() != 0) {
         std::string kn=k.name();
         std::ostringstream s;
-        s << kn << ": binding "
+        s << std::this_thread::get_id() << ": "
+          << kn << ": binding "
           << be::type_2_name<_T>::v()
           << " to arg " << arg_num
           << '\n';
-        std::cout << s.str();
+        be::data::debug_print(s.str());
     }
     k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;
@@ -362,11 +362,12 @@ ocl::bind_args(be::kernel& k, const _T& r, unsigned& arg_num)
     if (be::data::instance()->debug() != 0) {
         std::string kn=k.name();
         std::ostringstream s;
-        s << kn << ": binding const "
+        s << std::this_thread::get_id() << ": "
+          << kn << ": binding const "
           << be::type_2_name<_T>::v()
           << " to arg " << arg_num
           << '\n';
-        std::cout << s.str();
+        be::data::debug_print(s.str());
     }
     k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;

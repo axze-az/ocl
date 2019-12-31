@@ -23,7 +23,7 @@ namespace ocl {
         template <typename _T>
         struct type_2_name {
             static
-            constexpr std::string v() {
+            std::string v() {
                 // static_assert(0, "specialization required");
                 return demangle(typeid(_T).name());
             }

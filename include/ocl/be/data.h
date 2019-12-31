@@ -90,9 +90,11 @@ namespace ocl {
 
             static
             uint32_t read_debug_env();
+
             static mutex _instance_mutex;
             static std::atomic<bool> _init;
             static std::shared_ptr<data> _default;
+            static mutex _debug_mutex;
         public:
             data(const data&) = delete;
             data& operator=(const data&) = delete;
@@ -132,6 +134,10 @@ namespace ocl {
             std::shared_ptr<data>
             create(const device& dev, const context& ctx,
                    const queue& qe);
+
+            static
+            void
+            debug_print(const std::string& m);
         };
         typedef std::shared_ptr<data> data_ptr;
 

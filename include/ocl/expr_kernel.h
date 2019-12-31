@@ -100,6 +100,7 @@ execute(_RES& res, const _SRC& r,
         cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
                                             ab_size,
                                             ab.data());
+        q.flush();
         // insert the event before we queue the kernel
         // into the wait list
     }
@@ -115,9 +116,10 @@ execute(_RES& res, const _SRC& r,
         if (b->debug() != 0) {
             std::string kn=pk._k.name();
             std::ostringstream st;
-            st << kn << ": binding argument buffer of size "
+            st << std::this_thread::get_id() << ": "
+               << kn << ": binding argument buffer of size "
                << ab_size << '\n';
-            std::cout << st.str();
+            be::data::debug_print(st.str());
         }
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
@@ -164,9 +166,10 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
         if (b->debug() != 0) {
             std::string kn=f->second._k.name();
             std::ostringstream s;
-            s << kn << ": using cached kernel " << cookie
+            s << std::this_thread::get_id() << ": "
+              << kn << ": using cached kernel " << cookie
               << '\n';
-            std::cout << s.str();
+            be::data::debug_print(s.str());
         }
     }
     return f->second;
@@ -288,9 +291,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     std::string ss(s.str());
     if (b->debug() != 0) {
         std::ostringstream st;
-        st << k_name << ": --- source code ------------------\n"
+        st << std::this_thread::get_id() << ": "
+           << k_name << ": --- source code ------------------\n"
            << ss;
-        std::cout << st.str();
+        be::data::debug_print(st.str());
     }
     be::program pgm=be::program::create_with_source(ss, b->dcq().c());
     try {
@@ -306,8 +310,9 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     be::kernel k(pgm, k_name);
     if (b->debug() != 0) {
         std::ostringstream st;
-        st << k_name << ": --- compiled with success --------\n";
-        std::cout << st.str();
+        st << std::this_thread::get_id() << ": "
+           << k_name << ": --- compiled with success --------\n";
+        be::data::debug_print(st.str());
     }
     be::pgm_kernel_lock pkl(pgm, k);
     return pkl;

@@ -1,6 +1,7 @@
 #include "ocl/be/data.h"
 #include <cstdlib>
 #include <iomanip>
+#include <thread>
 
 ocl::be::kernel_cache::kernel_cache()
     : _kmap(), _mtx()
@@ -78,6 +79,8 @@ std::atomic<bool>
 ocl::be::data::_init;
 std::shared_ptr<ocl::be::data>
 ocl::be::data::_default;
+ocl::be::mutex
+ocl::be::data::_debug_mutex;
 
 ocl::be::event
 ocl::be::data::
@@ -87,15 +90,18 @@ enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
         const char nl='\n';
         std::string kn=k.name();
         std::ostringstream s;
-        s << kn << ": enqueue kernel " << nl
-          << kn << ": size:           " << std::setw(8)
+        s << std::this_thread::get_id() << ": ";
+        std::string tn=s.str() + kn;
+        s.str("");
+        s << tn << ": enqueue kernel " << nl
+          << tn << ": size:           " << std::setw(8)
           << ki._size << nl
-          << kn << ": global size:    " << std::setw(8)
+          << tn << ": global size:    " << std::setw(8)
           << ki._global_size << nl
-          << kn << ": local size:     " << std::setw(8)
+          << tn << ": local size:     " << std::setw(8)
           << ki._local_size
           << nl;
-        std::cout << s.str();
+        debug_print(s.str());
     }
     queue& q= dcq().q();
     auto& wl=dcq().wl();
@@ -111,8 +117,10 @@ enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
     if (_debug != 0) {
         std::string kn=k.name();
         std::ostringstream s;
-        s << kn << ": enqueue done\n";
-        std::cout << s.str();
+        s << std::this_thread::get_id() << ": ";
+        std::string tn=s.str() + kn;
+        tn+=": enqueue done\n";
+        debug_print(tn);
     }
     return ev;
 }
@@ -156,6 +164,13 @@ ocl::be::data::create(const device& dev, const context& ctx,
                            const queue& qe)
 {
     return std::make_shared<data>(dev, ctx, qe);
+}
+
+void
+ocl::be::data::debug_print(const std::string& m)
+{
+    std::unique_lock _lck(_debug_mutex);
+    std::cout << m;
 }
 
 std::uint32_t
