@@ -93,8 +93,8 @@ std::size_t
 ocl::be::request_local_mem(const dev_info& di, size_t lmem_req)
 {
     size_t lmem_size=di._max_local_memory;
-    // allow maximum of a 1/8 of the local device memory:
-    return ((lmem_req << 3) < lmem_size) ? lmem_req : 0;
+    // allow maximum of a 1/4 of the local device memory:
+    return ((lmem_req << 2) < lmem_size) ? lmem_req : 0;
 }
 
 std::size_t
@@ -103,15 +103,12 @@ ocl::be::calc_local_size(const dev_info& di,
                          size_t k_local_size)
 {
     size_t cu=di._max_compute_units;
-    size_t ls=1;
     size_t local_size = std::min(k_local_size, di._max_workgroup_size);
     // we want to have work on all cu's:
-    // ls * cu < global_size
-    size_t ls2;
-    while ((ls * cu < global_size) & ((ls2=ls<<1) <= local_size)) {
-        ls = ls2;
+    while (local_size * cu > global_size && local_size > 1) {
+        local_size >>= 1;
     }
-    return ls;
+    return local_size;
 }
 
 std::vector<ocl::be::device>
