@@ -93,6 +93,7 @@ execute(_RES& res, const _SRC& r,
     auto& q=dcq.q();
     auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
+    auto& d=dcq.d();
     be::event cpy_ev;
     {
         std::unique_lock<be::mutex> _lq(dcq_mtx);
@@ -102,8 +103,9 @@ execute(_RES& res, const _SRC& r,
         // insert the event before we queue the kernel
         // into the wait list
     }
-    size_t lmem_size=be::request_local_mem(dcq.d(), ab_size);
+    size_t lmem_size=be::request_local_mem(d, ab_size);
     be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b, lmem_size);
+    be::kexec_1d_info ki(d, pk._k, s);
     {
         std::unique_lock<be::pgm_kernel_lock> _lk(pk);
         unsigned buf_num=0;
@@ -111,24 +113,17 @@ execute(_RES& res, const _SRC& r,
         bind_buffer_args(r, buf_num, pk._k);
         pk._k.set_arg(buf_num++, dev_ab);
         if (b->debug() != 0) {
-            std::cout << "binding argument buffer of size "
-                      << ab_size << '\n';
+            std::string kn=pk._k.name();
+            std::ostringstream st;
+            st << kn << ": binding argument buffer of size "
+               << ab_size << '\n';
+            std::cout << st.str();
         }
-#if 0
-        if (lmem_size != 0) {
-            /* create local memory: */
-            pk._k.set_arg(buf_num, ab_size, nullptr);
-            if (b->debug() != 0) {
-                std::cout << "binding local buffer of size "
-                        << ab_size << '\n';
-            }
-        }
-#endif
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
             // wait also for the argument buffer
             wl.insert(cpy_ev);
-            ev=b->enqueue_kernel(pk, s);
+            ev=b->enqueue_1d_kernel(pk._k, ki);
         }
     }
     cpy_ev.wait();
@@ -167,8 +162,11 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
         f = ir.first;
     } else {
         if (b->debug() != 0) {
-            std::cout << "using cached kernel expr_kernel_" << cookie
-                      << std::endl;
+            std::string kn=f->second._k.name();
+            std::ostringstream s;
+            s << kn << ": using cached kernel " << cookie
+              << '\n';
+            std::cout << s.str();
         }
     }
     return f->second;
@@ -245,7 +243,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << store_result(res, cr);
     s << eval_ops(r, cr._var_num) << ";\n";
     s << "    }\n"
-         "}\n\n";
+         "}\n";
 #else
     const char nl='\n';
     // the real kernel follows now
@@ -289,8 +287,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     using namespace impl;
     std::string ss(s.str());
     if (b->debug() != 0) {
-        std::cout << "--- source code ------------------\n";
-        std::cout << ss;
+        std::ostringstream st;
+        st << k_name << ": --- source code ------------------\n"
+           << ss;
+        std::cout << st.str();
     }
     be::program pgm=be::program::create_with_source(ss, b->dcq().c());
     try {
@@ -305,9 +305,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     }
     be::kernel k(pgm, k_name);
     if (b->debug() != 0) {
-        std::cout << "-- compiled with success ---------\n";
+        std::ostringstream st;
+        st << k_name << ": --- compiled with success --------\n";
+        std::cout << st.str();
     }
-
     be::pgm_kernel_lock pkl(pgm, k);
     return pkl;
 }

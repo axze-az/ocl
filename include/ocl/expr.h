@@ -343,10 +343,13 @@ void
 ocl::bind_args(be::kernel& k, _T& r, unsigned& arg_num)
 {
     if (be::data::instance()->debug() != 0) {
-        std::cout << "binding "
-                  << be::type_2_name<_T>::v()
-                  << " to arg " << arg_num
-                  << std::endl;
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << kn << ": binding "
+          << be::type_2_name<_T>::v()
+          << " to arg " << arg_num
+          << '\n';
+        std::cout << s.str();
     }
     k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;
@@ -357,10 +360,13 @@ void
 ocl::bind_args(be::kernel& k, const _T& r, unsigned& arg_num)
 {
     if (be::data::instance()->debug() != 0) {
-        std::cout << "binding const "
-                  << be::type_2_name<_T>::v()
-                  << " to arg " << arg_num
-                  << std::endl;
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << kn << ": binding const "
+          << be::type_2_name<_T>::v()
+          << " to arg " << arg_num
+          << '\n';
+        std::cout << s.str();
     }
     k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;

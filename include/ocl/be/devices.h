@@ -54,16 +54,33 @@ namespace ocl {
             size_t _max_local_memory;
             dev_info(const device& d);
         };
-
         // returns 0 if the request can not be satisfied
         size_t
         request_local_mem(const device& d, size_t lmem_req);
         size_t
         request_local_mem(const dev_info& di, size_t lmem_req);
+
         size_t
         calc_local_size(const dev_info& di,
                         size_t global_size,
                         size_t max_local_size);
+
+        // kernel execution info: calculates _local_size
+        // and global_size with
+        // _global_size >= s
+        // _local_size == required_local_size from k
+        // or
+        // _global_size % _local_size == 0
+        // and tries to utilize all compute units of d
+        struct kexec_1d_info {
+            size_t _local_size;
+            size_t _global_size;
+            size_t _size;
+            kexec_1d_info(const device& d,
+                          const kernel& k,
+                          size_t s);
+        };
+
 
         std::vector<device>
         filter_devices(const std::vector<device>& devs,

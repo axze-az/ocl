@@ -76,6 +76,27 @@ ocl::be::dev_info::dev_info(const device& d)
         _max_local_memory=0;
 }
 
+ocl::be::
+kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
+    : _local_size(), _global_size(), _size(s)
+{
+    auto k_req_local_size=
+        k.get_work_group_info<std::vector<std::size_t> >
+            (d, CL_KERNEL_COMPILE_WORK_GROUP_SIZE);
+    std::size_t local_size=k_req_local_size[0];
+    if (local_size == 0) {
+        size_t k_local_size(
+            k.get_work_group_info<size_t>
+                (d, CL_KERNEL_WORK_GROUP_SIZE));
+        local_size=calc_local_size(dev_info(d),
+                                   s,
+                                   k_local_size);
+    }
+    _local_size = local_size;
+    _global_size = ((s+local_size-1)/local_size)*local_size;
+}
+
+
 std::size_t
 ocl::be::request_local_mem(const device& d, size_t lmem_req)
 {

@@ -108,7 +108,13 @@ namespace ocl {
             // enqueue a kernel with already bound arguments with
             // size s
             event
-            enqueue_kernel(pgm_kernel_lock& pk, size_t s);
+            enqueue_1d_kernel(const kernel& k, size_t s);
+            // enqueue a kernel with already bound arguments using
+            // ki
+            event
+            enqueue_1d_kernel(const kernel& k,
+                              const kexec_1d_info& ki);
+
             // shared, default backend data
             static
             std::shared_ptr<data>

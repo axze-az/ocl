@@ -294,7 +294,7 @@ ocl::test::test_horner(const dvec<float>& x)
         log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
         log_c3,  log_c2,  log_c1
     };
-    for (int i=0; i<32; ++i) {
+    for (int i=0; i<512; ++i) {
         vf_type y0=horner(x,
                           log_c23, log_c22, log_c21, log_c20, log_c19,
                           log_c18, log_c17, log_c16, log_c15, log_c14,
@@ -322,8 +322,8 @@ int main()
         ocl::dvec<float> x(ocl::test::ELEMENTS, 1.1235f);
         // ocl::test::test_add12cond();
         for (int i=0; i<count; ++i) {
-            ocl::test::test_mul12(x);
-            ocl::test::test_add12cond(x);
+            // ocl::test::test_mul12(x);
+            // ocl::test::test_add12cond(x);
             ocl::test::test_horner(x);
             if ((i & 3)==3) {
                 std::cout << '.' << std::flush;

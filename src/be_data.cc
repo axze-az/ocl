@@ -1,5 +1,6 @@
 #include "ocl/be/data.h"
 #include <cstdlib>
+#include <iomanip>
 
 ocl::be::kernel_cache::kernel_cache()
     : _kmap(), _mtx()
@@ -80,40 +81,49 @@ ocl::be::data::_default;
 
 ocl::be::event
 ocl::be::data::
-enqueue_kernel(pgm_kernel_lock& pk, size_t s)
+enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
 {
-    queue& q= dcq().q();
-    device& d= dcq().d();
-    if (debug() != 0) {
-        std::cout << "executing kernel" << std::endl;
-    }
-    std::size_t k_local_size(
-        pk._k.get_work_group_info<size_t>(d, CL_KERNEL_WORK_GROUP_SIZE));
-    std::size_t local_size=calc_local_size(dev_info(d),
-                                           s,
-                                           k_local_size);
-    std::size_t gs= ((s+local_size-1)/local_size)*local_size;
     if (_debug != 0) {
-        std::cout << "kernel: size: " << s
-                  << " global size: " << gs
-                  << " local size: " << local_size
-                  << std::endl;
+        const char nl='\n';
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << kn << ": enqueue kernel " << nl
+          << kn << ": size:           " << std::setw(8)
+          << ki._size << nl
+          << kn << ": global size:    " << std::setw(8)
+          << ki._global_size << nl
+          << kn << ": local size:     " << std::setw(8)
+          << ki._local_size
+          << nl;
+        std::cout << s.str();
     }
-    // TODO: make access to backend_data::_evs thread safe
+    queue& q= dcq().q();
     auto& wl=dcq().wl();
-    event ev=q.enqueue_1d_range_kernel(pk._k,
+    event ev=q.enqueue_1d_range_kernel(k,
                                        0,
-                                       gs,
-                                       local_size,
+                                       ki._global_size,
+                                       ki._local_size,
                                        wl);
     q.flush();
     wl.clear();
     // TODO: figure out why we have memory leaks here:
     // evs.insert(ev);
     if (_debug != 0) {
-        std::cout << "execution done" << std::endl;
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << kn << ": enqueue done\n";
+        std::cout << s.str();
     }
     return ev;
+}
+
+ocl::be::event
+ocl::be::data::
+enqueue_1d_kernel(const kernel& k, size_t s)
+{
+    auto& d=dcq().d();
+    kexec_1d_info ki(d, k, s);
+    return enqueue_1d_kernel(k, ki);
 }
 
 ocl::be::data_ptr
