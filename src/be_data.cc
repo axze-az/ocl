@@ -92,6 +92,9 @@ enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
         std::ostringstream s;
         s << std::this_thread::get_id() << ": ";
         std::string tn=s.str() + kn;
+        auto& d=dcq().d();
+        std::uint64_t lms= k.get_work_group_info<std::uint64_t>(
+            d, CL_KERNEL_LOCAL_MEM_SIZE);
         s.str("");
         s << tn << ": enqueue kernel " << nl
           << tn << ": size:           " << std::setw(8)
@@ -100,6 +103,9 @@ enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
           << ki._global_size << nl
           << tn << ": local size:     " << std::setw(8)
           << ki._local_size
+          << nl
+          << tn << ": local mem size: " << std::setw(8)
+          << lms
           << nl;
         debug_print(s.str());
     }

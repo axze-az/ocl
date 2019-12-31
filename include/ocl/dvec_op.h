@@ -125,15 +125,19 @@ namespace ocl {
 
         namespace names {
             struct neg {
+                constexpr
                 const char* operator()() const { return "-"; }
             };
             struct bit_not {
+                constexpr
                 const char* operator()() const { return "~"; }
             };
             struct fabs {
+                constexpr
                 const char* operator()() const { return "fabs"; }
             };
             struct abs {
+                constexpr
                 const char* operator()() const { return "abs"; }
             };
         };
@@ -174,26 +178,67 @@ namespace ocl {
 
         namespace names {
 
-            struct add { const char* operator()() const { return "+"; }};
-            struct sub { const char* operator()() const { return "-"; }};
-            struct mul { const char* operator()() const { return "*"; }};
-            struct div { const char* operator()() const { return "/"; }};
-
-            struct bit_and { const char* operator()() const { return "&"; }};
-            struct bit_or { const char* operator()() const { return "|"; }};
-            struct bit_xor { const char* operator()() const { return "^"; }};
-
-            struct shl { const char* operator()() const { return "<<"; }};
-            struct shr { const char* operator()() const { return ">>"; }};
-
-            struct lt { const char* operator()() const { return "<"; }};
-            struct le { const char* operator()() const { return "<="; }};
-            struct eq { const char* operator()() const { return "=="; }};
-            struct ne { const char* operator()() const { return "!="; }};
-            struct ge { const char* operator()() const { return ">="; }};
-            struct gt { const char* operator()() const { return ">"; }};
+            struct add {
+                constexpr
+                const char* operator()() const { return "+"; }
+            };
+            struct sub {
+                constexpr
+                const char* operator()() const { return "-"; }
+            };
+            struct mul {
+                constexpr
+                const char* operator()() const { return "*"; }
+            };
+            struct div {
+                constexpr
+                const char* operator()() const { return "/"; }
+            };
+            struct bit_and {
+                constexpr
+                const char* operator()() const { return "&"; }
+            };
+            struct bit_or {
+                constexpr
+                const char* operator()() const { return "|"; }
+            };
+            struct bit_xor {
+                constexpr
+                const char* operator()() const { return "^"; }
+            };
+            struct shl {
+                constexpr
+                const char* operator()() const { return "<<"; }
+            };
+            struct shr {
+                constexpr
+                const char* operator()() const { return ">>"; }
+            };
+            struct lt {
+                constexpr
+                const char* operator()() const { return "<"; }
+            };
+            struct le {
+                constexpr
+                const char* operator()() const { return "<="; }
+            };
+            struct eq {
+                constexpr
+                const char* operator()() const { return "=="; }
+            };
+            struct ne {
+                constexpr
+                const char* operator()() const { return "!="; }
+            };
+            struct ge {
+                constexpr
+                const char* operator()() const { return ">="; }
+            };
+            struct gt {
+                constexpr
+                const char* operator()() const { return ">"; }
+            };
         }
-
 
         template <class _T>
         struct add : public binary_func<names::add, true> {};
@@ -239,8 +284,14 @@ namespace ocl {
 
         namespace names {
 
-            struct min{ const char* operator()() const { return  "min"; }};
-            struct max{ const char* operator()() const { return  "max"; }};
+            struct min{
+                constexpr
+                const char* operator()() const { return  "min"; }
+            };
+            struct max{
+                constexpr
+                const char* operator()() const { return  "max"; }
+            };
         };
 
 

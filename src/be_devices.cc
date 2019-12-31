@@ -93,7 +93,16 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
                                    k_local_size);
     }
     _local_size = local_size;
-    _global_size = ((s+local_size-1)/local_size)*local_size;
+    size_t local_size_m_1 = local_size - 1;
+    if ((local_size & (local_size_m_1))==0) {
+        // how many bytes are used from the last alignment:
+        size_t m = s & local_size_m_1;
+        // pad bytes:
+        size_t pad= (local_size - m) & local_size_m_1;
+        _global_size = s + pad;
+    } else {
+        _global_size = ((s+local_size-1)/local_size)*local_size;
+    }
 }
 
 

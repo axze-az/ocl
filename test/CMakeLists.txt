@@ -40,6 +40,7 @@ endfunction()
 
 # test_be_data
 test_prog(test_be_data)
+test_prog(test_sizes)
 test_prog(test_dvec)
 test_prog(test_rnd)
 test_prog(test_math)
