@@ -51,37 +51,52 @@ namespace ocl {
         using value_type = _T;
         using mask_value_type = impl::dvec_select_mask_value_t<_T>;
         using mask_type = dvec<mask_value_type>;
-        // using base_type::backend_data;
-        // using base_type::buf;
-        ~dvec() {}
-        // size of the dvec
-        std::size_t size() const;
+        ~dvec();
         // default constructor.
-        dvec() : base_type{} {}
-        // constructor from backend data and size.
-        dvec(be::data_ptr pbe, std::size_t s);
-        // constructor from memory buffer
-        dvec(std::size_t n, const _T* s);
-        // constructor with size and initializer
-        dvec(std::size_t n, const _T& i);
-        // constructor from initializer list
-        dvec(std::initializer_list<_T> l);
-        // constructor with size and initializer
-        template <typename _U>
-        dvec(std::size_t n, const _U& i);
+        dvec();
         // copy constructor
         dvec(const dvec& v);
         // move constructor
         dvec(dvec&& v);
-        // construction from std::vector, forces move of data
-        // from host to device
-        dvec(const std::vector<_T>& v);
         // assignment operator from dvec
         dvec& operator=(const dvec& v);
         // move assignment
         dvec& operator=(dvec&& v);
+        // constructor with size and uninitialized memory
+        explicit dvec(std::size_t s);
+        // constructor from backend data and size with uninitialized
+        // memory
+        dvec(be::data_ptr pbe, std::size_t s);
+        // constructor from memory buffer
+        dvec(std::size_t n, const _T* s);
+        // constructor from memory buffer
+        dvec(be::data_ptr pbe, std::size_t n, const _T* s);
+        // constructor with size and initializer
+        dvec(std::size_t n, const _T& i);
+        // constructor with size and initializer
+        dvec(be::data_ptr pbe, std::size_t n, const _T& i);
+        // constructor with size and initializer
+        template <typename _U>
+        dvec(std::size_t n, const _U& i);
+        // constructor with size and initializer
+        template <typename _U>
+        dvec(be::data_ptr pbe, std::size_t n, const _U& i);
+        // constructor from initializer list
+        dvec(std::initializer_list<_T> l);
+        // constructor from initializer list
+        dvec(be::data_ptr pbe, std::initializer_list<_T> l);
+        // construction from std::vector, forces move of data
+        // from host to device
+        dvec(const std::vector<_T>& v);
+        // construction from std::vector, forces move of data
+        // from host to device
+        dvec(be::data_ptr pbe, const std::vector<_T>& v);
         // assignment from scalar
         dvec& operator=(const _T& i);
+        // assignment from scalar
+        template <typename _U>
+        dvec& operator=(const _U& i);
+
         // template constructor for evaluation of expressions
         template <template <class _V> class _OP,
                   class _L, class _R>
@@ -93,6 +108,8 @@ namespace ocl {
         // conversion operator to std::vector, forces move of
         // data to host
         explicit operator std::vector<_T> () const;
+        // size of the dvec
+        std::size_t size() const;
     };
 
     template <class _T>
@@ -104,38 +121,14 @@ namespace ocl {
 
 template <class _T>
 inline
-ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t n)
-    : base_type{pbe, n*sizeof(_T)}
+ocl::dvec<_T>::~dvec()
 {
 }
 
 template <class _T>
 inline
-ocl::dvec<_T>::dvec(std::size_t n, const _T* p)
-    : base_type{n*sizeof(_T)}
+ocl::dvec<_T>::dvec() : base_type()
 {
-    copy_from_host(p);
-}
-
-template <class _T>
-inline
-ocl::dvec<_T>::dvec(std::size_t s, const _T& i)
-    : base_type{s * sizeof(_T)}
-{
-    if (s) {
-        execute(*this, i, backend_data(), s);
-    }
-}
-
-template <class _T>
-template <typename _U>
-inline
-ocl::dvec<_T>::dvec(std::size_t s, const _U& i)
-    : base_type{s * sizeof(_T)}
-{
-    if (s) {
-        execute(*this, i, backend_data(), s);
-    }
 }
 
 template <class _T>
@@ -154,25 +147,142 @@ ocl::dvec<_T>::dvec(dvec&& r)
 
 template <class _T>
 inline
-ocl::dvec<_T>::dvec(const std::vector<_T>& r)
-    : base_type{sizeof(_T) * r.size()}
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(const dvec& r)
 {
-    copy_from_host(&r[0]);
+    base_type::operator=(r);
+    return *this;
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(dvec&& r)
+{
+    base_type::operator=(std::move(r));
+    return *this;
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(std::size_t n)
+    : base_type{n*sizeof(_T)}
+{
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t n)
+    : base_type{pbe, n*sizeof(_T)}
+{
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(std::size_t n, const _T* s)
+    : base_type{n*sizeof(_T), s}
+{
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t n, const _T* s)
+    : base_type{pbe, n*sizeof(_T), s}
+{
+}
+
+template <class _T>
+ocl::dvec<_T>::dvec(std::size_t s, const _T& i)
+    : base_type{s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i, backend_data(), s);
+    }
+}
+
+template <class _T>
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t s, const _T& i)
+    : base_type{pbe, s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i, pbe, s);
+    }
+}
+
+template <class _T>
+template <typename _U>
+ocl::dvec<_T>::dvec(std::size_t s, const _U& i)
+    : base_type{s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i, backend_data(), s);
+    }
+}
+
+template <class _T>
+template <typename _U>
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::size_t s, const _U& i)
+    : base_type{pbe, s * sizeof(_T)}
+{
+    if (s) {
+        execute(*this, i, pbe, s);
+    }
 }
 
 template <class _T>
 inline
 ocl::dvec<_T>::dvec(std::initializer_list<_T> l)
-    : base_type{sizeof(_T) * l.size()}
+    : base_type{sizeof(_T) * l.size(), l.begin()}
 {
-    copy_from_host(l.begin());
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(be::data_ptr pbe, std::initializer_list<_T> l)
+    : base_type{pbe, sizeof(_T) * l.size(), l.begin()}
+{
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(const std::vector<_T>& r)
+    : base_type{sizeof(_T) * r.size(), &r[0]}
+{
+}
+
+template <class _T>
+inline
+ocl::dvec<_T>::dvec(be::data_ptr pbe, const std::vector<_T>& r)
+    : base_type{pbe, sizeof(_T) * r.size(), &r[0]}
+{
+}
+
+template <class _T>
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(const _T& i)
+{
+    size_t s=size();
+    if (s) {
+        execute(*this, i, backend_data(), s);
+    }
+    return *this;
+}
+
+template <class _T>
+template <class _U>
+ocl::dvec<_T>&
+ocl::dvec<_T>::operator=(const _U& i)
+{
+    size_t s=size();
+    if (s) {
+        execute(*this, i, backend_data(), s);
+    }
+    return *this;
 }
 
 template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
-inline
-ocl::
-dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
+ocl::dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
     : base_type{ocl::backend_data(r), eval_size(r)*sizeof(_T)}
 {
     size_t s=size();
@@ -183,7 +293,6 @@ dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
 
 template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
-inline
 ocl::dvec<_T>&
 ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
 {
@@ -199,24 +308,6 @@ ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
             swap(t);
         }
     }
-    return *this;
-}
-
-template <class _T>
-inline
-ocl::dvec<_T>&
-ocl::dvec<_T>::operator=(const dvec& r)
-{
-    base_type::operator=(r);
-    return *this;
-}
-
-template <class _T>
-inline
-ocl::dvec<_T>&
-ocl::dvec<_T>::operator=(dvec&& r)
-{
-    base_type::operator=(std::move(r));
     return *this;
 }
 

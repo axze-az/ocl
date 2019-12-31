@@ -29,6 +29,7 @@
 #endif
 #if !defined(__GNUC__) && !defined (__CLANG__)
 #define __restrict
+#define __attribute__(X)
 #endif
 
 #endif
