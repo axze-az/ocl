@@ -41,7 +41,7 @@ namespace ocl {
     template <typename _T>
     std::string
     decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num);
-    
+
     // declare buffer arguments, must increment arg_num if something
     // generated
     template <typename _T>
@@ -74,7 +74,7 @@ namespace ocl {
     void
     bind_non_buffer_args(const impl::ignored_arg<_T>& t,
                          be::argument_buffer& a);
-    
+
     // bind buffer arguments
     template <typename _T>
     void
@@ -106,6 +106,10 @@ namespace ocl {
     // bind_args for const arguments
     template <class _T>
     void bind_args(be::kernel& k, _T& r,  unsigned& arg_num);
+
+    template <class _T>
+    void bind_args(be::kernel& k, const impl::ignored_arg<_T>& r,
+                   unsigned& arg_num);
 
     // default expression traits for simple/unspecialized
     // types
@@ -438,6 +442,20 @@ ocl::bind_args(be::kernel& k, const _T& r, unsigned& arg_num)
     }
     k.set_arg(arg_num, sizeof(_T), &r);
     ++arg_num;
+}
+
+template <class _T>
+void
+ocl::bind_args(be::kernel& k, const impl::ignored_arg<_T>& r,
+               unsigned& arg_num)
+{
+    if (be::data::instance()->debug() != 0) {
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << std::this_thread::get_id() << ": "
+          << kn << ": ignoring argument\n";
+        be::data::debug_print(s.str());
+    }
 }
 
 template <class _OP, class _L, class _R>

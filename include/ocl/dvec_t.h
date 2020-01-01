@@ -283,7 +283,8 @@ ocl::dvec<_T>::operator=(const _U& i)
 template <class _T>
 template <template <class _V> class _OP, class _L, class _R>
 ocl::dvec<_T>::dvec(const expr<_OP<dvec<_T> >, _L, _R>& r)
-    : base_type{ocl::backend_data(r), eval_size(r)*sizeof(_T)}
+    : base_type{ocl::backend_data(r),
+                eval_size(r)*sizeof(_T)}
 {
     size_t s=size();
     if (s) {
