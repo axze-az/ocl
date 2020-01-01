@@ -85,11 +85,11 @@ execute(_RES& res, const _SRC& r,
     bind_non_buffer_args(s, ab);
     // rest of arguments later
     bind_non_buffer_args(r, ab);
-    ab.pad_to_multiple_of<4>();
+    ab.pad_to_max_alignment();
     size_t ab_size=ab.size();
     auto& dcq=b->dcq();
     auto& c=dcq.c();
-    be::buffer dev_ab(c, ab_size);
+    be::buffer dev_ab(c, ab_size, be::buffer::read_only);
     auto& q=dcq.q();
     auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
@@ -191,6 +191,45 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     impl::insert_headers(s);
 
 #if USE_ARG_BUFFER > 0
+    const char nl='\n';
+    // the real kernel follows now
+    s << "void " << k_name << "_func"
+      << "\n(\n";
+    // element count:
+    std::string element_count=spaces(4) +
+        be::type_2_name<unsigned long>::v() + " n";
+    // argument generation
+    unsigned arg_num{0};
+    s << eval_args(element_count, res, arg_num, false)
+      << ",\n";
+    s << eval_args("", r, arg_num, true);
+    s << "\n)\n";
+    // begin body
+    s << "{\n";
+
+    // global id
+    s << spaces(4) << "ulong gid = get_global_id(0);\n";
+    s << spaces(4) << "if (gid < n) {\n";
+    // temporary variables
+    unsigned var_num{1};
+    s << eval_vars(r, var_num, true)
+      << nl;
+
+    // result variable
+    unsigned res_num{0};
+    s << eval_vars(res, res_num, false) << "= ";
+    // the operations
+    unsigned body_num{1};
+    s << eval_ops(r, body_num) << ";\n";
+    // write back
+    res_num = 0;
+    s << eval_results(res, res_num)
+      << nl;
+    // end if
+    s << spaces(4) << "}\n";
+    // end body
+    s << "}\n\n";
+
     unsigned decl_nb_args(0);
     // argument structure with the scalar arguments
     s << "struct " << k_arg_name << " {\n"
@@ -237,6 +276,13 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
              "    __local const struct "
           << k_arg_name << "* pa= &__args._a;\n";
     }
+#if 1
+    var_counters c{0};
+    s << "    " << k_name << "_func("
+      << "pa->_n, "
+      << concat_args(res, c) << ", "
+      << concat_args(r, c) << ");\n";
+#else
     s << "    /* start execution */\n"
          "    ulong gid = get_global_id(0);\n"
          "    if (gid < pa->_n) {\n";
@@ -245,8 +291,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     var_counters cr{0};
     s << store_result(res, cr);
     s << eval_ops(r, cr._var_num) << ";\n";
-    s << "    }\n"
-         "}\n";
+    s << "    }\n";
+#endif
+    s << "}\n";
+
 #else
     const char nl='\n';
     // the real kernel follows now

@@ -9,8 +9,9 @@ namespace ocl {
 
         class argument_buffer {
             std::vector<char> _v;
+            size_t _max_alignment;
         public:
-            argument_buffer() : _v() {
+            argument_buffer() : _v(), _max_alignment(0) {
                 _v.reserve(4096);
             };
             // allow access to the stored data
@@ -39,6 +40,37 @@ namespace ocl {
                 char* cd=_v.data() + ns;
                 _T* d=reinterpret_cast<_T*>(cd);
                 *d = t;
+                _max_alignment = std::max(_max_alignment, at);
+            }
+            // insert a constant array into to the buffer
+            template <typename _T, size_t _N>
+            void
+            insert(const _T(&t)[_N]) {
+                for (size_t i=0; i<_N; ++i) {
+                    insert(t[i]);
+                }
+            }
+            // insert a memory area into the buffer
+            template <typename _T>
+            void
+            insert(const _T* p, size_t n) {
+                for (size_t i=0; i<n; ++i) {
+                    insert(p[i]);
+                }
+            }
+            // return the maximum alignment seen so far
+            size_t max_alignment() const { return _max_alignment; }
+            // pad the buffer to a multiple of _max_alignment
+            void
+            pad_to_max_alignment() {
+                size_t s= _v.size();
+                const size_t max_alignment_m_1 = _max_alignment - 1;
+                const size_t m= s & max_alignment_m_1;
+                const size_t pad= (_max_alignment - m) & max_alignment_m_1;
+                if (pad != 0) {
+                    const size_t ns=s+pad;
+                    _v.resize(ns, char(0xff));
+                }
             }
             // align the end of the buffer to an multiple of x
             template <std::size_t _N>

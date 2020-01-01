@@ -47,6 +47,10 @@ namespace ocl {
     std::string
     fetch_args(const _T& r, var_counters& c);
 
+    template <typename _T>
+    std::string
+    concat_args(const _T& r, var_counters& c);
+
     // bind non buffer arguments
     template <typename _T>
     void
@@ -148,6 +152,14 @@ namespace ocl {
     template <class _OP, class _L>
     std::string
     fetch_args(const expr<_OP, _L, void>& e, var_counters& c);
+
+    template <class _OP, class _L, class _R>
+    std::string
+    concat_args(const expr<_OP, _L, _R>& e, var_counters& c);
+
+    template <class _OP, class _L>
+    std::string
+    concat_args(const expr<_OP, _L, void>& e, var_counters& c);
 
     // bind_non_buffer_args specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -270,6 +282,18 @@ ocl::fetch_args(const _T& r, var_counters& c)
     s << spaces(8) << "const " << be::type_2_name<_T>::v()
       << " v" << c._var_num
       << " = pa->_a" << c._scalar_num << ";\n";
+    ++c._var_num;
+    ++c._scalar_num;
+    return s.str();
+}
+
+template <class _T>
+std::string
+ocl::concat_args(const _T& r, var_counters& c)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << "pa->_a" << c._scalar_num;
     ++c._var_num;
     ++c._scalar_num;
     return s.str();
@@ -470,6 +494,23 @@ fetch_args(const expr<_OP, _L, _R>& e, var_counters& c)
     return l+r;
 }
 
+template <class _OP, class _L>
+std::string
+ocl::
+concat_args(const expr<_OP, _L, void>& e, var_counters& c)
+{
+    return concat_args(e._l, c);
+}
+
+template <class _OP, class _L, class _R>
+std::string
+ocl::
+concat_args(const expr<_OP, _L, _R>& e, var_counters& c)
+{
+    std::string l=concat_args(e._l, c);
+    std::string r=concat_args(e._r, c);
+    return l+", " + r;
+}
 
 template <class _OP, class _L, class _R>
 std::string ocl::eval_args(const std::string& p,

@@ -95,7 +95,7 @@ int main()
         // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
         rtype a(rtype(2.0)), b(rtype(3.0));
         rtype c= test_func(a, b);
-        for (std::size_t i=1; i<8192*8; ++i) {
+        for (std::size_t i=4; i<5; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers of "
                           <<  i*sizeof(rtype)
