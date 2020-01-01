@@ -2,6 +2,7 @@
 #include "ocl/dvec.h"
 #include "ocl/be/devices.h"
 #include "ocl/be/data.h"
+#include "ocl/test/tools.h"
 
 namespace ocl {
 
@@ -171,7 +172,6 @@ gen_kernel(_RES& res,
            const void* cookie,
            be::data_ptr b, size_t lmem_size)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
     std::ostringstream s;
     s << "k_" << cookie;
     std::string k_name(s.str());
@@ -279,18 +279,7 @@ ocl::test::test_custom_kernel()
 {
     const
     dvec<float> v0({2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f});
-    {
-        std::cout << "v0" << std::endl;
-        std::vector<float> vh(v0);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
-
+    dump(v0, "v0");
     const char* kbody0=
     "__kernel void add(ulong n, __global float* a0, float a1)\n"
     "{\n"
@@ -303,28 +292,9 @@ ocl::test::test_custom_kernel()
 
     auto ck0=custom_kernel_with_size<float>(kname0, kbody0, 8, 1.5f);
     dvec<float> v1(v0);
-    {
-        std::cout << "v0 after copy" << std::endl;
-        std::vector<float> vh(v0);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
+    dump(v0, "v0 after copy");
     v1 = ck0;
-    {
-        std::vector<float> vh(v1);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
+    dump(v1, "v1 after assignment 1.5f + gid");
     const char* kbody1=
     "__kernel void muladd(ulong n,\n"
     "                     __global float* a0,\n"
@@ -342,16 +312,7 @@ ocl::test::test_custom_kernel()
     std::cout << be::demangle(typeid(ck1).name()) << std::endl;
     dvec<float> v3(v0);
     v3=ck1;
-    {
-        std::vector<float> vh(v3);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
+    dump(v3, "v3: v1 + 100");
 
     const char* kbody2=
     "__kernel void muladd(ulong n,\n"
@@ -366,35 +327,25 @@ ocl::test::test_custom_kernel()
     "        float v1=a1[gid];\n"
     "        float v2=a2;\n"
     "        float v3=a3[gid];\n"
-    "        a0[gid]= v3;\n"
+    "        a0[gid]= (v1*v2)+v3;\n"
     "    }\n"
     "}\n";
     const char* kname2="muladd";
     dvec<float> v4(v0);
-    {
-        std::vector<float> vh(v4);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
+    v1=v0;
+    v4=dvec<float>(8, 2.0);
+    // 2.4 * 100 + 2.0
+    dump(v4, "v4: 2.0");
     auto ck2=custom_kernel<float>(kname2, kbody2, v1, 100.0f, v4);
-    std::cout << be::demangle(typeid(ck1).name()) << std::endl;
+    dump(v4, "v4: 2.0 after assignment");
+    std::cout << be::demangle(typeid(ck2).name()) << std::endl;
+#if 0
     dvec<float> v5(v0);
     v5=ck2;
-    {
-        std::vector<float> vh(v5);
-        for (std::size_t i=0; i<vh.size(); ++i) {
-            std::cout << vh[i];
-            if ((i & 3) ==3)
-                std::cout << '\n';
-            else
-                std::cout << ' ';
-        }
-    }
+#else
+    dvec<float> v5(ck2);
+#endif
+    dump(v5, "v5: v1*100 + 2 = 242.4");
 }
 
 int main()

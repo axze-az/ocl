@@ -783,7 +783,7 @@ bind_buffer_args(const dvec<_T>& r, unsigned& buf_num, be::kernel& k)
         std::string kn=k.name();
         std::ostringstream s;
         s << std::this_thread::get_id() << ": "
-          << kn << ": binding const dvec<"
+          << kn << ": " << &r << ": binding const dvec<"
           << be::type_2_name<_T>::v()<< "> with "
           << r.size()
           << " elements to arg " << buf_num << '\n';
@@ -802,7 +802,7 @@ bind_buffer_args(dvec<_T>& r, unsigned& buf_num, be::kernel& k)
         std::string kn=k.name();
         std::ostringstream s;
         s << std::this_thread::get_id() << ": "
-          << kn << ": binding dvec<"
+          << kn << ": " << &r << ": binding dvec<"
           << be::type_2_name<_T>::v()<< "> with "
           << r.size()
           << " elements to arg " << buf_num << '\n';

@@ -121,7 +121,7 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
         auto& wl=dcq.wl();
         {
             std::unique_lock<be::mutex> _ql(dcq.mtx());
-            be::event ev= q.enqueue_copy_buffer(r._b, _b,0, 0, s, wl);
+            be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
             q.flush();
             wl.clear();
             wl.insert(ev);
