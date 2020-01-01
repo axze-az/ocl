@@ -11,6 +11,14 @@
 
 namespace ocl {
 
+    namespace impl {
+        // a template to allow encapsulation of payload into expressions
+        template <typename _T>
+        struct ignored_arg : public _T {
+            using _T::_T;
+        };
+    }
+
     struct spaces : public std::string {
         spaces(unsigned int n) : std::string(n, ' ') {}
     };
@@ -29,6 +37,11 @@ namespace ocl {
     std::string
     decl_non_buffer_args(const _T& p, unsigned& arg_num);
 
+    // ignored_arg are really ignored
+    template <typename _T>
+    std::string
+    decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num);
+    
     // declare buffer arguments, must increment arg_num if something
     // generated
     template <typename _T>
@@ -56,6 +69,12 @@ namespace ocl {
     void
     bind_non_buffer_args(const _T& t, be::argument_buffer& a);
 
+    // bind ignored arguments
+    template <typename _T>
+    void
+    bind_non_buffer_args(const impl::ignored_arg<_T>& t,
+                         be::argument_buffer& a);
+    
     // bind buffer arguments
     template <typename _T>
     void
@@ -152,6 +171,12 @@ namespace ocl {
     template <class _OP, class _L>
     std::string
     fetch_args(const expr<_OP, _L, void>& e, var_counters& c);
+
+    template <typename _T>
+    std::string
+    concat_args(const impl::ignored_arg<_T>& r, var_counters& c) {
+        return std::string();
+    }
 
     template <class _OP, class _L, class _R>
     std::string
@@ -265,6 +290,15 @@ ocl::decl_non_buffer_args(const _T& r, unsigned& arg_num)
 
 template <class _T>
 std::string
+ocl::decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num)
+{
+    static_cast<void>(r);
+    static_cast<void>(arg_num);
+    return std::string();
+}
+
+template <class _T>
+std::string
 ocl::decl_buffer_args(const _T& r, unsigned& arg_num, bool read_only)
 {
     static_cast<void>(r);
@@ -304,6 +338,15 @@ void
 ocl::bind_non_buffer_args(const _T& t, be::argument_buffer& a)
 {
     a.insert(t);
+}
+
+template <typename _T>
+void
+ocl::
+bind_non_buffer_args(const impl::ignored_arg<_T>& t, be::argument_buffer& a)
+{
+    static_cast<void>(t);
+    static_cast<void>(a);
 }
 
 template <typename _T>
@@ -509,6 +552,10 @@ concat_args(const expr<_OP, _L, _R>& e, var_counters& c)
 {
     std::string l=concat_args(e._l, c);
     std::string r=concat_args(e._r, c);
+    if (l.empty())
+        return r;
+    if (r.empty())
+        return l;
     return l+", " + r;
 }
 

@@ -303,6 +303,11 @@ ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
         if (s == size() && pm==p) {
             execute(*this, r, p, s);
         } else {
+            if (p == nullptr)
+                p = pm;
+            if (p == nullptr) {
+                impl::missing_backend_data();
+            }
             dvec t(p, s);
             execute(t, r, p, s);
             swap(t);

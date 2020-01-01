@@ -11,6 +11,7 @@
 namespace ocl {
 
     namespace impl {
+
         // inserts defines/pragmas into the source code
         void
         insert_headers(std::ostream& s);
@@ -19,6 +20,23 @@ namespace ocl {
         __attribute__((__noreturn__))
         void
         missing_backend_data();
+
+        template <class _RES, class _EXPR>
+        void
+        execute(_RES& res, const _EXPR& r,
+                be::data_ptr b, size_t s,
+                const void* addr);
+        // returns a cached kernel for (res, r) or calls gen_kernel
+        // and inserts the new kernel into the cache
+        template <class _RES, class _EXPR>
+        be::pgm_kernel_lock&
+        get_kernel(_RES& res, const _EXPR& r, const void* addr,
+                   be::data_ptr b, size_t lmem_size=0);
+        // generate a new kernel for (res, r)
+        template <class _RES, class _EXPR>
+        be::pgm_kernel_lock
+        gen_kernel(_RES& res, const _EXPR& r, const void* addr,
+                   be::data_ptr b, size_t lmem_size=0);
 
     }
 
@@ -73,7 +91,7 @@ backend_ptr(const _RES& res, const _SRC& r)
 
 template <class _RES, class _SRC>
 void
-ocl::expr_kernel<_RES, _SRC>::
+ocl::impl::
 execute(_RES& res, const _SRC& r,
         be::data_ptr b, size_t s,
         const void* cookie)
@@ -131,17 +149,22 @@ execute(_RES& res, const _SRC& r,
     cpy_ev.wait();
 #else
     be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
+    // bind args
+    auto& dcq=b->dcq();
+    auto& d=dcq.d();
+    be::kexec_1d_info ki(d, pk._k, s);
     {
         std::unique_lock<be::pgm_kernel_lock> _l(pk);
-        // bind args
-        std::size_t s(eval_size(res));
         const auto& sc=s;
         unsigned arg_num{0};
         bind_args(pk._k, sc, arg_num);
         bind_args(pk._k, res, arg_num);
         bind_args(pk._k, r, arg_num);
-        // execute the kernel
-        ev=b->enqueue_kernel(pk, s);
+        {
+            std::unique_lock<be::mutex> _lq(dcq.mtx());
+            // wait also for the argument buffer
+            ev=b->enqueue_1d_kernel(pk._k, ki);
+        }
     }
 #endif
     // otherwise we leak memory
@@ -150,9 +173,9 @@ execute(_RES& res, const _SRC& r,
 
 template <class _RES, class _SRC>
 ocl::be::pgm_kernel_lock&
-ocl::expr_kernel<_RES, _SRC>::
+ocl::impl::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr& b, size_t lmem_size)
+           be::data_ptr b, size_t lmem_size)
 {
     auto& kc=b->kcache();
     std::unique_lock<be::mutex> _l(kc.mtx());
@@ -177,9 +200,9 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
 
 template <class _RES, class _SRC>
 ocl::be::pgm_kernel_lock
-ocl::expr_kernel<_RES, _SRC>::
+ocl::impl::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr& b, size_t lmem_size)
+           be::data_ptr b, size_t lmem_size)
 {
     std::ostringstream s;
     s << "k_" << cookie;
@@ -190,11 +213,15 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s.str("");
     impl::insert_headers(s);
 
-#if USE_ARG_BUFFER > 0
-    const char nl='\n';
+#if USE_ARG_BUFFER == 0
+    static_cast<void>(lmem_size);
+    s << "__kernel void " << k_name;
+#else
     // the real kernel follows now
-    s << "void " << k_name << "_func"
-      << "\n(\n";
+    s << "inline void " << k_name << "_func";
+#endif
+    s << "\n(\n";
+    const char nl='\n';
     // element count:
     std::string element_count=spaces(4) +
         be::type_2_name<unsigned long>::v() + " n";
@@ -208,13 +235,12 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << "{\n";
 
     // global id
-    s << spaces(4) << "ulong gid = get_global_id(0);\n";
-    s << spaces(4) << "if (gid < n) {\n";
+    s << "    ulong gid = get_global_id(0);\n";
+    s << "    if (gid < n) {\n";
     // temporary variables
     unsigned var_num{1};
     s << eval_vars(r, var_num, true)
       << nl;
-
     // result variable
     unsigned res_num{0};
     s << eval_vars(res, res_num, false) << "= ";
@@ -226,10 +252,11 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << eval_results(res, res_num)
       << nl;
     // end if
-    s << spaces(4) << "}\n";
+    s << "    }\n";
     // end body
     s << "}\n\n";
 
+#if USE_ARG_BUFFER>0
     unsigned decl_nb_args(0);
     // argument structure with the scalar arguments
     s << "struct " << k_arg_name << " {\n"
@@ -265,8 +292,6 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
              "        __attribute__((opencl_unroll_hint()))\n"
              "        for (uint i= 0; i < cpy_size; i+= lsz) {\n"
              "            uint idx= i + lid;\n"
-             // "            uint tidx= idx < cpy_size ? idx : 0;\n"
-             // "            pd[tidx]= ps[tidx];\n"
              "            if (idx < cpy_size) {\n"
              "                pd[idx] = ps[idx];\n"
              "            }\n"
@@ -276,63 +301,11 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
              "    __local const struct "
           << k_arg_name << "* pa= &__args._a;\n";
     }
-#if 1
     var_counters c{0};
     s << "    " << k_name << "_func("
       << "pa->_n, "
       << concat_args(res, c) << ", "
       << concat_args(r, c) << ");\n";
-#else
-    s << "    /* start execution */\n"
-         "    ulong gid = get_global_id(0);\n"
-         "    if (gid < pa->_n) {\n";
-    var_counters c{1};
-    s << fetch_args(r, c);
-    var_counters cr{0};
-    s << store_result(res, cr);
-    s << eval_ops(r, cr._var_num) << ";\n";
-    s << "    }\n";
-#endif
-    s << "}\n";
-
-#else
-    const char nl='\n';
-    // the real kernel follows now
-    s << "__kernel void " << k_name
-      << "\n(\n";
-    // element count:
-    std::string element_count=spaces(4) +
-        be::type_2_name<unsigned long>::v() + " n";
-    // argument generation
-    unsigned arg_num{0};
-    s << eval_args(element_count, res, arg_num, false)
-      << ",\n";
-    s << eval_args("", r, arg_num, true);
-    s << "\n)\n";
-    // begin body
-    s << "{\n";
-
-    // global id
-    s << spaces(4) << "ulong gid = get_global_id(0);\n";
-    s << spaces(4) << "if (gid < n) {\n";
-    // temporary variables
-    unsigned var_num{1};
-    s << eval_vars(r, var_num, true)
-      << nl;
-
-    // result variable
-    unsigned res_num{0};
-    s << eval_vars(res, res_num, false) << "= ";
-    // the operations
-    unsigned body_num{1};
-    s << eval_ops(r, body_num) << ";\n";
-    // write back
-    res_num = 0;
-    s << eval_results(res, res_num)
-      << nl;
-    // end if
-    s << spaces(4) << "}\n";
-    // end body
     s << "}\n";
 #endif
     using namespace impl;
@@ -374,7 +347,7 @@ ocl::execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
     void (*pf)(_RES&, const _EXPR&, be::data_ptr, size_t) =
         execute<_RES, _EXPR>;
     const void* pv=reinterpret_cast<const void*>(pf);
-    expr_kernel<_RES, _EXPR>::execute(res, r, b, s, pv);
+    impl::execute(res, r, b, s, pv);
 }
 
 // Local variables:
