@@ -105,6 +105,12 @@ namespace ocl {
         template <template <class _V> class _OP,
                   class _L, class _R>
         dvec& operator=(const expr<_OP<dvec<_T> >, _L, _R>& r);
+        // copy the contents of the device buffer into p[0, size())
+        void
+        copy_to_host(_T* p) const;
+        // copy the contents of p[0, size()) into the device buffer
+        void
+        copy_from_host(const _T* p);
         // conversion operator to std::vector, forces move of
         // data to host
         explicit operator std::vector<_T> () const;
@@ -315,6 +321,23 @@ ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
         }
     }
     return *this;
+}
+
+template <class _T>
+inline
+void
+ocl::dvec<_T>::copy_to_host(_T* p)
+    const
+{
+    dvec_base::copy_to_host(p);
+}
+
+template <class _T>
+inline
+void
+ocl::dvec<_T>::copy_from_host(const _T* p)
+{
+    dvec_base::copy_from_host(p);
 }
 
 template <class _T>

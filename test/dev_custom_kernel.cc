@@ -118,17 +118,23 @@ namespace ocl {
 
         template <typename _T, typename _A0>
         auto
-        custom_kernel_args(const _A0& a0) {
+        custom_kernel_args(_A0&& a0) {
             return a0;
         }
 
+        template <typename _T, typename _A0, typename _A1>
+        auto
+        custom_kernel_args(_A0&& a0, _A1&& a1) {
+            return make_expr<dop::custom_k_arg<_T> >(a0, a1);
+        }
+        
         template <typename _T, typename _A0, typename ... _AX>
         auto
-        custom_kernel_args(const _A0& a0, const _AX& ... ax)
+        custom_kernel_args(_A0&& a0, _AX&& ... ax)
         {
-            auto tail=custom_kernel_args<_T>(ax...);
-            expr<dop::custom_k_arg<_T>, _A0, typeof(tail)> e(a0, tail);
-            return e;
+            return make_expr<dop::custom_k_arg<_T> >(
+                a0,
+                custom_kernel_args<_T>(std::forward<_AX&&>(ax) ...));
         }
     }
 
@@ -137,24 +143,24 @@ namespace ocl {
     custom_kernel_with_size(const std::string& name,
                             const std::string& body,
                             std::size_t s,
-                            const _AX&... ax)
+                            _AX&&... ax)
     {
-        auto e0=impl::custom_kernel_args<dvec<_T>>(ax...);
-        expr<dop::custom_k<dvec<_T> >, impl::ck_body, typeof(e0)>
-            e(impl::ck_body(name, body, s), e0);
-        return e;
+        return make_expr<dop::custom_k<dvec<_T> > >(
+            impl::ck_body(name, body, s),
+            impl::custom_kernel_args<dvec<_T>>(
+                std::forward<_AX&&>(ax) ...));
     }
 
     template <typename _T, typename ... _AX>
     auto
     custom_kernel(const std::string& name,
                   const std::string& body,
-                  const _AX&... ax)
+                  _AX&&... ax)
     {
-        auto e0=impl::custom_kernel_args<dvec<_T> >(ax...);
-        expr<dop::custom_k<dvec<_T> >, impl::ck_body, typeof(e0)>
-            e(impl::ck_body(name, body), e0);
-        return e;
+        return make_expr<dop::custom_k<dvec<_T> > >(
+            impl::ck_body(name, body),
+            impl::custom_kernel_args<dvec<_T>>(
+                std::forward<_AX&&>(ax) ...));
     }
 
     namespace test {
@@ -333,7 +339,7 @@ ocl::test::test_custom_kernel()
     const char* kname2="muladd";
     dvec<float> v4(v0);
     v1=v0;
-    v4=dvec<float>(8, 2.0);
+    v4=dvec<float>(8, 2.0f);
     // 2.4 * 100 + 2.0
     dump(v4, "v4: 2.0");
     auto ck2=custom_kernel<float>(kname2, kbody2, v1, 100.0f, v4);
@@ -345,7 +351,7 @@ ocl::test::test_custom_kernel()
 #else
     dvec<float> v5(ck2);
 #endif
-    dump(v5, "v5: v1*100 + 2 = 242.4");
+    dump(v5, "v5: v1*100 + 2 = 242");
 }
 
 int main()

@@ -132,6 +132,19 @@ namespace ocl {
         constexpr expr(const _L& l) : _l{l} {};
     };
 
+
+    template <class _OP, class _L, class _R>
+    expr<_OP, _L, _R>
+    make_expr(const _L& l, const _R& r) {
+        return expr<_OP, _L, _R>(l, r);
+    }
+
+    template <class _OP, class _L>
+    expr<_OP, _L, void>
+    make_expr(const _L& l) {
+        return expr<_OP, _L, void>(l);
+    }
+    
     // backend_data specialized for expr
     template <class _OP, class _L, class _R>
     be::data_ptr backend_data(const expr<_OP, _L, _R>& a);

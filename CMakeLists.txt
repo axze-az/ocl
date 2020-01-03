@@ -124,6 +124,8 @@ configure_file("include/ocl/config.h.in"
 include_directories(../cftal/gcc9/include)
 include_directories(../cftal/include)
 include_directories(../cftal/test/include)
+include_directories(../dev-cftal/include)
+include_directories(../dev-cftal/test/include)
 #include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
 find_package(Threads REQUIRED)
