@@ -40,8 +40,6 @@ namespace ocl {
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
 
-
-
     }
 
     // Opencl kernel for expressions
@@ -77,6 +75,7 @@ namespace ocl {
     template <class _RES, class _EXPR>
     void execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
 }
+
 
 template <class _RES, class _SRC>
 ocl::be::data_ptr
@@ -217,6 +216,9 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s.str("");
     impl::insert_headers(s);
 
+    std::set<std::string> fnames;
+    s << def_custom_func(fnames, r);
+    
 #if USE_ARG_BUFFER == 0
     static_cast<void>(lmem_size);
     s << "__kernel void " << k_name;

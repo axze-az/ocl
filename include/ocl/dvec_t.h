@@ -123,6 +123,14 @@ namespace ocl {
         using type = const dvec<_T>&;
     };
 
+    // generate a custom function for dvec<_T> expressions
+    template <typename _T, typename ... _AX>
+    auto
+    custom_func(const std::string& name,
+                const std::string& body,
+                _AX&&... ax);
+ 
+    
 }
 
 template <class _T>
@@ -362,6 +370,18 @@ ocl::dvec<_T>::size() const
         s /= st;
     }
     return s;
+}
+
+template <typename _T, typename ... _AX>
+auto
+ocl::
+custom_func(const std::string& name,  const std::string& body,
+            _AX&&... ax)
+{
+    return make_expr<dop::custom_f<dvec<_T> > >(
+        impl::cf_body(name, body),
+        impl::custom_args<dvec<_T>>(
+            std::forward<_AX&&>(ax) ...));
 }
 
 // Local variables:

@@ -317,8 +317,6 @@ ocl::decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num)
 {
     static_cast<void>(r);
     static_cast<void>(arg_num);
-    std::cout << "decl_non_buffer args called for "
-              << be::demangle(typeid(r).name()) << '\n';
     return std::string();
 }
 
