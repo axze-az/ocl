@@ -6,47 +6,6 @@
 
 namespace ocl {
 
-    namespace impl {
-
-        class __ck_body {
-            std::string _name;
-            std::string _body;
-            std::optional<std::size_t> _s;
-        public:
-            __ck_body(const std::string& n,
-                      const std::string& b,
-                      std::size_t s)
-                : _name(n), _body(b), _s(s) {}
-            __ck_body(const std::string& n,
-                      const std::string& b)
-                : _name(n), _body(b), _s() {}
-            const std::string& name() const { return _name; }
-            const std::string& body() const { return _body; }
-            const std::optional<std::size_t>& size() const {
-                return _s;
-            }
-        };
-
-        using cf_body = ignored_arg<__ck_body>;
-    }
-
-    namespace dop {
-
-        // custom function marker
-        template <typename _T>
-        struct custom_f {
-            static
-            std::string body(...) {
-                return std::string(" ");
-            }
-        };
-        // custom function argument marker
-        template <class _T>
-        struct custom_arg {
-        };
-
-    }
-
     template <typename _T, typename _R>
     std::string
     eval_ops(const expr<dop::custom_f<_T>, impl::cf_body, _R>& e,

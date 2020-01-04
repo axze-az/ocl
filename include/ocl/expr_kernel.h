@@ -3,6 +3,7 @@
 
 #include <ocl/config.h>
 #include <ocl/expr.h>
+#include <ocl/expr_custom.h>
 #include <thread>
 #include <chrono>
 
@@ -32,11 +33,14 @@ namespace ocl {
         be::pgm_kernel_lock&
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
+
         // generate a new kernel for (res, r)
         template <class _RES, class _EXPR>
         be::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
+
+
 
     }
 

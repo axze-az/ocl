@@ -8,30 +8,6 @@ namespace ocl {
 
     namespace impl {
 
-        class __ck_body {
-            std::string _name;
-            std::string _body;
-            std::optional<std::size_t> _s;
-        public:
-            __ck_body(const std::string& n,
-                      const std::string& b,
-                      std::size_t s)
-                : _name(n), _body(b), _s(s) {}
-            __ck_body(const std::string& n,
-                      const std::string& b)
-                : _name(n), _body(b), _s() {}
-            const std::string& name() const { return _name; }
-            const std::string& body() const { return _body; }
-            const std::optional<std::size_t>& size() const {
-                return _s;
-            }
-        };
-
-        using ck_body = ignored_arg<__ck_body>;
-    }
-
-    namespace impl {
-
         template <typename _T>
         struct get_arg_info {
             static
@@ -55,22 +31,6 @@ namespace ocl {
 
     }
 
-    namespace dop {
-
-        // custom kernel function marker
-        template <typename _T>
-        struct custom_k {
-            static
-            std::string body(...) {
-                return std::string();
-            }
-        };
-        template <class _T>
-        struct custom_arg {
-        };
-
-    }
-
     namespace impl {
 
         template <typename _RES, typename _T, typename _R>
@@ -81,27 +41,6 @@ namespace ocl {
                    be::data_ptr b, size_t lmem_size=0);
     }
 
-    template <typename _T, typename _R>
-    std::size_t
-    eval_size(const expr<dop::custom_k<_T>, impl::ck_body, _R>& r)
-    {
-        if (r._l.size().has_value()) {
-            return r._l.size().value();
-        }
-        std::size_t rs=eval_size(r._r);
-        return rs;
-    }
-
-    template <typename _T, typename _R>
-    be::data_ptr
-    backend_data(const expr<dop::custom_k<_T>, impl::ck_body, _R>& r)
-    {
-        be::data_ptr p=backend_data(r);
-        if (p==nullptr) {
-            p=be::data::instance();
-        }
-        return p;
-    }
 
 #if 0
     // generate and execute an opencl kernel for an
@@ -114,31 +53,6 @@ namespace ocl {
     }
 #endif
 
-    namespace impl {
-
-        template <typename _T, typename _A0>
-        const _A0&
-        custom_args(_A0&& a0) {
-            return a0;
-        }
-#if 0
-        template <typename _T, typename _A0, typename _A1>
-        auto
-        custom_args(_A0&& a0, _A1&& a1) {
-            return make_expr<dop::custom_arg<_T> >(
-                custom_args<_T>(std::forward<_A0&&>(a0)),
-                custom_args<_T>(std::forward<_A1&&>(a1)));
-        }
-#endif
-        template <typename _T, typename _A0, typename ... _AX>
-        auto
-        custom_args(_A0&& a0, _AX&& ... ax)
-        {
-            return make_expr<dop::custom_arg<_T> >(
-                custom_args<_T>(std::forward<_A0&&>(a0)),
-                custom_args<_T>(std::forward<_AX&&>(ax) ...));
-        }
-    }
 
     template <typename _T, typename ... _AX>
     auto
