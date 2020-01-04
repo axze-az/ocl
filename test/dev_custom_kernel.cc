@@ -326,8 +326,7 @@ ocl::test::test_custom_kernel()
     std::cout << be::demangle(typeid(ck1._r).name()) << std::endl;
     std::size_t s= eval_size(ck1._r);
     std::cout << s << std::endl;
-    dvec<float> v3(v0);
-    v3=ck1;
+    dvec<float> v3=ck1;
     dump(v3, "v3: v1 + 100");
 
     const char* kbody2=
