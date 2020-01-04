@@ -87,6 +87,12 @@ namespace ocl {
     std::string
     eval_args(const std::string& p, const _T& r,
               unsigned& arg_num, bool ro);
+    // eval_args for ignored args
+    template <class _T>
+    std::string
+    eval_args(const std::string& p, const impl::ignored_arg<_T>& t,
+              unsigned& arg_num, bool ro);
+    
     // eval_vars
     template <class _T>
     std::string
@@ -311,6 +317,8 @@ ocl::decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num)
 {
     static_cast<void>(r);
     static_cast<void>(arg_num);
+    std::cout << "decl_non_buffer args called for "
+              << be::demangle(typeid(r).name()) << '\n';
     return std::string();
 }
 
@@ -391,6 +399,18 @@ std::string ocl::eval_args(const std::string& p,
       << " arg"  << arg_num;
     ++arg_num;
     return s.str();
+}
+
+template <class _T>
+std::string ocl::eval_args(const std::string& p,
+                           const impl::ignored_arg<_T>& t,
+                           unsigned& arg_num,
+                           bool ro)
+{
+    static_cast<void>(t);
+    static_cast<void>(arg_num);
+    static_cast<void>(ro);
+    return p;
 }
 
 template <class _T>
