@@ -7,39 +7,40 @@ ocl::dvec_base::~dvec_base()
 }
 
 ocl::dvec_base::dvec_base()
-    : _bed{}, _b{}
+    : base_type(), _bed{}, _b{}
 {
 }
 
 
 ocl::dvec_base::dvec_base(std::size_t s)
-    : _bed{be::data::instance()},
+    : base_type(), _bed{be::data::instance()},
       _b{_bed->dcq().c(), s}
 {
 }
 
 ocl::dvec_base::dvec_base(std::size_t s, const void* p)
-    : _bed{be::data::instance()},
+    : base_type(), _bed{be::data::instance()},
       _b{_bed->dcq().c(), s}
 {
     copy_from_host(p);
 }
 
 ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s)
-    : _bed{pbe},
+    : base_type(), _bed{pbe},
       _b{_bed->dcq().c(), s}
 {
 }
 
 ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s, const void* p)
-    : _bed{pbe},
+    : base_type(), _bed{pbe},
       _b{_bed->dcq().c(), s}
 {
     copy_from_host(p);
 }
 
 ocl::dvec_base::dvec_base(const dvec_base& r)
-    : _bed{r._bed},
+    : base_type(r),
+      _bed{r._bed},
       _b(_bed != nullptr ?
          be::buffer(_bed->dcq().c(), r.buffer_size()) :
          be::buffer())
@@ -48,7 +49,7 @@ ocl::dvec_base::dvec_base(const dvec_base& r)
 }
 
 ocl::dvec_base::dvec_base(dvec_base&& r)
-    : _bed(), _b()
+    : base_type(std::move(r)), _bed(), _b()
 {
     swap(r);
 }
@@ -56,6 +57,7 @@ ocl::dvec_base::dvec_base(dvec_base&& r)
 ocl::dvec_base&
 ocl::dvec_base::operator=(const dvec_base& r)
 {
+    base_type::operator=(r);
     if (this != &r) {
         if (buffer_size() == r.buffer_size()) {
             copy_on_device(r);
@@ -70,6 +72,7 @@ ocl::dvec_base::operator=(const dvec_base& r)
 ocl::dvec_base&
 ocl::dvec_base::operator=(dvec_base&& r)
 {
+    base_type::operator=(std::move(r));
     return swap(r);
 }
 

@@ -66,7 +66,7 @@ namespace ocl {
             }
         };
         template <class _T>
-        struct custom_k_arg {
+        struct custom_arg {
         };
 
     }
@@ -117,24 +117,26 @@ namespace ocl {
     namespace impl {
 
         template <typename _T, typename _A0>
-        auto
-        custom_kernel_args(_A0&& a0) {
+        const _A0&
+        custom_args(_A0&& a0) {
             return a0;
         }
-
+#if 0
         template <typename _T, typename _A0, typename _A1>
         auto
-        custom_kernel_args(_A0&& a0, _A1&& a1) {
-            return make_expr<dop::custom_k_arg<_T> >(a0, a1);
+        custom_args(_A0&& a0, _A1&& a1) {
+            return make_expr<dop::custom_arg<_T> >(
+                custom_args<_T>(std::forward<_A0&&>(a0)),
+                custom_args<_T>(std::forward<_A1&&>(a1)));
         }
-        
+#endif
         template <typename _T, typename _A0, typename ... _AX>
         auto
-        custom_kernel_args(_A0&& a0, _AX&& ... ax)
+        custom_args(_A0&& a0, _AX&& ... ax)
         {
-            return make_expr<dop::custom_k_arg<_T> >(
-                a0,
-                custom_kernel_args<_T>(std::forward<_AX&&>(ax) ...));
+            return make_expr<dop::custom_arg<_T> >(
+                custom_args<_T>(std::forward<_A0&&>(a0)),
+                custom_args<_T>(std::forward<_AX&&>(ax) ...));
         }
     }
 
@@ -147,7 +149,7 @@ namespace ocl {
     {
         return make_expr<dop::custom_k<dvec<_T> > >(
             impl::ck_body(name, body, s),
-            impl::custom_kernel_args<dvec<_T>>(
+            impl::custom_args<dvec<_T>>(
                 std::forward<_AX&&>(ax) ...));
     }
 
@@ -159,7 +161,7 @@ namespace ocl {
     {
         return make_expr<dop::custom_k<dvec<_T> > >(
             impl::ck_body(name, body),
-            impl::custom_kernel_args<dvec<_T>>(
+            impl::custom_args<dvec<_T>>(
                 std::forward<_AX&&>(ax) ...));
     }
 
@@ -295,12 +297,15 @@ ocl::test::test_custom_kernel()
     "    }\n"
     "}\n";
     const char* kname0="add";
-
+    std::cout << "expecting 1 object\n" << dvec<float>::state();
     auto ck0=custom_kernel_with_size<float>(kname0, kbody0, 8, 1.5f);
+    std::cout << "expecting 1 object\n" << dvec<float>::state();
     dvec<float> v1(v0);
+    std::cout << "expecting 2 objects\n" << dvec<float>::state();
     dump(v0, "v0 after copy");
     v1 = ck0;
     dump(v1, "v1 after assignment 1.5f + gid");
+    std::cout << "expecting 2 objects\n" << dvec<float>::state();
     const char* kbody1=
     "__kernel void muladd(ulong n,\n"
     "                     __global float* a0,\n"
@@ -314,8 +319,13 @@ ocl::test::test_custom_kernel()
     "}\n";
     const char* kname1="muladd";
     dvec<float> v2(v0);
+    std::cout << "expecting 3 objects\n" << dvec<float>::state();
     auto ck1=custom_kernel<float>(kname1, kbody1, v1, 100.0f);
+    std::cout << "expecting 3 objects\n" << dvec<float>::state();
     std::cout << be::demangle(typeid(ck1).name()) << std::endl;
+    std::cout << be::demangle(typeid(ck1._r).name()) << std::endl;
+    std::size_t s= eval_size(ck1._r);
+    std::cout << s << std::endl;
     dvec<float> v3(v0);
     v3=ck1;
     dump(v3, "v3: v1 + 100");

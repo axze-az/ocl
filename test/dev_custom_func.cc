@@ -66,8 +66,8 @@ namespace ocl {
         std::cout << "called\n" << std::flush;
         return eval_vars(e._r, arg_num, read);
     };
-    
-    
+
+
     namespace impl {
 
         template <typename _T, typename _A0>
@@ -81,9 +81,9 @@ namespace ocl {
         custom_func_args(_A0&& a0, _A1&& a1) {
             return make_expr<dop::custom_arg<_T> >(
                 custom_func_args<_T>(std::forward<_A0&&>(a0)),
-                custom_func_args<_T>(std::forward<_A0&&>(a1)));
+                custom_func_args<_T>(std::forward<_A1&&>(a1)));
         }
-        
+
         template <typename _T, typename _A0, typename ... _AX>
         auto
         custom_func_args(_A0&& a0, _AX&& ... ax)
