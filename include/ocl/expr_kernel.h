@@ -310,7 +310,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     ksrc_info ksi=gen_kernel_src(res, r, cookie);
     std::string k_name = ksi.name();
     std::ostringstream s;
-    impl::insert_headers(s);
+    impl::insert_headers(s, lmem_size);
     s << ksi.source();
 #if USE_ARG_BUFFER>0
     std::ostringstream sa;
