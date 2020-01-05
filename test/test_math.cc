@@ -169,7 +169,7 @@ ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
     hs << tname << " " << hname << "( " << tname
        << " v0, __arg_local const " << cname << "* c)\n"
         "{\n"
-        "    "<< tname << " r=v0*c[0];\n"
+        "    "<< tname << " r=c[0];\n"
         "    for (int i=1; i<" << _N << "; ++i) {\n"
         "        r=v0*r+c[i];\n"
         "    }\n"
