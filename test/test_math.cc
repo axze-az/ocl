@@ -169,12 +169,12 @@ ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
     hs << tname << " " << hname << "( " << tname
        << " v0, __arg_local const " << cname << "* c)\n"
         "{\n"
-        "    "<< tname << " r=c[0];\n"
-        "    for (int i=1; i<" << _N << "; ++i) {\n"
-        "        r=v0*r+c[i];\n"
-        "    }\n"
-        "    return r;\n"
-        "}\n";
+        "    "<< tname << " r=c[0];\n";
+    for (size_t i=1; i<_N; ++i) {
+        hs << "    r=v0*r+c["<< i<<"];\n";
+    }
+    hs << "    return r;\n"
+          "}\n";
     const std::string hbody=hs.str();
     return custom_func<_T>(hname, hbody, x, a); 
 #else
