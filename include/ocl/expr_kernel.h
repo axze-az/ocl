@@ -15,7 +15,7 @@ namespace ocl {
 
         // inserts defines/pragmas into the source code
         void
-        insert_headers(std::ostream& s);
+        insert_headers(std::ostream& s, size_t lmem_size=0);
         // throws an exception because of missing
         // backend data
         __attribute__((__noreturn__))

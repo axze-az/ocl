@@ -34,6 +34,23 @@ ocl::test::test_custom_func()
     std::cout << def_custom_func(fnames, t1);
     dvec<float> v1=t1;
     dump(v1, "v1: (v0+v0+2.0f)+(v0+v0+2.0f) = 2.0f*6.8f=13.6f");
+
+    static const float ci[]={
+        1.0f, 2.0f, 3.0f, 4.0f
+    };
+    const char* hname="horner";
+    const char* hbody=
+        "float horner(float v0, __arg_local float* c)\n"
+        "{\n"
+        "    float r=v0*c[0];\n"
+        "    for (int i=0; i<4; ++i) {\n"
+        "        r=v0*r+c[i];\n"
+        "    }\n"
+        "    return r;\n"
+        "}\n";
+    auto h=custom_func<float>(hname, hbody, v0, ci);
+    dvec<float> v2=h;
+    dump(v2, "v2 after call to horner");
 }
 
 int main()
