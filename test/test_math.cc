@@ -159,10 +159,30 @@ template <typename _T, typename _C, size_t _N>
 auto
 ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
 {
+#if 1
+    std::ostringstream hs;
+    hs << "horner" << _N; 
+    const std::string hname=hs.str();
+    hs.str("");
+    const std::string tname= be::type_2_name<_T>::v();
+    const std::string cname= be::type_2_name<_C>::v();
+    hs << tname << " " << hname << "( " << tname
+       << " v0, __arg_local const " << cname << "* c)\n"
+        "{\n"
+        "    "<< tname << " r=v0*c[0];\n"
+        "    for (int i=1; i<" << _N << "; ++i) {\n"
+        "        r=v0*r+c[i];\n"
+        "    }\n"
+        "    return r;\n"
+        "}\n";
+    const std::string hbody=hs.str();
+    return custom_func<_T>(hname, hbody, x, a); 
+#else
     static_assert(_N > 0, "invalid call to horner(x, array)");
     const _C* pa=a;
     using _T_t= const dvec<_T>&;
     return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa);
+#endif
 }
 
 template <typename _X, typename _C1, typename _C0>

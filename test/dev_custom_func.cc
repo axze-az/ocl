@@ -43,7 +43,7 @@ ocl::test::test_custom_func()
         "float horner(float v0, __arg_local const float* c)\n"
         "{\n"
         "    float r=v0*c[0];\n"
-        "    for (int i=0; i<4; ++i) {\n"
+        "    for (int i=1; i<4; ++i) {\n"
         "        r=v0*r+c[i];\n"
         "    }\n"
         "    return r;\n"
