@@ -34,12 +34,37 @@ namespace ocl {
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
 
+        // result of gen_kernel_src
+        class ksrc_info {
+            std::string _kname;
+            std::string _s;
+            bool _custom;
+        public:
+            ksrc_info(const std::string& kname, const std::string& s,
+                      bool custom_k)
+                : _kname(kname), _s(s), _custom(custom_k) {}
+            const std::string& name() const { return _kname; }
+            const std::string& source() const { return _s; }
+            const bool& custom() const { return _custom; }
+        };
+
+        // generates kernel source without headers
+        template <class _RES, class _EXPR>
+        ksrc_info
+        gen_kernel_src(_RES& res, const _EXPR& r, const void* addr);
+
+        // generates custom kernel source without headers
+        template <class _RES, typename _OP, typename _R>
+        ksrc_info
+        gen_kernel_src(_RES& res,
+                       const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+                       const void* addr);
+
         // generate a new kernel for (res, r)
         template <class _RES, class _EXPR>
         be::pgm_kernel_lock
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
-
     }
 
     // Opencl kernel for expressions
@@ -202,30 +227,19 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
 }
 
 template <class _RES, class _SRC>
-ocl::be::pgm_kernel_lock
+ocl::impl::ksrc_info
 ocl::impl::
-gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr b, size_t lmem_size)
+gen_kernel_src(_RES& res, const _SRC& r, const void* cookie)
 {
     std::ostringstream s;
     s << "k_" << cookie;
     std::string k_name(s.str());
     s.str("");
-    s << "arg_" << cookie;
-    std::string k_arg_name(s.str());
-    s.str("");
-    impl::insert_headers(s);
-
     std::set<std::string> fnames;
     s << def_custom_func(fnames, r);
-    
-#if USE_ARG_BUFFER == 0
-    static_cast<void>(lmem_size);
-    s << "__kernel void " << k_name;
-#else
+
     // the real kernel follows now
-    s << "inline void " << k_name << "_func";
-#endif
+    s << "inline void " << k_name;
     s << "\n(\n";
     const char nl='\n';
     // element count:
@@ -262,7 +276,50 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     // end body
     s << "}\n\n";
 
+    return ksrc_info(k_name, s.str(), false);
+}
+
+template <class _RES, typename _OP, typename _R>
+ocl::impl::ksrc_info
+ocl::impl::
+gen_kernel_src(_RES& res,
+               const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+               const void* addr)
+{
+    static_cast<void>(addr);
+    static_cast<void>(res);
+    std::ostringstream s;
+#if USE_ARG_BUFFER == 0
+    s << "__kernel " << r._l.body();
+    k_name = r._l.name();
+#else
+    // the real kernel follows now
+    s << "inline " << r._l.body();
+#endif
+    s << '\n';
+    return ksrc_info(r._l.name(), s.str(), true);
+}
+
+
+template <class _RES, class _SRC>
+ocl::be::pgm_kernel_lock
+ocl::impl::
+gen_kernel(_RES& res, const _SRC& r, const void* cookie,
+           be::data_ptr b, size_t lmem_size)
+{
+    ksrc_info ksi=gen_kernel_src(res, r, cookie);
+    std::string k_name = ksi.name();
+    std::ostringstream s;
+    impl::insert_headers(s);
+    s << ksi.source();
 #if USE_ARG_BUFFER>0
+    std::ostringstream sa;
+    sa << cookie;
+    const std::string s_cookie=sa.str();
+    std::string k_arg_name("arg_" + s_cookie);
+    std::string k_func_name(k_name);
+    k_name=std::string("e_") + s_cookie;
+    const bool const_buffer_args=ksi.custom() == false ? true : false;
     unsigned decl_nb_args(0);
     // argument structure with the scalar arguments
     s << "struct " << k_arg_name << " {\n"
@@ -274,7 +331,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << "__kernel void " << k_name
       << "\n(\n";
     s << decl_buffer_args(res, buf_args, false);
-    s << decl_buffer_args(r, buf_args, true);
+    s << decl_buffer_args(r, buf_args, const_buffer_args);
     if (lmem_size == 0) {
         s << spaces(4) << "__global const struct "
           << k_arg_name << "* pa\n)\n";
@@ -308,7 +365,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
           << k_arg_name << "* pa= &__args._a;\n";
     }
     var_counters c{0};
-    s << "    " << k_name << "_func("
+    s << "    " << k_func_name << "("
       << "pa->_n, "
       << concat_args(res, c) << ", "
       << concat_args(r, c) << ");\n";

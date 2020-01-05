@@ -32,13 +32,14 @@ namespace ocl {
     }
 
     namespace impl {
-
+#if 0
         template <typename _RES, typename _T, typename _R>
         be::pgm_kernel_lock
         gen_kernel(_RES& res,
                    const expr<dop::custom_k<dvec<_T> >, impl::ck_body, _R>& r,
                    const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
+#endif
     }
 
 
@@ -54,30 +55,6 @@ namespace ocl {
 #endif
 
 
-    template <typename _T, typename ... _AX>
-    auto
-    custom_kernel_with_size(const std::string& name,
-                            const std::string& body,
-                            std::size_t s,
-                            _AX&&... ax)
-    {
-        return make_expr<dop::custom_k<dvec<_T> > >(
-            impl::ck_body(name, body, s),
-            impl::custom_args<dvec<_T>>(
-                std::forward<_AX&&>(ax) ...));
-    }
-
-    template <typename _T, typename ... _AX>
-    auto
-    custom_kernel(const std::string& name,
-                  const std::string& body,
-                  _AX&&... ax)
-    {
-        return make_expr<dop::custom_k<dvec<_T> > >(
-            impl::ck_body(name, body),
-            impl::custom_args<dvec<_T>>(
-                std::forward<_AX&&>(ax) ...));
-    }
 
     namespace test {
         void
@@ -86,6 +63,8 @@ namespace ocl {
 
 }
 
+
+#if 0
 template <typename _RES, typename _T, typename _R>
 ocl::be::pgm_kernel_lock
 ocl::impl::
@@ -194,7 +173,7 @@ gen_kernel(_RES& res,
     be::pgm_kernel_lock pkl(pgm, k);
     return pkl;
 }
-
+#endif
 
 void
 ocl::test::test_custom_kernel()

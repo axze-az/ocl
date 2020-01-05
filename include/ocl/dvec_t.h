@@ -129,8 +129,23 @@ namespace ocl {
     custom_func(const std::string& name,
                 const std::string& body,
                 _AX&&... ax);
- 
-    
+
+    // generate a custom kernel with predefined vector size
+    // for dvec<_T> expressions
+    template <typename _T, typename ... _AX>
+    auto
+    custom_kernel_with_size(const std::string& name,
+                            const std::string& body,
+                            std::size_t s,
+                            _AX&&... ax);
+
+    // generate a custom kernel with for dvec<_T> expressions
+    template <typename _T, typename ... _AX>
+    auto
+    custom_kernel(const std::string& name,
+                  const std::string& body,
+                  _AX&&... ax);
+
 }
 
 template <class _T>
@@ -380,6 +395,33 @@ custom_func(const std::string& name,  const std::string& body,
 {
     return make_expr<dop::custom_f<dvec<_T> > >(
         impl::cf_body(name, body),
+        impl::custom_args<dvec<_T>>(
+            std::forward<_AX&&>(ax) ...));
+}
+
+template <typename _T, typename ... _AX>
+auto
+ocl::
+custom_kernel_with_size(const std::string& name,
+                        const std::string& body,
+                        std::size_t s,
+                        _AX&&... ax)
+{
+    return make_expr<dop::custom_k<dvec<_T> > >(
+        impl::ck_body(name, body, s),
+        impl::custom_args<dvec<_T>>(
+            std::forward<_AX&&>(ax) ...));
+}
+
+template <typename _T, typename ... _AX>
+auto
+ocl::
+custom_kernel(const std::string& name,
+              const std::string& body,
+              _AX&&... ax)
+{
+    return make_expr<dop::custom_k<dvec<_T> > >(
+        impl::ck_body(name, body),
         impl::custom_args<dvec<_T>>(
             std::forward<_AX&&>(ax) ...));
 }
