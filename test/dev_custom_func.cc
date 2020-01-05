@@ -40,7 +40,7 @@ ocl::test::test_custom_func()
     };
     const char* hname="horner";
     const char* hbody=
-        "float horner(float v0, __arg_local float* c)\n"
+        "float horner(float v0, __arg_local const float* c)\n"
         "{\n"
         "    float r=v0*c[0];\n"
         "    for (int i=0; i<4; ++i) {\n"
