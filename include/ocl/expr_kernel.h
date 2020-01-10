@@ -16,11 +16,34 @@ namespace ocl {
         // inserts defines/pragmas into the source code
         void
         insert_headers(std::ostream& s, size_t lmem_size=0);
+
+        be::kernel_handle
+        compile(const std::string& s, const std::string& k_name,
+                be::data_ptr& b);
+        
         // throws an exception because of missing
         // backend data
         __attribute__((__noreturn__))
         void
         missing_backend_data();
+
+        template <typename _T>
+        std::string
+        gen_key(const _T& s);
+
+        template <typename _OP, typename _L, typename _R>
+        std::string
+        gen_key(const expr<_OP, _L, _R>& e);
+        
+        template <typename _OP, typename _L>
+        std::string
+        gen_key(const expr<_OP, _L, void>& e);
+
+        std::string
+        gen_key(const cf_body& r);
+        
+        std::string
+        gen_key(const ck_body& r);
 
         template <class _RES, class _EXPR>
         void
@@ -30,7 +53,7 @@ namespace ocl {
         // returns a cached kernel for (res, r) or calls gen_kernel
         // and inserts the new kernel into the cache
         template <class _RES, class _EXPR>
-        be::pgm_kernel_lock&
+        be::kernel_handle
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
 
@@ -62,7 +85,7 @@ namespace ocl {
 
         // generate a new kernel for (res, r)
         template <class _RES, class _EXPR>
-        be::pgm_kernel_lock
+        be::kernel_handle
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
     }
@@ -85,12 +108,12 @@ namespace ocl {
         // returns a cached kernel for (res, r) or calls gen_kernel
         // and inserts the new kernel into the cache
         static
-        be::pgm_kernel_lock&
+        be::kernel_handle&
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr& b, size_t lmem_size=0);
         // generate a new kernel for (res, r)
         static
-        be::pgm_kernel_lock
+        be::kernel_handle
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr& b, size_t lmem_size=0);
     };
@@ -99,6 +122,48 @@ namespace ocl {
     // expression
     template <class _RES, class _EXPR>
     void execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
+}
+
+template <typename _T>
+std::string
+ocl::impl::gen_key(const _T& r)
+{
+    static_cast<void>(r);
+    return std::string();
+}
+
+template <typename _OP, typename _L, typename _R>
+std::string
+ocl::impl::gen_key(const expr<_OP, _L, _R>& r)
+{
+    std::string sl=gen_key(r._l);
+    std::string sr=gen_key(r._r);
+    if (sl.empty())
+        return sr;
+    if (sr.empty())
+        return sl;
+    return sl + sr;
+}
+
+template <typename _OP, typename _L>
+std::string
+ocl::impl::gen_key(const expr<_OP, _L, void>& r)
+{
+    return gen_key(r._l);
+}
+
+inline
+std::string
+ocl::impl::gen_key(const cf_body& r)
+{
+    return r.body();
+}
+
+inline
+std::string
+ocl::impl::gen_key(const ck_body& r)
+{
+    return r.body();
 }
 
 
@@ -147,20 +212,20 @@ execute(_RES& res, const _SRC& r,
                                             ab_size,
                                             ab.data());
         q.flush();
-        // insert the event before we queue the kernel
-        // into the wait list
+        // insert the event before we queue the kernel into the wait
+        // list
     }
     size_t lmem_size=be::request_local_mem(d, ab_size);
-    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b, lmem_size);
-    be::kexec_1d_info ki(d, pk._k, s);
+    be::kernel_handle pk=get_kernel(res, r, cookie, b, lmem_size);
+    be::kexec_1d_info ki(d, pk.k(), s);
     {
-        std::unique_lock<be::pgm_kernel_lock> _lk(pk);
+        std::unique_lock<be::kernel_handle> _lk(pk);
         unsigned buf_num=0;
-        bind_buffer_args(res, buf_num, pk._k);
-        bind_buffer_args(r, buf_num, pk._k);
-        pk._k.set_arg(buf_num++, dev_ab);
+        bind_buffer_args(res, buf_num, pk.k());
+        bind_buffer_args(r, buf_num, pk.k());
+        pk.k().set_arg(buf_num++, dev_ab);
         if (b->debug() != 0) {
-            std::string kn=pk._k.name();
+            std::string kn=pk.k().name();
             std::ostringstream st;
             st << std::this_thread::get_id() << ": "
                << kn << ": binding argument buffer of size "
@@ -171,27 +236,26 @@ execute(_RES& res, const _SRC& r,
             std::unique_lock<be::mutex> _lq(dcq_mtx);
             // wait also for the argument buffer
             wl.insert(cpy_ev);
-            ev=b->enqueue_1d_kernel(pk._k, ki);
+            ev=b->enqueue_1d_kernel(pk.k(), ki);
         }
     }
     cpy_ev.wait();
 #else
-    be::pgm_kernel_lock& pk=get_kernel(res, r, cookie, b);
+    be::kernel_handle pk=get_kernel(res, r, cookie, b);
     // bind args
     auto& dcq=b->dcq();
     auto& d=dcq.d();
-    be::kexec_1d_info ki(d, pk._k, s);
+    be::kexec_1d_info ki(d, pk.k(), s);
     {
-        std::unique_lock<be::pgm_kernel_lock> _l(pk);
+        std::unique_lock<be::kernel_handle> _l(pk);
         const auto& sc=s;
         unsigned arg_num{0};
-        bind_args(pk._k, sc, arg_num);
-        bind_args(pk._k, res, arg_num);
-        bind_args(pk._k, r, arg_num);
+        bind_args(pk.k(), sc, arg_num);
+        bind_args(pk.k(), res, arg_num);
+        bind_args(pk.k(), r, arg_num);
         {
             std::unique_lock<be::mutex> _lq(dcq.mtx());
-            // wait also for the argument buffer
-            ev=b->enqueue_1d_kernel(pk._k, ki);
+            ev=b->enqueue_1d_kernel(pk.k(), ki);
         }
     }
 #endif
@@ -200,25 +264,27 @@ execute(_RES& res, const _SRC& r,
 }
 
 template <class _RES, class _SRC>
-ocl::be::pgm_kernel_lock&
+ocl::be::kernel_handle
 ocl::impl::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
            be::data_ptr b, size_t lmem_size)
 {
     auto& kc=b->kcache();
+    std::string kl=gen_key(r);
+    be::kernel_key kk(cookie, kl);
     std::unique_lock<be::mutex> _l(kc.mtx());
-    be::kernel_cache::iterator f(kc.find(cookie));
+    be::kernel_cache::iterator f(kc.find(kk));
     if (f == kc.end()) {
-        be::pgm_kernel_lock pkl(gen_kernel(res, r, cookie, b, lmem_size));
+        be::kernel_handle pkl(gen_kernel(res, r, cookie, b, lmem_size));
         std::pair<be::kernel_cache::iterator, bool> ir(
-            kc.insert(cookie, pkl));
+            kc.insert(kk, pkl));
         f = ir.first;
     } else {
         if (b->debug() != 0) {
-            std::string kn=f->second._k.name();
+            std::string kn=f->second.k().name();
             std::ostringstream s;
             s << std::this_thread::get_id() << ": "
-              << kn << ": using cached kernel " << cookie
+              << kn << ": using cached kernel " << kk
               << '\n';
             be::data::debug_print(s.str());
         }
@@ -302,7 +368,7 @@ gen_kernel_src(_RES& res,
 
 
 template <class _RES, class _SRC>
-ocl::be::pgm_kernel_lock
+ocl::be::kernel_handle
 ocl::impl::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
            be::data_ptr b, size_t lmem_size)
@@ -371,6 +437,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << concat_args(r, c) << ");\n";
     s << "}\n";
 #endif
+#if 1
+    std::string ss=s.str();
+    return compile(ss, k_name, b);
+#else
     using namespace impl;
     std::string ss(s.str());
     if (b->debug() != 0) {
@@ -398,8 +468,9 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
            << k_name << ": --- compiled with success --------\n";
         be::data::debug_print(st.str());
     }
-    be::pgm_kernel_lock pkl(pgm, k);
+    be::kernel_handle pkl(pgm, k);
     return pkl;
+#endif
 }
 
 template <class _RES, class _EXPR>

@@ -56,7 +56,6 @@ namespace ocl {
     std::string
     store_result(dvec<_T>& t, var_counters& c);
 
-
     // eval_args specialized for dvec
     template <class _T>
     std::string
@@ -289,22 +288,30 @@ namespace ocl {
 
         namespace names {
 
-            struct min{
+            struct min_f {
                 constexpr
                 const char* operator()() const { return  "min"; }
             };
-            struct max{
+            struct max_f {
                 constexpr
                 const char* operator()() const { return  "max"; }
+            };
+
+            struct pow_f {
+                constexpr
+                const char* operator()() const { return  "pow"; }
             };
         };
 
 
         template <class _T>
-        struct max_func : public binary_func<names::max> {};
+        struct max_f : public binary_func<names::max_f> {};
 
         template <class _T>
-        struct min_func : public binary_func<names::min> {};
+        struct min_f : public binary_func<names::min_f> {};
+
+        template <class _T>
+        struct pow_f : public binary_func<names::pow_f> {};
 
         template <class _D>
         struct cvt_to {
@@ -372,6 +379,30 @@ namespace ocl {
         return expr<dop::as<_D>, _S, void>(s);
     }
 
+#define DEF_UNARY_FUNC(fname, op_name)                          \
+    /* fname (V) */                                             \
+    template <class _T>                                         \
+    inline                                                      \
+    expr<dop:: op_name <dvec<_T> >, dvec<_T>, void>             \
+    fname (const dvec<_T>& t) {                                 \
+        return expr<dop:: op_name <dvec<_T> >,                  \
+                    dvec<_T>, void>(t);                         \
+    }                                                           \
+                                                                \
+    /* fname (expr) */                                          \
+    template <class _T,                                         \
+              template <class _T1> class _OP,                   \
+              class _L, class _R>                               \
+    inline                                                      \
+    expr<dop:: op_name <dvec<_T> >,                             \
+         expr<_OP<dvec<_T> >, _L, _R>,                          \
+         void>                                                  \
+    fname (const expr<_OP<dvec<_T> >, _L, _R>& v) {             \
+        return expr<dop:: op_name <dvec<_T> >,                  \
+                    expr<_OP<dvec<_T> >, _L, _R>,               \
+                    void>(v);                                   \
+    }
+
     // abs(V)
     template <class _T>
     inline
@@ -397,11 +428,11 @@ namespace ocl {
     // min(V)
     template <class _T, class _S>
     inline
-    expr<dop::min_func<dvec<_T> >,
+    expr<dop::min_f<dvec<_T> >,
          dvec<_T>, _S>
     min(const dvec<_T>& a, const _S& b)
     {
-        return expr<dop::min_func<dvec<_T> >,
+        return expr<dop::min_f<dvec<_T> >,
                     dvec<_T>, _S >(a, b);
     }
 
@@ -411,12 +442,12 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<dop::min_func<dvec<_T> >,
+    expr<dop::min_f<dvec<_T> >,
          expr<_OP<dvec<_T> >, _L, _R>,
          _S >
     min(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
     {
-        return expr<dop::min_func<dvec<_T> >,
+        return expr<dop::min_f<dvec<_T> >,
                     expr<_OP<dvec<_T> >, _L, _R>,
                     _S >(a, b);
     }
@@ -427,12 +458,12 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<dop::min_func<dvec<_T> >,
+    expr<dop::min_f<dvec<_T> >,
          _S,
          expr<_OP<dvec<_T> >, _L, _R> >
     min(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
     {
-        return expr<dop::min_func<dvec<_T> >,
+        return expr<dop::min_f<dvec<_T> >,
                     _S,
                     expr<_OP<dvec<_T> >, _L, _R> >(a, b);
     }
@@ -440,11 +471,11 @@ namespace ocl {
     // max(V)
     template <class _T, class _S>
     inline
-    expr<dop::max_func<dvec<_T> >,
+    expr<dop::max_f<dvec<_T> >,
          dvec<_T>, _S>
     max(const dvec<_T>& a, const _S& b)
     {
-        return expr<dop::max_func<dvec<_T> >,
+        return expr<dop::max_f<dvec<_T> >,
                     dvec<_T>, _S >(a, b);
     }
 
@@ -454,12 +485,12 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<dop::max_func<dvec<_T> >,
+    expr<dop::max_f<dvec<_T> >,
          expr<_OP<dvec<_T> >, _L, _R>,
          _S >
     max(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
     {
-        return expr<dop::max_func<dvec<_T> >,
+        return expr<dop::max_f<dvec<_T> >,
                     expr<_OP<dvec<_T> >, _L, _R>,
                     _S >(a, b);
     }
@@ -470,12 +501,12 @@ namespace ocl {
               class _L, class _R,
               class _S>
     inline
-    expr<dop::max_func<dvec<_T> >,
+    expr<dop::max_f<dvec<_T> >,
          _S,
          expr<_OP<dvec<_T> >, _L, _R> >
     max(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
     {
-        return expr<dop::max_func<dvec<_T> >,
+        return expr<dop::max_f<dvec<_T> >,
                     _S,
                     expr<_OP<dvec<_T> >, _L, _R> >(a, b);
     }
@@ -689,6 +720,14 @@ namespace ocl {
     DEFINE_OCLVEC_CMP_OPERATOR(>, gt)
 
 #undef DEFINE_OCLVEC_CMP_OPERATOR
+
+#if 0
+    // overload for float vectors with incorrectly rounded division
+    template <typename _L, typename _R>
+    std::string
+    def_custom_func(std::set<std::string>& fnames,
+                    const expr<dop::div<dvec<float>>, _L, _R>& e );
+#endif
 }
 
 template <class _T>

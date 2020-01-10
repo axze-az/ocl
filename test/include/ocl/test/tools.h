@@ -35,6 +35,23 @@ namespace ocl {
             }
         }
 
+        template <typename _T>
+        void
+        dump(const cftal::lvec<_T>& vh, const std::string& pfx="") {
+            std::cout << &vh << ' ' << pfx << '\n';
+            for (std::size_t i=0; i<vh.size(); ++i) {
+                std::cout << vh[i];
+                if ((i&7)==7) {
+                    std::cout << '\n';
+                } else if (i+1 < vh.size()){
+                    std::cout << ", ";
+                }
+            }
+            if ((vh.size() & 7) != 0) {
+                std::cout << '\n';
+            }
+        }
+        
         // create a dvec<_T> from an lvec
         template <typename _T>
         dvec<_T>
@@ -59,7 +76,6 @@ namespace ocl {
             typename lvec<_T>::mask_type cv=dh == h;
             return all_of(cv);
         }
-        
     }
 }
 

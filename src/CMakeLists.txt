@@ -7,6 +7,9 @@ set(has_ipo, FALSE)
 
 set (CSRCS
   be_devices.cc
+  be_kernel_key.cc
+  be_kernel_cache.cc
+  be_dev_ctx_queue.cc 
   be_data.cc
   expr_kernel.cc
   random.cc

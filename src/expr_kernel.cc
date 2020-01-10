@@ -1,6 +1,7 @@
 #include "ocl/expr_kernel.h"
 #include <iterator>
 
+#if 0
 namespace ocl {
     namespace impl {
 
@@ -90,6 +91,7 @@ insert_swap_if(std::ostream& s, bool dev_is_little_endian)
     } else {
     }
 }
+#endif
 
 void
 ocl::impl::insert_headers(std::ostream& s, size_t lmem_size)
@@ -110,6 +112,41 @@ ocl::impl::insert_headers(std::ostream& s, size_t lmem_size)
     } else {
         s << "#define __arg_local __local\n\n";
     }
+}
+
+ocl::be::kernel_handle
+ocl::impl::
+compile(const std::string& s, const std::string& k_name,
+        be::data_ptr& b)
+{
+    using namespace impl;
+    if (b->debug() != 0) {
+        std::ostringstream st;
+        st << std::this_thread::get_id() << ": "
+           << k_name << ": --- source code ------------------\n"
+           << s;
+        be::data::debug_print(st.str());
+    }
+    be::program pgm=be::program::create_with_source(s, b->dcq().c());
+    try {
+        // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
+        // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
+        pgm.build("-cl-std=CL1.1 -cl-mad-enable");
+    }
+    catch (const be::error& e) {
+        std::cerr << "error info: " << e.what() << '\n';
+        std::cerr << pgm.build_log() << std::endl;
+        throw;
+    }
+    be::kernel k(pgm, k_name);
+    if (b->debug() != 0) {
+        std::ostringstream st;
+        st << std::this_thread::get_id() << ": "
+           << k_name << ": --- compiled with success --------\n";
+        be::data::debug_print(st.str());
+    }
+    be::kernel_handle pkl(pgm, k);
+    return pkl;
 }
 
 void

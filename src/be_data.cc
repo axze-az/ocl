@@ -1,77 +1,8 @@
 #include "ocl/be/data.h"
 #include <cstdlib>
+#include <iostream>
 #include <iomanip>
 #include <thread>
-
-ocl::be::kernel_cache::kernel_cache()
-    : _kmap(), _mtx()
-{
-}
-
-ocl::be::kernel_cache::iterator
-ocl::be::kernel_cache::
-find(const void* cookie)
-{
-    return _kmap.find(cookie);
-}
-
-void
-ocl::be::kernel_cache::
-erase(iterator f)
-{
-    _kmap.erase(f);
-}
-
-std::pair<ocl::be::kernel_cache::iterator, bool>
-ocl::be::kernel_cache::
-insert(const void* cookie, const pgm_kernel_lock& v)
-{
-    return _kmap.insert(std::make_pair(cookie, v));
-}
-
-void
-ocl::be::kernel_cache::clear()
-{
-    _kmap.clear();
-}
-
-std::size_t
-ocl::be::kernel_cache::size() const
-{
-    return _kmap.size();
-}
-
-ocl::be::dev_ctx_queue::
-dev_ctx_queue()
-    : _d(default_device()),
-      _c(_d),
-      _q(_c, _d, queue::enable_out_of_order_execution),
-      _wl(), _mtx()
-{
-}
-
-ocl::be::dev_ctx_queue::
-dev_ctx_queue(const device& dd)
-    : _d(dd),
-      _c(_d),
-      _q(_c, _d, queue::enable_out_of_order_execution),
-      _wl(), _mtx()
-{
-}
-
-ocl::be::dev_ctx_queue::
-dev_ctx_queue(const device& dd, const context& ctx)
-    : _d(dd), _c(ctx),
-      _q(_c, _d, queue::enable_out_of_order_execution),
-      _wl(), _mtx()
-{
-}
-
-ocl::be::dev_ctx_queue::
-dev_ctx_queue(const device& dev, const context& ctx, const queue& qe)
-    : _d(dev), _c(ctx), _q(qe), _wl(), _mtx()
-{
-}
 
 ocl::be::mutex
 ocl::be::data::_instance_mutex;
