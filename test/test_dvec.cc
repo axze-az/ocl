@@ -45,6 +45,7 @@ ocl::test::ops<_T>::ops(size_t n)
       _h_res(n), _h_a0(n), _h_a1(n)
 {
     std::mt19937_64 rnd;
+    rnd.seed(n);
     std::uniform_real_distribution<_T> distrib(_T(0.5), _T(2.0));
     for (std::size_t i=0; i<n; ++i) {
         _h_a0[i]=distrib(rnd);
@@ -74,7 +75,6 @@ ocl::test::ops<_T>::check_res(const std::string& msg)
     return res;
 }
 
-
 template <typename _T>
 bool
 ocl::test::ops<_T>::perform()
@@ -100,36 +100,15 @@ ocl::test::ops<_T>::perform()
 #if 1
     static const char* fname="__divide";
     static const char* fbody=
-        "float __xfmaf(float x, float y, float z)\n"
-        "{\n"
-        "    float r;\n"
-        "#if defined FP_FAST_FMA\n"
-        "    r=fma(x, y, z);\n"
-        "#else\n"
-        "    float xh, xl, yh, yl;\n"
-        "    xh=as_float(as_uint(x) & 0xfffff000U);\n"
-        "    yh=as_float(as_uint(x) &0xfffff000U);\n"
-        "    xl=x-xh\n"
-        "    yl=y-yh\n"
-        "    float ph=x*y;\n"
-        "    float xhyh = xh * yh;\n"
-        "    float xhyl = xh * yl;\n"
-        "    float xlyh = xl * yh;\n"
-        "    float xlyl = xl * yl;\n"
-        "    float pl = (((xhyh - ph) + xhyl) + xlyh) + xlyl;\n"
-        "#endif\n"
-        "    return r;\n"
-        "}\n"
-        "\n"
         "float __divide(float a, float b)\n"
         "{\n"
         // "    float q0 = a/b;\n"
         // "    float q1 = fma(-q0, b, a)/b;\n"
         // "    return q0 + q1;\n"
         "    float xn=1.0f/b;\n"
-        // "    xn = xn + xn * fma(xn, -b, 1.0f);\n"
+        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
         "    float yn= a*xn;\n"
-        "    yn= yn + xn * fma(yn, -b, a);\n"
+        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
         "    return yn;\n"
         "}\n";
     _res=custom_func<float>(fname, fbody, _a0, _a1);
@@ -194,7 +173,7 @@ int main()
         using rtype = float;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
-        for (std::size_t i=13; i<16384; ++i) {
+        for (std::size_t i=1; i<16*16384; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers of "
                           <<  i*sizeof(rtype)
