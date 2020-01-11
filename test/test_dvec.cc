@@ -30,7 +30,7 @@ namespace ocl {
             bool perform();
             bool check_res(const std::string& msg);
         };
-        
+
         template <typename _T>
         bool test_ops(dvec<_T>& res,
                       const dvec<_T>& s0, const dvec<_T>& s1);
@@ -63,7 +63,7 @@ ocl::test::ops<_T>::check_res(const std::string& msg)
     bool res=all_of(cv);
     if (res==false) {
         std::cout << "FAILED: " << msg <<std::endl;
-        std::cout << std::scientific 
+        std::cout << std::scientific
                   << std::setprecision(10);
         // std::cout << std::hexfloat;
         dump(_h_a0, "_a0");
@@ -97,9 +97,47 @@ ocl::test::ops<_T>::perform()
     _h_res = _h_a0 * _h_a1;
     rc &= check_res("multiplication v v");
     // division
-    // a1 = a - q*b 
+#if 1
+    static const char* fname="__divide";
+    static const char* fbody=
+        "float __xfmaf(float x, float y, float z)\n"
+        "{\n"
+        "    float r;\n"
+        "#if defined FP_FAST_FMA\n"
+        "    r=fma(x, y, z);\n"
+        "#else\n"
+        "    float xh, xl, yh, yl;\n"
+        "    xh=as_float(as_uint(x) & 0xfffff000U);\n"
+        "    yh=as_float(as_uint(x) &0xfffff000U);\n"
+        "    xl=x-xh\n"
+        "    yl=y-yh\n"
+        "    float ph=x*y;\n"
+        "    float xhyh = xh * yh;\n"
+        "    float xhyl = xh * yl;\n"
+        "    float xlyh = xl * yh;\n"
+        "    float xlyl = xl * yl;\n"
+        "    float pl = (((xhyh - ph) + xhyl) + xlyh) + xlyl;\n"
+        "#endif\n"
+        "    return r;\n"
+        "}\n"
+        "\n"
+        "float __divide(float a, float b)\n"
+        "{\n"
+        // "    float q0 = a/b;\n"
+        // "    float q1 = fma(-q0, b, a)/b;\n"
+        // "    return q0 + q1;\n"
+        "    float xn=1.0f/b;\n"
+        // "    xn = xn + xn * fma(xn, -b, 1.0f);\n"
+        "    float yn= a*xn;\n"
+        "    yn= yn + xn * fma(yn, -b, a);\n"
+        "    return yn;\n"
+        "}\n";
+    _res=custom_func<float>(fname, fbody, _a0, _a1);
+#else
+    // a1 = a - q*b
     _res = _a0 / _a1;
     _res = _res + ((_a0 - _res*_a1)/_a1);
+#endif
     _h_res = _h_a0 / _h_a1;
     rc &= check_res("division v v");
     // neg
@@ -156,7 +194,7 @@ int main()
         using rtype = float;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
-        for (std::size_t i=4; i<16384; ++i) {
+        for (std::size_t i=13; i<16384; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers of "
                           <<  i*sizeof(rtype)
