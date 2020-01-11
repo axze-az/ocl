@@ -17,7 +17,7 @@ namespace ocl {
         srand(const dvec<uint32_t>& gid) : _next{gid} {}
         void 
         seed(const dvec<uint64_t>& gid){
-            _next = cvt_to<dvec<uint32_t> >(gid);
+            _next = cvt<dvec<uint32_t> >(gid);
         }
         void 
         seed(const dvec<uint32_t>& gid){
@@ -31,7 +31,7 @@ namespace ocl {
         }
         auto
         nextf() {
-            return (cvt_to<dvec<float> >(next()) * _R());
+            return (cvt<dvec<float> >(next()) * _R());
         }
     };
     

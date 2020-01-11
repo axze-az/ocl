@@ -144,6 +144,10 @@ namespace ocl {
                 constexpr
                 const char* operator()() const { return "abs"; }
             };
+            struct sqrt {
+                constexpr
+                const char* operator()() const { return "sqrt"; }
+            };
         };
 
         template <class _T>
@@ -156,30 +160,26 @@ namespace ocl {
         struct abs : public unary_func<names::abs, false>{};
 
         template <>
-        struct abs< dvec<float> > {
-            static
-            std::string body(const std::string& l) {
-                std::string res("fabs(");
-                res += l;
-                res += ")";
-                return res;
-            }
+        struct abs< dvec<float> >
+            : public unary_func<names::fabs, false> {
         };
-        // public unary_func<names::fabs, false>{};
+        template <std::size_t _N>
+        struct abs< dvec<cftal::vec<float, _N> > >
+            : public unary_func<names::fabs, false> {
+        };
 
         template <>
-        struct abs< dvec<double> >  {
-            static
-            std::string body(const std::string& l) {
-                std::string res("fabs(");
-                res += l;
-                res += ")";
-                return res;
-            }
+        struct abs< dvec<double> >
+            : public unary_func<names::fabs, false> {
         };
-        // public unary_func<names::fabs, false>{};
+        template <std::size_t _N>
+        struct abs< dvec<cftal::vec<double, _N> > >
+            : public unary_func<names::fabs, false> {
+        };
 
-
+        template <class _T>
+        struct sqrt : public unary_func<names::sqrt, false> {};
+        
         namespace names {
 
             struct add {
@@ -357,28 +357,25 @@ namespace ocl {
         struct pow_f : public binary_func<names::pow_f> {};
 
         template <class _D>
-        struct cvt_to {
+        struct cvt {
             static
             std::string body(const std::string& l) {
-                std::string res("((");
-                // I AM BUGGY:
-                // res += "int"; // impl::type_2_name<_D>::v();
+                std::string res("convert_");
                 res += be::type_2_name<_D>::v();
-                res += ")";
+                res += "_rte(";
                 res += l;
                 res += ")";
-                std::cout<< res << std::endl;
                 return res;
             }
         };
 
         template <class _D>
-        struct cvt_to<dvec<_D> > {
+        struct cvt<dvec<_D> > {
             static
             std::string body(const std::string& l) {
                 std::string res("convert_");
                 res += be::type_2_name<_D>::v();
-                res += "_rtz(";
+                res += "_rte(";
                 res += l;
                 res += ")";
                 return res;
@@ -401,18 +398,16 @@ namespace ocl {
                 res += "(";
                 res += l;
                 res += "))";
-                // std::cout<< res << std::endl;
                 return res;
             }
         };
-
     }
 
     template <class _D, class _S>
     inline
-    expr<dop::cvt_to<_D>, _S, void>
-    cvt_to(const _S& s) {
-        return expr<dop::cvt_to<_D>, _S, void>(s);
+    expr<dop::cvt<_D>, _S, void>
+    cvt(const _S& s) {
+        return expr<dop::cvt<_D>, _S, void>(s);
     }
 
     template <class _D, class _S>
@@ -446,27 +441,9 @@ namespace ocl {
                     void>(v);                                   \
     }
 
-    // abs(V)
-    template <class _T>
-    inline
-    expr<dop::abs<dvec<_T> >, dvec<_T>, void>
-    abs(const dvec<_T>& t) {
-        return expr<dop::abs<dvec<_T> >, dvec<_T>, void>(t);
-    }
-
-    // abs(expr)
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R>
-    inline
-    expr<dop::abs<dvec<_T> >,
-         expr<_OP<dvec<_T> >, _L, _R>,
-         void>
-    abs(const expr<_OP<dvec<_T> >, _L, _R>& v) {
-        return expr<dop::abs<dvec<_T> >,
-                    expr<_OP<dvec<_T> >, _L, _R>,
-                    void>(v);
-    }
+    DEF_UNARY_FUNC(abs, abs)
+    DEF_UNARY_FUNC(sqrt, sqrt)
+    
 
     // min(V)
     template <class _T, class _S>

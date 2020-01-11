@@ -80,7 +80,7 @@ namespace ocl {
         dvec<std::int32_t>
         lrand48() {
             next();
-            return cvt_to<dvec<std::int32_t> >(_state) & (0x7fffffff);
+            return cvt<dvec<std::int32_t> >(_state) & (0x7fffffff);
         }
 
         // returns non negative numbers between -2^31 and 2^31
@@ -88,7 +88,7 @@ namespace ocl {
         dvec<std::int32_t>
         mrand48() {
             next();
-            return cvt_to<dvec<std::int32_t> >(_state);
+            return cvt<dvec<std::int32_t> >(_state);
         }
 
         // returns floating point variables in interval [0, 1.0)
@@ -96,7 +96,7 @@ namespace ocl {
         dvec<float>
         drand48() {
             next();
-            return cvt_to<dvec<float> >(_state);
+            return cvt<dvec<float> >(_state);
         }
 
         void
@@ -106,7 +106,7 @@ namespace ocl {
 
         dvec<float>
         nextf() {
-            dvec<float> t=cvt_to<dvec<float> >(drand48()) * REC;
+            dvec<float> t=cvt<dvec<float> >(drand48()) * REC;
             dvec<float> r=max(min(t, 1.0f), 0.0f);
             return r;
         }
