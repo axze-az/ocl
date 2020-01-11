@@ -97,7 +97,7 @@ ocl::test::ops<_T>::perform()
     _h_res = _h_a0 * _h_a1;
     rc &= check_res("multiplication v v");
     // division
-#if 1
+#if 0
     static const char* fname="__divide";
     static const char* fbody=
         "float __divide(float a, float b)\n"
@@ -113,9 +113,7 @@ ocl::test::ops<_T>::perform()
         "}\n";
     _res=custom_func<float>(fname, fbody, _a0, _a1);
 #else
-    // a1 = a - q*b
     _res = _a0 / _a1;
-    _res = _res + ((_a0 - _res*_a1)/_a1);
 #endif
     _h_res = _h_a0 / _h_a1;
     rc &= check_res("division v v");

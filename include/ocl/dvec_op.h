@@ -256,6 +256,51 @@ namespace ocl {
         template <class _T>
         struct div : public binary_func<names::div, true> {};
 
+        namespace names {
+            template <typename _T>
+            struct divide {
+                static
+                std::string
+                func_name() {
+                    return std::string("__div_") +
+                        be::type_2_name<_T>::v();
+                }
+                static
+                std::string
+                func_body() {
+                    std::string tname= be::type_2_name<_T>::v();
+                    std::string inl="inline ";
+                    std::string body =
+                        inl +
+                        tname + " __div_" + tname + "(" +
+                        tname + " a, " + tname + " b)\n"
+                        "{\n"
+                        "    " + tname + " xn=1.0f/b;\n"
+                        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
+                        "    " + tname + " yn= a*xn;\n"
+                        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
+                        "    return yn;\n"
+                        "}\n";
+                    return body;
+                }
+                std::string
+                operator()() const {
+                    return func_name();
+                }
+            };
+        }
+        
+        template <>
+        struct div<dvec<float> >
+            : public binary_func<names::divide<float>, false> {
+        };
+
+        template <std::size_t _N>
+        struct div<dvec<cftal::vec<float, _N> > > :
+            public binary_func<names::divide<cftal::vec<float, _N> >,
+                               false> {
+        };
+        
         template <class _T>
         struct bit_and : public binary_func<names::bit_and, true> {};
 
@@ -283,8 +328,6 @@ namespace ocl {
         struct ge : public binary_func<names::ge, true> {};
         template <class _T>
         struct gt : public binary_func<names::gt, true> {};
-
-
 
         namespace names {
 
@@ -721,13 +764,18 @@ namespace ocl {
 
 #undef DEFINE_OCLVEC_CMP_OPERATOR
 
-#if 0
     // overload for float vectors with incorrectly rounded division
     template <typename _L, typename _R>
     std::string
     def_custom_func(std::set<std::string>& fnames,
                     const expr<dop::div<dvec<float>>, _L, _R>& e );
-#endif
+
+    // overload for float vectors with incorrectly rounded division
+    template <std::size_t _N, typename _L, typename _R>
+    std::string
+    def_custom_func(
+        std::set<std::string>& fnames,
+        const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e );
 }
 
 template <class _T>
@@ -948,6 +996,38 @@ ocl::bind_args(be::kernel& k, const dvec<_T>& r, unsigned& arg_num)
     }
     k.set_arg(arg_num, r.buf());
     ++arg_num;
+}
+
+template <typename _L, typename _R>
+std::string
+ocl::def_custom_func(std::set<std::string>& fnames,
+                     const expr<dop::div<dvec<float>>, _L, _R>& e )
+{
+    using d_t=dop::names::divide<float>;
+    const std::string fn=d_t::func_name();
+    std::string s;
+    if (fnames.find(fn) == fnames.end()) {
+        s = d_t::func_body() + '\n';
+        fnames.insert(fn);
+    }
+    return s;
+}
+
+// overload for float vectors with incorrectly rounded division
+template <std::size_t _N, typename _L, typename _R>
+std::string
+ocl::def_custom_func(
+    std::set<std::string>& fnames,
+    const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e )
+{
+    using d_t=dop::names::divide<cftal::vec<float, _N> >;
+    const std::string fn=d_t::func_name();
+    std::string s;
+    if (fnames.find(fn) == fnames.end()) {
+        s = d_t::func_body() + '\n';
+        fnames.insert(fn);
+    }
+    return s;
 }
 
 // Local variables:

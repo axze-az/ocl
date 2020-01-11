@@ -131,7 +131,9 @@ compile(const std::string& s, const std::string& k_name,
     try {
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
-        pgm.build("-cl-std=CL1.1 -cl-mad-enable");
+        pgm.build( "-cl-std=CL1.1 "
+                   "-cl-mad-enable "
+                   "-cl-fp32-correctly-rounded-divide-sqrt");
     }
     catch (const be::error& e) {
         std::cerr << "error info: " << e.what() << '\n';
