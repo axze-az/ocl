@@ -66,11 +66,13 @@ ocl::test::ops<_T>::check_res(const std::string& msg)
         std::cout << "FAILED: " << msg <<std::endl;
         std::cout << std::scientific
                   << std::setprecision(10);
-        // std::cout << std::hexfloat;
+        std::cout << std::hexfloat;
         dump(_h_a0, "_a0");
         dump(_h_a1, "_a1");
         dump(_h_d_res, "device result: ");
         dump(_h_res, "host result: ");
+        std::cout << std::scientific
+                  << std::setprecision(10);
     }
     return res;
 }
@@ -125,6 +127,65 @@ ocl::test::ops<_T>::perform()
     _res = abs(_a0);
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
+    // sqrt
+#if 1
+    // x_{n+1} = 1/2(x_n + a/x_n)
+    //         = 0.5 x_n + 0.5*a/x_n
+    //         = 1.0 x_n - 0.5 x_n + 0.5*a/x_n
+    //         = 1.0 x_n + (0.5*a/x_n - 0.5 x_n)
+    //         = 1.0 x_n + 0.5 * (a/x_n - x_n)
+    //         = a*r_n + 0.5 * (a/(a*r_n) - a*r_rn)
+    //         = a*r_n + 0.5 * (1/(r_n) - a*r_rn)
+    static const char* fname="__sqrt";
+    static const char* fbody=
+        "float __rcp(float b)\n"
+        "{\n"
+        "    float xn=1.0f/b;\n"
+        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
+        "    // xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
+        "    return xn;\n"
+        "}\n"
+        "\n"
+        "float __divide(float a, float b)\n"
+        "{\n"
+        // "    float q0 = a/b;\n"
+        // "    float q1 = fma(-q0, b, a)/b;\n"
+        // "    return q0 + q1;\n"
+        "    float xn=1.0f/b;\n"
+        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
+        "    float yn= a*xn;\n"
+        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
+        "    return yn;\n"
+        "}\n"
+        "\n"
+        "float __sqrt(float a)\n"
+        "{\n"
+#if 1
+        "    float r=rsqrt(a);\n"
+        "    float rah, ral;\n"
+        "    rah=a*r;\n"
+        "    ral=fma(-a, r, rah);\n"
+        "    float th= fma(r, rah, -1.0f);\n"
+        "    th=fma(r, ral, th);\n"
+        "    r= fma(-0.5f*r*a, th, r*a);\n"
+        "    return r;\n"
+#else
+        "    float r=rsqrt(a);\n"
+        "    float rah, ral;\n"
+        "    rah=a*r;\n"
+        "    ral=fma(-a, r, rah);\n"
+        "    float th= fma(r, rah, -1.0f);\n"
+        "    th=fma(r, ral, th);\n"
+        "    r= fma(-0.5f*r, th, r);\n"
+        "    return a*r;\n"
+#endif
+        "}\n";
+    _res=custom_func<float>(fname, fbody, _a0);
+#else
+    _res = sqrt(_a0);
+#endif
+    _h_res = sqrt(_h_a0);
+    rc &= check_res("sqrt");
     return rc;
 }
 
