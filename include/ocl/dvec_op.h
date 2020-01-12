@@ -487,9 +487,10 @@ namespace ocl {
                     void>(v);                                   \
     }
 
+    DEF_UNARY_FUNC(operator-, neg)
+    DEF_UNARY_FUNC(operator~, bit_not)
     DEF_UNARY_FUNC(abs, abs)
     DEF_UNARY_FUNC(sqrt, sqrt)
-
 
     // min(V)
     template <class _T, class _S>
@@ -585,6 +586,7 @@ namespace ocl {
         return v;
     }
 
+#if 0
     // unary minus V
     template <class _T>
     inline
@@ -626,103 +628,106 @@ namespace ocl {
                     expr<_OP<dvec<_T> >, _L, _R>,
                     void>(v);
     }
+#endif
 
-
-#define DEFINE_OCLVEC_OPERATOR(op, eq_op, op_name)                      \
-    /* operator op(V, V) */                                             \
+#define BINARY_FUNC(name, op_name)                                      \
+    /* name(V, V) */                                                    \
     template <class _T>                                                 \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >, dvec<_T>, dvec<_T> >           \
-    operator op (const dvec<_T>& a, const dvec<_T>& b) {            \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    dvec<_T>, dvec<_T> >(a,b);                      \
+    expr<dop:: op_name<dvec<_T> >, dvec<_T>, dvec<_T> >                 \
+    name (const dvec<_T>& a, const dvec<_T>& b) {                       \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    dvec<_T>, dvec<_T> >(a,b);                          \
     }                                                                   \
-    /* operator op(V, _T) */                                            \
+    /* name(V, _T) */                                                   \
     template <class _T, class _S>                                       \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >, dvec<_T>, _S>                    \
-    operator op (const dvec<_T>& a, const _S& b) {                    \
-        return expr<dop:: op_name<dvec<_T> >, dvec<_T>, _S>(a,b);   \
+    expr<dop:: op_name<dvec<_T> >, dvec<_T>, _S>                        \
+    name (const dvec<_T>& a, const _S& b) {                             \
+        return expr<dop:: op_name<dvec<_T> >, dvec<_T>, _S>(a,b);       \
     }                                                                   \
-    /* operator op(_T, V) */                                            \
+    /* name(_T, V) */                                                   \
     template <class _T, class _S>                                       \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >, _S, dvec<_T> >                   \
-    operator op (const _S& a, const dvec<_T>& b) {                    \
-        return expr<dop:: op_name<dvec<_T> >, _S, dvec<_T> >(a,b);  \
+    expr<dop:: op_name<dvec<_T> >, _S, dvec<_T> >                       \
+    name (const _S& a, const dvec<_T>& b) {                             \
+        return expr<dop:: op_name<dvec<_T> >, _S, dvec<_T> >(a,b);      \
     }                                                                   \
-    /* operator op(V, expr) */                                          \
+    /* name(V, expr) */                                                 \
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >,                                    \
-         dvec<_T>,                                                    \
-         expr<_OP<dvec<_T> >, _L, _R> >                               \
-    operator op (const dvec<_T>& a,                                   \
-                 const expr<_OP<dvec<_T> >, _L, _R>& b) {             \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    dvec<_T>,                                         \
-                    expr<_OP<dvec<_T>>, _L, _R> >(a, b);              \
+    expr<dop:: op_name<dvec<_T> >,                                      \
+         dvec<_T>,                                                      \
+         expr<_OP<dvec<_T> >, _L, _R> >                                 \
+    name (const dvec<_T>& a,                                            \
+          const expr<_OP<dvec<_T> >, _L, _R>& b) {                      \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    dvec<_T>,                                           \
+                    expr<_OP<dvec<_T>>, _L, _R> >(a, b);                \
     }                                                                   \
-    /* operator op(_S, expr) */                                         \
+    /* name(_S, expr) */                                                \
     template <class _T, class _S,                                       \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >, _S,                                \
-         expr<_OP<dvec<_T> >, _L, _R> >                               \
-    operator op (const _S& a,                                           \
-                 const expr<_OP<dvec<_T> >, _L, _R>& b) {             \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    _S, expr<_OP<dvec<_T> >, _L, _R> >(a, b);         \
+    expr<dop:: op_name<dvec<_T> >, _S,                                  \
+         expr<_OP<dvec<_T> >, _L, _R> >                                 \
+    name (const _S& a,                                                  \
+          const expr<_OP<dvec<_T> >, _L, _R>& b) {                      \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    _S, expr<_OP<dvec<_T> >, _L, _R> >(a, b);           \
     }                                                                   \
-    /* operator op(expr, V) */                                          \
+    /* name(expr, V) */                                                 \
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T>>,                                     \
-         expr<_OP<dvec<_T> >, _L, _R>, dvec<_T> >                   \
-    operator op (const expr<_OP<dvec<_T> >, _L, _R>& a,               \
-                 const dvec<_T>& b) {                                 \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    expr<_OP<dvec<_T> >, _L, _R>,                     \
-                    dvec<_T> >(a, b);                                 \
+    expr<dop:: op_name<dvec<_T>>,                                       \
+         expr<_OP<dvec<_T> >, _L, _R>, dvec<_T> >                       \
+    name (const expr<_OP<dvec<_T> >, _L, _R>& a,                        \
+          const dvec<_T>& b) {                                          \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    expr<_OP<dvec<_T> >, _L, _R>,                       \
+                    dvec<_T> >(a, b);                                   \
     }                                                                   \
-    /* operator op(expr, _S) */                                         \
+    /* name(expr, _S) */                                                \
     template <class _T, class _S,                                       \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >,                                    \
-         expr<_OP<dvec<_T> >, _L, _R>, _S>                            \
-    operator op (const expr<_OP<dvec<_T> >,                           \
-                 _L, _R>& a, const _S& b) {                             \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    expr<_OP<dvec<_T> >, _L, _R>, _S>(a, b);          \
+    expr<dop:: op_name<dvec<_T> >,                                      \
+         expr<_OP<dvec<_T> >, _L, _R>, _S>                              \
+    name (const expr<_OP<dvec<_T> >,                                    \
+          _L, _R>& a, const _S& b) {                                    \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    expr<_OP<dvec<_T> >, _L, _R>, _S>(a, b);            \
     }                                                                   \
-    /* operator op(expr, expr)  */                                      \
+    /* name(expr, expr)  */                                             \
     template <class _T,                                                 \
               template <class _V> class _OP1, class _L1, class _R1,     \
               template <class _V> class _OP2, class _L2, class _R2>     \
     inline                                                              \
-    expr<dop:: op_name<dvec<_T> >,                                    \
-         expr<_OP1<dvec<_T> >, _L1, _R1>,                             \
-         expr<_OP2<dvec<_T> >, _L2, _R2> >                            \
-    operator op(const expr<_OP1<dvec<_T> >, _L1, _R1>& a,             \
-                const expr<_OP2<dvec<_T> >, _L2, _R2>& b) {           \
-        return expr<dop:: op_name<dvec<_T> >,                         \
-                    expr<_OP1<dvec<_T> >, _L1, _R1>,                  \
-                    expr<_OP2<dvec<_T> >, _L2, _R2> > (a, b);         \
+    expr<dop:: op_name<dvec<_T> >,                                      \
+         expr<_OP1<dvec<_T> >, _L1, _R1>,                               \
+         expr<_OP2<dvec<_T> >, _L2, _R2> >                              \
+    name(const expr<_OP1<dvec<_T> >, _L1, _R1>& a,                      \
+         const expr<_OP2<dvec<_T> >, _L2, _R2>& b) {                    \
+        return expr<dop:: op_name<dvec<_T> >,                           \
+                    expr<_OP1<dvec<_T> >, _L1, _R1>,                    \
+                    expr<_OP2<dvec<_T> >, _L2, _R2> > (a, b);           \
     }                                                                   \
+
+#define DEFINE_OCLVEC_OPERATOR(op, eq_op, op_name)                      \
+    BINARY_FUNC(operator op, op_name)                                   \
     /* operator eq_op V */                                              \
     template <class _T>                                                 \
     inline                                                              \
-    dvec<_T>& operator eq_op(dvec<_T>& a, const dvec<_T>& r) {    \
+    dvec<_T>& operator eq_op(dvec<_T>& a, const dvec<_T>& r) {          \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
     /* operator eq_op _T */                                             \
     template <class _T>                                                 \
     inline                                                              \
-    dvec<_T>& operator eq_op(dvec<_T>& a, const _T& r) {            \
+    dvec<_T>& operator eq_op(dvec<_T>& a, const _T& r) {                \
         a = a op r;                                                     \
         return a;                                                       \
     }                                                                   \
@@ -730,13 +735,12 @@ namespace ocl {
     template <class _T,                                                 \
               template <class _V> class _OP, class _L, class _R>        \
     inline                                                              \
-    dvec<_T>&                                                         \
-    operator eq_op(dvec<_T>& a,                                       \
-                   const expr<_OP<dvec<_T> >, _L, _R>& r) {           \
+    dvec<_T>&                                                           \
+    operator eq_op(dvec<_T>& a,                                         \
+                   const expr<_OP<dvec<_T> >, _L, _R>& r) {             \
         a = a op r;                                                     \
         return a;                                                       \
     }
-
 
 #define DEFINE_OCLVEC_OPERATORS()          \
     DEFINE_OCLVEC_OPERATOR(+, +=, add)     \
