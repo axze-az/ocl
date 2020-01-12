@@ -105,12 +105,12 @@ namespace ocl {
         };
 
         struct binary_func_base {
-            // generate the body of an binary_func object
+            // generate the body of a binary_func object
             static
             std::string
             body(const std::string& l, const std::string& r,
                  bool is_operator, const char* name);
-            // generate the body of an binary_func object
+            // generate the body of a binary_func object
             static
             std::string
             body(const std::string& l, const std::string& r,
