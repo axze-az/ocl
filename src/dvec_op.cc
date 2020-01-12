@@ -50,25 +50,25 @@ ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,
 }
 
 std::string
-ocl::dop::names::divide_base::name(const char* tname)
+ocl::dop::names::div_base::name(const char* tname)
 {
     return name(std::string(tname));
 }
 
 std::string
-ocl::dop::names::divide_base::name(const std::string& tname)
+ocl::dop::names::div_base::name(const std::string& tname)
 {
     return std::string("__div_") + tname;
 }
 
 std::string
-ocl::dop::names::divide_base::body(const char* tname)
+ocl::dop::names::div_base::body(const char* tname)
 {
     return body(std::string(tname));
 }
 
 std::string
-ocl::dop::names::divide_base::body(const std::string& tname)
+ocl::dop::names::div_base::body(const std::string& tname)
 {
     std::string inl="inline ";
     std::string fbody =

@@ -135,19 +135,7 @@ namespace ocl {
                 constexpr
                 const char* operator()() const { return "~"; }
             };
-            struct fabs {
-                constexpr
-                const char* operator()() const { return "fabs"; }
-            };
-            struct abs {
-                constexpr
-                const char* operator()() const { return "abs"; }
-            };
-            struct sqrt {
-                constexpr
-                const char* operator()() const { return "sqrt"; }
-            };
-        };
+        }
 
         template <class _T>
         struct neg : public unary_func<names::neg, true>{};
@@ -155,29 +143,45 @@ namespace ocl {
         template <class _T>
         struct bit_not : public unary_func<names::bit_not, true>{};
 
-        template <class _T>
-        struct abs : public unary_func<names::abs, false>{};
-
-        template <>
-        struct abs< dvec<float> >
-            : public unary_func<names::fabs, false> {
-        };
-        template <std::size_t _N>
-        struct abs< dvec<cftal::vec<float, _N> > >
-            : public unary_func<names::fabs, false> {
-        };
-
-        template <>
-        struct abs< dvec<double> >
-            : public unary_func<names::fabs, false> {
-        };
-        template <std::size_t _N>
-        struct abs< dvec<cftal::vec<double, _N> > >
-            : public unary_func<names::fabs, false> {
+        namespace names {
+            
+            struct f_fabs {
+                constexpr
+                const char* operator()() const { return "fabs"; }
+            };
+            struct f_abs {
+                constexpr
+                const char* operator()() const { return "abs"; }
+            };
+            struct f_sqrt {
+                constexpr
+                const char* operator()() const { return "sqrt"; }
+            };
         };
 
         template <class _T>
-        struct sqrt : public unary_func<names::sqrt, false> {};
+        struct abs_f : public unary_func<names::f_abs, false>{};
+        
+        template <>
+        struct abs_f< dvec<float> >
+            : public unary_func<names::f_fabs, false> {
+        };
+        template <std::size_t _N>
+        struct abs_f< dvec<cftal::vec<float, _N> > >
+            : public unary_func<names::f_fabs, false> {
+        };
+
+        template <>
+        struct abs_f< dvec<double> >
+            : public unary_func<names::f_fabs, false> {
+        };
+        template <std::size_t _N>
+        struct abs_f< dvec<cftal::vec<double, _N> > >
+            : public unary_func<names::f_fabs, false> {
+        };
+
+        template <class _T>
+        struct sqrt_f : public unary_func<names::f_sqrt, false> {};
 
         namespace names {
 
@@ -196,7 +200,7 @@ namespace ocl {
             };
 
             template <typename _T>
-            struct f_sqrt : private f_sqrt_base {
+            struct f_sqrt_fix : private f_sqrt_base {
                 static
                 std::string
                 func_name() {
@@ -215,16 +219,47 @@ namespace ocl {
         }
 
         template <>
-        struct sqrt<dvec<float> >
-            : public unary_func<names::f_sqrt<float>, false> {
+        struct sqrt_f<dvec<float> >
+            : public unary_func<names::f_sqrt_fix<float>, false> {
         };
 
         template <std::size_t _N>
-        struct sqrt<dvec<cftal::vec<float, _N> > > :
-            public unary_func<names::f_sqrt<cftal::vec<float, _N> >,
+        struct sqrt_f<dvec<cftal::vec<float, _N> > > :
+            public unary_func<names::f_sqrt_fix<cftal::vec<float, _N> >,
                                false> {
         };
 
+        namespace names {
+            struct f_exp {
+                constexpr
+                const char* operator()() const { return "exp"; }
+            };
+            struct f_expm1 {
+                constexpr
+                const char* operator()() const { return "expm1"; }
+            };
+            struct f_exp2 {
+                constexpr
+                const char* operator()() const { return "exp2"; }
+            };
+            struct f_exp10 {
+                constexpr
+                const char* operator()() const { return "exp10"; }
+            };
+        }
+
+        template <class _T>
+        struct exp_f : public unary_func<names::f_exp, false>{};
+
+        template <class _T>
+        struct expm1_f : public unary_func<names::f_expm1, false>{};
+
+        template <class _T>
+        struct exp2_f : public unary_func<names::f_exp2, false>{};
+
+        template <class _T>
+        struct exp10_f : public unary_func<names::f_exp10, false>{};
+        
         namespace names {
 
             struct add {
@@ -303,7 +338,7 @@ namespace ocl {
 
         namespace names {
 
-            struct divide_base {
+            struct div_base {
                 // function name
                 static
                 std::string name(const char* tname);
@@ -318,7 +353,7 @@ namespace ocl {
             };
 
             template <typename _T>
-            struct divide : private divide_base {
+            struct div_fix : private div_base {
                 static
                 std::string
                 func_name() {
@@ -338,12 +373,12 @@ namespace ocl {
 
         template <>
         struct div<dvec<float> >
-            : public binary_func<names::divide<float>, false> {
+            : public binary_func<names::div_fix<float>, false> {
         };
 
         template <std::size_t _N>
         struct div<dvec<cftal::vec<float, _N> > > :
-            public binary_func<names::divide<cftal::vec<float, _N> >,
+            public binary_func<names::div_fix<cftal::vec<float, _N> >,
                                false> {
         };
 
@@ -377,31 +412,30 @@ namespace ocl {
 
         namespace names {
 
-            struct min_f {
+            struct f_min {
                 constexpr
                 const char* operator()() const { return  "min"; }
             };
-            struct max_f {
+            struct f_max {
                 constexpr
                 const char* operator()() const { return  "max"; }
             };
 
-            struct pow_f {
+            struct f_pow {
                 constexpr
                 const char* operator()() const { return  "pow"; }
             };
         };
 
+        template <class _T>
+        struct max_f : public binary_func<names::f_max> {};
 
         template <class _T>
-        struct max_f : public binary_func<names::max_f> {};
+        struct min_f : public binary_func<names::f_min> {};
 
         template <class _T>
-        struct min_f : public binary_func<names::min_f> {};
-
-        template <class _T>
-        struct pow_f : public binary_func<names::pow_f> {};
-
+        struct pow_f : public binary_func<names::f_pow> {};
+        
         template <class _D>
         struct cvt {
             static
@@ -489,94 +523,12 @@ namespace ocl {
 
     DEF_UNARY_FUNC(operator-, neg)
     DEF_UNARY_FUNC(operator~, bit_not)
-    DEF_UNARY_FUNC(abs, abs)
-    DEF_UNARY_FUNC(sqrt, sqrt)
-
-    // min(V)
-    template <class _T, class _S>
-    inline
-    expr<dop::min_f<dvec<_T> >,
-         dvec<_T>, _S>
-    min(const dvec<_T>& a, const _S& b)
-    {
-        return expr<dop::min_f<dvec<_T> >,
-                    dvec<_T>, _S >(a, b);
-    }
-
-    // min(V)
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R,
-              class _S>
-    inline
-    expr<dop::min_f<dvec<_T> >,
-         expr<_OP<dvec<_T> >, _L, _R>,
-         _S >
-    min(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
-    {
-        return expr<dop::min_f<dvec<_T> >,
-                    expr<_OP<dvec<_T> >, _L, _R>,
-                    _S >(a, b);
-    }
-
-    // min(V)
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R,
-              class _S>
-    inline
-    expr<dop::min_f<dvec<_T> >,
-         _S,
-         expr<_OP<dvec<_T> >, _L, _R> >
-    min(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
-    {
-        return expr<dop::min_f<dvec<_T> >,
-                    _S,
-                    expr<_OP<dvec<_T> >, _L, _R> >(a, b);
-    }
-
-    // max(V)
-    template <class _T, class _S>
-    inline
-    expr<dop::max_f<dvec<_T> >,
-         dvec<_T>, _S>
-    max(const dvec<_T>& a, const _S& b)
-    {
-        return expr<dop::max_f<dvec<_T> >,
-                    dvec<_T>, _S >(a, b);
-    }
-
-    // max(V)
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R,
-              class _S>
-    inline
-    expr<dop::max_f<dvec<_T> >,
-         expr<_OP<dvec<_T> >, _L, _R>,
-         _S >
-    max(const expr<_OP<dvec<_T> >, _L, _R>& a, const _S& b)
-    {
-        return expr<dop::max_f<dvec<_T> >,
-                    expr<_OP<dvec<_T> >, _L, _R>,
-                    _S >(a, b);
-    }
-
-    // max(V)
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R,
-              class _S>
-    inline
-    expr<dop::max_f<dvec<_T> >,
-         _S,
-         expr<_OP<dvec<_T> >, _L, _R> >
-    max(const _S& b, const expr<_OP<dvec<_T> >, _L, _R>& a)
-    {
-        return expr<dop::max_f<dvec<_T> >,
-                    _S,
-                    expr<_OP<dvec<_T> >, _L, _R> >(a, b);
-    }
+    DEF_UNARY_FUNC(abs, abs_f)
+    DEF_UNARY_FUNC(sqrt, sqrt_f)
+    DEF_UNARY_FUNC(exp, exp_f)
+    DEF_UNARY_FUNC(expm1, expm1_f)
+    DEF_UNARY_FUNC(exp2, exp2_f)
+    DEF_UNARY_FUNC(exp10, exp10_f)
 
     // unary plus
     template <class _T>
@@ -585,50 +537,6 @@ namespace ocl {
     _T& operator+(const _T& v) {
         return v;
     }
-
-#if 0
-    // unary minus V
-    template <class _T>
-    inline
-    expr<dop::neg<dvec<_T> >, dvec<_T>, void>
-    operator-(const dvec<_T>& v) {
-        return expr<dop::neg<dvec<_T> >, dvec<_T>, void>(v);
-    };
-    // unary minus expr
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R>
-    inline
-    expr<dop::neg<dvec<_T> >,
-         expr<_OP<dvec<_T> >, _L, _R>,
-         void>
-    operator-(const expr<_OP<dvec<_T> >, _L, _R>& v) {
-        return expr<dop::neg<dvec<_T> >,
-                    expr<_OP<dvec<_T> >, _L, _R>,
-                    void>(v);
-    }
-
-    // unary not V
-    template <class _T>
-    inline
-    expr<dop::bit_not<dvec<_T> >, dvec<_T>, void>
-    operator~(const dvec<_T>& v) {
-        return expr<dop::bit_not<dvec<_T> >, dvec<_T>, void>(v);
-    };
-    // unary not expr
-    template <class _T,
-              template <class _T1> class _OP,
-              class _L, class _R>
-    inline
-    expr<dop::bit_not<dvec<_T> >,
-         expr<_OP<dvec<_T> >, _L, _R>,
-         void>
-    operator~(const expr<_OP<dvec<_T> >, _L, _R>& v) {
-        return expr<dop::bit_not<dvec<_T> >,
-                    expr<_OP<dvec<_T> >, _L, _R>,
-                    void>(v);
-    }
-#endif
 
 #define BINARY_FUNC(name, op_name)                                      \
     /* name(V, V) */                                                    \
@@ -791,6 +699,10 @@ namespace ocl {
 
 #undef DEFINE_OCLVEC_CMP_OPERATOR
 
+    BINARY_FUNC(max, max_f)
+    BINARY_FUNC(min, min_f)
+    BINARY_FUNC(pow, pow_f)
+    
     // overload for float vectors with incorrectly rounded division
     template <typename _L, typename _R>
     std::string
@@ -808,14 +720,14 @@ namespace ocl {
     template <typename _L>
     std::string
     def_custom_func(std::set<std::string>& fnames,
-                    const expr<dop::sqrt<dvec<float>>, _L, void>& e );
+                    const expr<dop::sqrt_f<dvec<float>>, _L, void>& e );
 
     // overload for float vectors with incorrectly rounded sqrt
     template <std::size_t _N, typename _L>
     std::string
     def_custom_func(
         std::set<std::string>& fnames,
-        const expr<dop::sqrt<dvec<cftal::vec<float, _N>>>, _L, void>& e );
+        const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e );
 }
 
 template <class _T>
@@ -1044,7 +956,7 @@ ocl::def_custom_func(std::set<std::string>& fnames,
                      const expr<dop::div<dvec<float>>, _L, _R>& e )
 {
     static_cast<void>(e);
-    using d_t=dop::names::divide<float>;
+    using d_t=dop::names::div_fix<float>;
     const std::string fn=d_t::func_name();
     std::string s;
     if (fnames.find(fn) == fnames.end()) {
@@ -1062,7 +974,7 @@ ocl::def_custom_func(
     const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e )
 {
     static_cast<void>(e);
-    using d_t=dop::names::divide<cftal::vec<float, _N> >;
+    using d_t=dop::names::div_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
     if (fnames.find(fn) == fnames.end()) {
@@ -1076,10 +988,10 @@ ocl::def_custom_func(
 template <typename _L>
 std::string
 ocl::def_custom_func(std::set<std::string>& fnames,
-                     const expr<dop::sqrt<dvec<float>>, _L, void>& e )
+                     const expr<dop::sqrt_f<dvec<float>>, _L, void>& e )
 {
     static_cast<void>(e);
-    using d_t=dop::names::f_sqrt<float>;
+    using d_t=dop::names::f_sqrt_fix<float>;
     const std::string fn=d_t::func_name();
     std::string s;
     if (fnames.find(fn) == fnames.end()) {
@@ -1094,10 +1006,10 @@ template <std::size_t _N, typename _L>
 std::string
 ocl::def_custom_func(
     std::set<std::string>& fnames,
-    const expr<dop::sqrt<dvec<cftal::vec<float, _N>>>, _L, void>& e )
+    const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e )
 {
     static_cast<void>(e);
-    using d_t=dop::names::f_sqrt<cftal::vec<float, _N> >;
+    using d_t=dop::names::f_sqrt_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
     if (fnames.find(fn) == fnames.end()) {
