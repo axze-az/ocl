@@ -17,13 +17,19 @@ namespace ocl {
 
         template <typename _T>
         class ops {
+            // result device buffer
             dvec<_T> _res;
+            // arg0 device buffer
             dvec<_T> _a0;
+            // arg1 device buffer
             dvec<_T> _a1;
 
             lvec<_T> _h_d_res;
+            // result host buffer
             lvec<_T> _h_res;
+            // arg0 host buffer
             lvec<_T> _h_a0;
+            // arg1 host buffer
             lvec<_T> _h_a1;
         public:
             ops(size_t n);
@@ -128,7 +134,7 @@ ocl::test::ops<_T>::perform()
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
     // sqrt
-#if 1
+#if 0
     // x_{n+1} = 1/2(x_n + a/x_n)
     //         = 0.5 x_n + 0.5*a/x_n
     //         = 1.0 x_n - 0.5 x_n + 0.5*a/x_n

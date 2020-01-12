@@ -82,50 +82,49 @@ namespace ocl {
 
     namespace dop {
 
-        template <typename _P, bool _OP=false>
-        struct unary_func {
-            static const _P m_p;
+        struct unary_func_base {
+            // generate the body of an unary_func object
             static
-            std::string body(const std::string& l) {
-                std::string res;
-                res += m_p();
-                if (_OP == false)
-                    res += '(';
-                res += l;
-                if (_OP == false)
-                    res += ')';
-                return res;
-            };
+            std::string
+            body(const std::string& l, bool is_operator,
+                            const char* name);
+            // generate the body of an unary_func object
+            static
+            std::string
+            body(const std::string& l, bool is_operator,
+                            const std::string& name);
         };
 
-        template <typename _P, bool _OP>
-        const _P unary_func<_P, _OP>::m_p=_P();
-
-        template <typename _P, bool _OP = false>
-        struct binary_func {
-            static const _P m_p;
+        template <typename _P, bool _OP=false>
+        struct unary_func : private unary_func_base {
             static
-            std::string body(const std::string& l,
-                             const std::string& r) {
-                std::string res;
-                if (_OP == false) {
-                    res += m_p();
-                    res += "(";
-                }
-                res += l;
-                if (_OP == false)
-                    res += ", ";
-                else
-                    res += m_p();
-                res += r;
-                if (_OP == false)
-                    res += ")";
-                return res;
+            std::string body(const std::string& l) {
+                _P p;
+                return unary_func_base::body(l, _OP, p());
             }
         };
 
-        template <typename _P, bool _OP>
-        const _P binary_func<_P, _OP>::m_p=_P();
+        struct binary_func_base {
+            // generate the body of an binary_func object
+            static
+            std::string
+            body(const std::string& l, const std::string& r,
+                 bool is_operator, const char* name);
+            // generate the body of an binary_func object
+            static
+            std::string
+            body(const std::string& l, const std::string& r,
+                 bool is_operator, const std::string& name);
+        };
+
+        template <typename _P, bool _OP = false>
+        struct binary_func : private binary_func_base {
+            static
+            std::string body(const std::string& l, const std::string& r) {
+                _P p;
+                return binary_func_base::body(l, r, _OP, p());
+            }
+        };
 
         namespace names {
             struct neg {
@@ -179,7 +178,53 @@ namespace ocl {
 
         template <class _T>
         struct sqrt : public unary_func<names::sqrt, false> {};
-        
+
+        namespace names {
+
+            struct f_sqrt_base {
+                // function name
+                static
+                std::string name(const char* tname);
+                // function name
+                static
+                std::string name(const std::string& tname);
+                // function body
+                static
+                std::string body(const char* tname);
+                static
+                std::string body(const std::string& tname);
+            };
+
+            template <typename _T>
+            struct f_sqrt : private f_sqrt_base {
+                static
+                std::string
+                func_name() {
+                    return name(be::type_2_name<_T>::v());
+                }
+                static
+                std::string
+                func_body() {
+                    return body(be::type_2_name<_T>::v());
+                }
+                std::string
+                operator()() const {
+                    return func_name();
+                }
+            };
+        }
+
+        template <>
+        struct sqrt<dvec<float> >
+            : public unary_func<names::f_sqrt<float>, false> {
+        };
+
+        template <std::size_t _N>
+        struct sqrt<dvec<cftal::vec<float, _N> > > :
+            public unary_func<names::f_sqrt<cftal::vec<float, _N> >,
+                               false> {
+        };
+
         namespace names {
 
             struct add {
@@ -257,31 +302,32 @@ namespace ocl {
         struct div : public binary_func<names::div, true> {};
 
         namespace names {
+
+            struct divide_base {
+                // function name
+                static
+                std::string name(const char* tname);
+                // function name
+                static
+                std::string name(const std::string& tname);
+                // function body
+                static
+                std::string body(const char* tname);
+                static
+                std::string body(const std::string& tname);
+            };
+
             template <typename _T>
-            struct divide {
+            struct divide : private divide_base {
                 static
                 std::string
                 func_name() {
-                    return std::string("__div_") +
-                        be::type_2_name<_T>::v();
+                    return name(be::type_2_name<_T>::v());
                 }
                 static
                 std::string
                 func_body() {
-                    std::string tname= be::type_2_name<_T>::v();
-                    std::string inl="inline ";
-                    std::string body =
-                        inl +
-                        tname + " __div_" + tname + "(" +
-                        tname + " a, " + tname + " b)\n"
-                        "{\n"
-                        "    " + tname + " xn=1.0f/b;\n"
-                        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
-                        "    " + tname + " yn= a*xn;\n"
-                        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
-                        "    return yn;\n"
-                        "}\n";
-                    return body;
+                    return body(be::type_2_name<_T>::v());
                 }
                 std::string
                 operator()() const {
@@ -289,7 +335,7 @@ namespace ocl {
                 }
             };
         }
-        
+
         template <>
         struct div<dvec<float> >
             : public binary_func<names::divide<float>, false> {
@@ -300,7 +346,7 @@ namespace ocl {
             public binary_func<names::divide<cftal::vec<float, _N> >,
                                false> {
         };
-        
+
         template <class _T>
         struct bit_and : public binary_func<names::bit_and, true> {};
 
@@ -443,7 +489,7 @@ namespace ocl {
 
     DEF_UNARY_FUNC(abs, abs)
     DEF_UNARY_FUNC(sqrt, sqrt)
-    
+
 
     // min(V)
     template <class _T, class _S>
@@ -753,6 +799,19 @@ namespace ocl {
     def_custom_func(
         std::set<std::string>& fnames,
         const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e );
+
+    // overload for float vectors with incorrectly rounded sqrt
+    template <typename _L>
+    std::string
+    def_custom_func(std::set<std::string>& fnames,
+                    const expr<dop::sqrt<dvec<float>>, _L, void>& e );
+
+    // overload for float vectors with incorrectly rounded sqrt
+    template <std::size_t _N, typename _L>
+    std::string
+    def_custom_func(
+        std::set<std::string>& fnames,
+        const expr<dop::sqrt<dvec<cftal::vec<float, _N>>>, _L, void>& e );
 }
 
 template <class _T>
@@ -980,6 +1039,7 @@ std::string
 ocl::def_custom_func(std::set<std::string>& fnames,
                      const expr<dop::div<dvec<float>>, _L, _R>& e )
 {
+    static_cast<void>(e);
     using d_t=dop::names::divide<float>;
     const std::string fn=d_t::func_name();
     std::string s;
@@ -997,6 +1057,7 @@ ocl::def_custom_func(
     std::set<std::string>& fnames,
     const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e )
 {
+    static_cast<void>(e);
     using d_t=dop::names::divide<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
@@ -1006,6 +1067,42 @@ ocl::def_custom_func(
     }
     return s;
 }
+
+// overload for float vectors with incorrectly rounded sqrt
+template <typename _L>
+std::string
+ocl::def_custom_func(std::set<std::string>& fnames,
+                     const expr<dop::sqrt<dvec<float>>, _L, void>& e )
+{
+    static_cast<void>(e);
+    using d_t=dop::names::f_sqrt<float>;
+    const std::string fn=d_t::func_name();
+    std::string s;
+    if (fnames.find(fn) == fnames.end()) {
+        s = d_t::func_body() + '\n';
+        fnames.insert(fn);
+    }
+    return s;
+}
+
+// overload for float vectors with incorrectly rounded sqrt
+template <std::size_t _N, typename _L>
+std::string
+ocl::def_custom_func(
+    std::set<std::string>& fnames,
+    const expr<dop::sqrt<dvec<cftal::vec<float, _N>>>, _L, void>& e )
+{
+    static_cast<void>(e);
+    using d_t=dop::names::f_sqrt<cftal::vec<float, _N> >;
+    const std::string fn=d_t::func_name();
+    std::string s;
+    if (fnames.find(fn) == fnames.end()) {
+        s = d_t::func_body() + '\n';
+        fnames.insert(fn);
+    }
+    return s;
+}
+
 
 // Local variables:
 // mode: c++

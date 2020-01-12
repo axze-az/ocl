@@ -9,11 +9,12 @@ set (CSRCS
   be_devices.cc
   be_kernel_key.cc
   be_kernel_cache.cc
-  be_dev_ctx_queue.cc 
+  be_dev_ctx_queue.cc
   be_data.cc
+  dvec_base.cc
+  dvec_op.cc
   expr_kernel.cc
   random.cc
-  dvec_base.cc
 )
 
 # only for ides
