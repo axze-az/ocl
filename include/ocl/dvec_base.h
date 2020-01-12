@@ -8,10 +8,13 @@
 #include <iostream>
 #include <iomanip>
 
+#define DEBUG_DVEC_BASE 0
+
 namespace ocl {
 
     namespace impl {
 
+#if DEBUG_DVEC_BASE>0
         template <typename _I>
         struct _counter_state {
             enum es {
@@ -105,6 +108,15 @@ namespace ocl {
         template <typename _TAG>
         std::unique_ptr<typename _counter<_TAG>::st_t>
         _counter<_TAG>::_instance=std::make_unique<_counter<_TAG>::st_t>();
+#else
+        template <typename _TAG>
+        struct _counter {
+            static
+            const char* state() {
+                return "object statistics are unavailable\n";
+            }
+        };
+#endif
     }
 
     // dvec base class wrapping an opencl buffer and a

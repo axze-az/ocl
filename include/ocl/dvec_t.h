@@ -145,7 +145,12 @@ namespace ocl {
     custom_kernel(const std::string& name,
                   const std::string& body,
                   _AX&&... ax);
-
+#if 0
+    extern template class dvec<double>;
+    extern template class dvec<float>;
+    extern template class dvec<int32_t>;
+    extern template class dvec<uint32_t>;
+#endif
 }
 
 template <class _T>

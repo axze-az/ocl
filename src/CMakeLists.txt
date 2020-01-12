@@ -12,6 +12,7 @@ set (CSRCS
   be_dev_ctx_queue.cc
   be_data.cc
   dvec_base.cc
+  dvec_t.cc
   dvec_op.cc
   expr_kernel.cc
   random.cc
