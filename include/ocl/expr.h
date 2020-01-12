@@ -108,9 +108,6 @@ namespace ocl {
         var_counters(unsigned buf_offs)
             : _var_num(buf_offs), _buf_num(buf_offs), _scalar_num(0) {};
     };
-    template <typename _T>
-    std::string
-    fetch_args(const _T& r, var_counters& c);
 
     template <typename _T>
     std::string
@@ -225,14 +222,6 @@ namespace ocl {
     std::string
     decl_buffer_args(const expr<_OP, _L, void>& r,
                      unsigned& arg_num, bool read_only);
-
-    template <class _OP, class _L, class _R>
-    std::string
-    fetch_args(const expr<_OP, _L, _R>& e, var_counters& c);
-
-    template <class _OP, class _L>
-    std::string
-    fetch_args(const expr<_OP, _L, void>& e, var_counters& c);
 
     template <typename _T>
     std::string
@@ -382,20 +371,6 @@ ocl::decl_buffer_args(const _T& r, unsigned& arg_num, bool read_only)
     static_cast<void>(arg_num);
     static_cast<void>(read_only);
     return std::string();
-}
-
-template <class _T>
-std::string
-ocl::fetch_args(const _T& r, var_counters& c)
-{
-    static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8) << "const " << be::type_2_name<_T>::v()
-      << " v" << c._var_num
-      << " = pa->_a" << c._scalar_num << ";\n";
-    ++c._var_num;
-    ++c._scalar_num;
-    return s.str();
 }
 
 template <class _T>
@@ -682,24 +657,6 @@ decl_buffer_args(const expr<_OP, _L, void>& e,
                  unsigned& arg_num, bool read_only)
 {
     return decl_buffer_args(e._l, arg_num, read_only);
-}
-
-template <class _OP, class _L>
-std::string
-ocl::
-fetch_args(const expr<_OP, _L, void>& e, var_counters& c)
-{
-    return fetch_args(e._l, c);
-}
-
-template <class _OP, class _L, class _R>
-std::string
-ocl::
-fetch_args(const expr<_OP, _L, _R>& e, var_counters& c)
-{
-    std::string l=fetch_args(e._l, c);
-    std::string r=fetch_args(e._r, c);
-    return l+r;
 }
 
 template <class _OP, class _L>

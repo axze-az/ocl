@@ -26,12 +26,7 @@ namespace ocl {
     std::string
     decl_buffer_args(const dvec<_T>& t, unsigned& arg_num, bool ro);
 
-    // fetch_args specialized for dvecs
-    template <typename _T>
-    std::string
-    fetch_args(const dvec<_T>& t, var_counters& c);
-
-    // fetch_args specialized for dvecs
+    // concat_args specialized for dvecs
     template <typename _T>
     std::string
     concat_args(const dvec<_T>& t, var_counters& c);
@@ -51,7 +46,7 @@ namespace ocl {
     void
     bind_buffer_args(dvec<_T>& t, unsigned& buf_num, be::kernel& k);
 
-    // fetch_args specialized for dvecs
+    // store results
     template <typename _T>
     std::string
     store_result(dvec<_T>& t, var_counters& c);
@@ -776,20 +771,6 @@ ocl::decl_buffer_args(const dvec<_T>& r, unsigned& arg_num, bool ro)
     s << be::type_2_name<_T>::v()
       << "* arg" << arg_num << ",\n";
     ++arg_num;
-    return s.str();
-}
-
-template <typename _T>
-std::string
-ocl::fetch_args(const dvec<_T>& r, var_counters& c)
-{
-    static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8) << "const " << be::type_2_name<_T>::v()
-      << " v" << c._var_num
-      << " = arg" << c._buf_num << "[gid];\n";
-    ++c._var_num;
-    ++c._buf_num;
     return s.str();
 }
 
