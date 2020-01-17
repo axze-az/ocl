@@ -10,6 +10,7 @@ set (CSRCS
   be_kernel_key.cc
   be_kernel_cache.cc
   be_dev_ctx_queue.cc
+  be_type_2_name.cc
   be_data.cc
   dvec_base.cc
   dvec_t.cc

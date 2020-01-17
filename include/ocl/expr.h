@@ -285,7 +285,7 @@ namespace ocl {
     eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
               bool read);
 
-    // eval_vars specialized for expr<>
+    // eval_ops specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
     eval_ops(const expr<_OP, _L, _R>& a, unsigned& arg_num);

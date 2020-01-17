@@ -1,4 +1,4 @@
-#include "ocl/dvec.h"
+#include "ocl/dvec_base.h"
 #include <iomanip>
 
 

@@ -10,15 +10,8 @@ namespace ocl {
 
     namespace be {
 
-        inline
-        std::string demangle( const char* mangled_name ) {
-
-            std::size_t len = 0 ;
-            int status = 0 ;
-            std::unique_ptr< char, decltype(&std::free) > ptr(
-                        __cxxabiv1::__cxa_demangle( mangled_name, nullptr, &len, &status ), &std::free ) ;
-            return ptr.get() ;
-        }
+        std::string
+        demangle(const char* mangled_name);
 
         template <typename _T>
         struct type_2_name {

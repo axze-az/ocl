@@ -71,6 +71,22 @@ std::string
 ocl::dop::names::div_base::body(const std::string& tname)
 {
     std::string inl="inline ";
+#if 0
+    // not precise enough
+    // -0x1.9d9e4cp+0/-0x1.afc97ep+0=0x1.ea74c2p-1 != 0x1.ea74cp-1 0x1p-24
+    std::string fbody =
+        inl +
+        tname + " __div_" + tname + "(" +
+        tname + " a, " + tname + " b)\n"
+        "{\n"
+        "    " + tname + " q0=a/b;\n"
+        "    " + tname + " r= fma(q0, -b, a);\n"
+        "    " + tname + " q1= r/b;\n"
+        "    " + tname + " q = q0+q1; \n"
+        "    q1= isnan(q1) ? q0 : q;\n"
+        "    return q1;\n"
+        "}\n";
+#else
     std::string fbody =
         inl +
         tname + " __div_" + tname + "(" +
@@ -80,8 +96,10 @@ ocl::dop::names::div_base::body(const std::string& tname)
         "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
         "    " + tname + " yn= a*xn;\n"
         "    yn= fma(xn, fma(yn, -b, a), yn);\n"
+        "    yn= isnan(yn) ? a/b : yn;\n"
         "    return yn;\n"
         "}\n";
+#endif
     return fbody;
 }
 
@@ -120,6 +138,8 @@ ocl::dop::names::f_sqrt_base::body(const std::string& tname)
         "    " + tname + " th= fma(r, rah, -1.0f);\n"
         "    th=fma(r, ral, th);\n"
         "    r= fma(-0.5f*r*a, th, r*a);\n"
+        "    r= isnan(r) ? a*r : r;\n"
+        "    r= a==0 ? a : r;\n"
         "    return r;\n"
         "}\n";
     return fbody;

@@ -1,4 +1,3 @@
-#include "ocl/ocl.h"
 #include "ocl/be/devices.h"
 #include <boost/compute/system.hpp>
 #include <iostream>

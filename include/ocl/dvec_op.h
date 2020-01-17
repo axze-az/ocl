@@ -82,12 +82,12 @@ namespace ocl {
             static
             std::string
             body(const std::string& l, bool is_operator,
-                            const char* name);
+                 const char* name);
             // generate the body of an unary_func object
             static
             std::string
             body(const std::string& l, bool is_operator,
-                            const std::string& name);
+                 const std::string& name);
         };
 
         template <typename _P, bool _OP=false>
@@ -445,18 +445,18 @@ namespace ocl {
         };
 
         template <class _D>
-        struct cvt<dvec<_D> > {
+        struct cvt_rz {
             static
             std::string body(const std::string& l) {
                 std::string res("convert_");
                 res += be::type_2_name<_D>::v();
-                res += "_rte(";
+                res += "_rtz(";
                 res += l;
                 res += ")";
                 return res;
             }
         };
-
+        
         template <class _D>
         struct as {
             static
@@ -476,8 +476,27 @@ namespace ocl {
                 return res;
             }
         };
+
+        // place holder for the arguments of select
+        template <class _D>
+        struct sel_data {
+        };
+
+        template <class _D>
+        struct sel_f {
+            static
+            std::string
+            body(const std::string& s,
+                 const std::string& on_true,
+                 const std::string& on_false) {
+                std::string r="(( ";
+                r += s + ") ? (" + on_true + ") : (" + on_false + "))";
+                return r;
+            }
+        };
     }
 
+    // convert with round nearest even
     template <class _D, class _S>
     inline
     expr<dop::cvt<_D>, _S, void>
@@ -485,6 +504,14 @@ namespace ocl {
         return expr<dop::cvt<_D>, _S, void>(s);
     }
 
+    // convert with round to zero
+    template <class _D, class _S>
+    inline
+    expr<dop::cvt_rz<_D>, _S, void>
+    cvt_rz(const _S& s) {
+        return expr<dop::cvt_rz<_D>, _S, void>(s);
+    }
+    
     template <class _D, class _S>
     inline
     expr<dop::as<_D>, _S, void>
@@ -697,6 +724,173 @@ namespace ocl {
     BINARY_FUNC(max, max_f)
     BINARY_FUNC(min, min_f)
     BINARY_FUNC(pow, pow_f)
+
+#if 0
+    // overloads for select
+    template <typename _T, typename _U>
+    auto
+    select(const dvec<_U>& m, const dvec<_T>& ot, const _T& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, typename _U>
+    auto
+    select(const dvec<_U>& m, const _T& ot, const dvec<_T>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+#endif
+
+    template <typename _T, typename _U>
+    auto
+    select(const dvec<_U>& m, const _T& ot, const _T& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, typename _U>
+    auto
+    select(const dvec<_U>& m, const dvec<_T>& ot, const dvec<_T>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, typename _U, typename _R>
+    auto
+    select(const dvec<_U>& m, const dvec<_T>& ot, const _R& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T, typename _U, typename _L>
+    auto
+    select(const dvec<_U>& m, const _L& ot, const dvec<_T>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T,
+              template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const _T ot, const _T& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T,
+              template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const dvec<_T>& ot, const dvec<_T>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR,
+              typename _R>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const dvec<_T>& ot, const _R& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T, template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR,
+              typename _L>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const _L& ot, const dvec<_T>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T,
+              template <typename _V1> class _OPL,
+              typename _LL, typename _LR,
+              template <typename _V2> class _OPR,
+              typename _RL, typename _RR,
+              typename _U>
+    auto
+    select(const dvec<_U>& m,
+           const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
+           const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, typename _U,
+              template <typename _V1> class _OPL,
+              typename _LL, typename _LR,
+              typename _R>
+    auto
+    select(const dvec<_U>& m,
+           const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
+           const _R& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T, typename _U,
+              template <typename _V2> class _OPR,
+              typename _RL, typename _RR,
+              typename _L>
+    auto
+    select(const dvec<_U>& m,
+           const _L& ot,
+           const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T,
+              template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR,
+              template <typename _V1> class _OPL,
+              typename _LL, typename _LR,
+              template <typename _V2> class _OPR,
+              typename _RL, typename _RR>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
+           const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    template <typename _T, template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR,
+              template <typename _V1> class _OPL,
+              typename _LL, typename _LR,
+              typename _R>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
+           const _R& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+
+    template <typename _T, template <typename _V> class _OPU,
+              typename _U, typename _UL, typename _UR,
+              typename _L,
+              template <typename _V2> class _OPR,
+              typename _RL, typename _RR>
+    auto
+    select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
+           const _L& ot,
+           const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
+        return make_expr<dop::sel_f<dvec<_T> > >(
+            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
+    }
+    
+    // eval_ops specialized for expr<>
+    template <class _T, class _L, class _R>
+    std::string
+    eval_ops(const expr<dop::sel_f<dvec<_T> >, _L, _R>& e, unsigned& arg_num) {
+        std::string m=eval_ops(e._l, arg_num);
+        std::string ot=eval_ops(e._r._l, arg_num);
+        std::string of=eval_ops(e._r._r, arg_num);
+        return dop::sel_f<dvec<_T> >::body(m, ot, of);
+    }
     
     // overload for float vectors with incorrectly rounded division
     template <typename _L, typename _R>
