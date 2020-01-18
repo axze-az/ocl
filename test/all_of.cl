@@ -1,7 +1,8 @@
 
 kernel
-void all_of(ulong n, 
+void all_of(ulong n,
             __global int* d,
+            __global int* dcnt,
             __global const int* s,
             __local int* t)
 {
@@ -9,29 +10,24 @@ void all_of(ulong n,
     uint gid= get_global_id(0);
     uint lsz= get_local_size(0);
     // copy s[gid] into t[lid]
-    int v=0;
-    if (gid < n) {
-        v=s[gid]
-    }
-    t[lid]=v;
+    int v= gid < n ? s[gid] : 1;
+    t[lid]=v != 0 ? 1: 0;
     barrier(CLK_LOCAL_MEM_FENCE);
     // loop over t[0, lsz)
-    int sv=1;
+    for (uint stride=lsz>>1; stride>0; stride >>=1) {
+        if (lid < stride) {
+            uint pos=lid + stride;
+            int vi= pos < lsz ? t[pos] : 1;
+            t[lid] &= vi;
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
     if (lid == 0) {
         uint grp_id=get_group_id(0);
-        for (uint i=0; i<lsz; ++i) {
-            sv &= t[i] != 0;
-        }
-        d[grp_id] = sv;
+        d[grp_id]=t[0];
     }
-    barrier(CLK_GLOBAL_MEM_FENCE);
-    // loop over d[0, grps]
     if (gid == 0) {
-        uint grps=get_groups(0);
-        sv = 1;
-        for (uint i=0; i<grps; ++i) {
-            sv &= d[i] != 0;
-        }
-        d[0] = sv;
+        uint grps=get_num_groups(0);
+        dcnt[0]=grps;
     }
 }

@@ -27,24 +27,31 @@ namespace ocl {
         void
         missing_backend_data();
 
+        // generate the second part of the key of a kernel
         template <typename _T>
         std::string
         gen_key(const _T& s);
-
+        
+        // generate the second part of the key of a kernel
         template <typename _OP, typename _L, typename _R>
         std::string
         gen_key(const expr<_OP, _L, _R>& e);
         
+        // generate the second part of the key of a kernel
         template <typename _OP, typename _L>
         std::string
         gen_key(const expr<_OP, _L, void>& e);
 
+        // generate the second part of the key of a kernel
         std::string
         gen_key(const cf_body& r);
         
+        // generate the second part of the key of a kernel
         std::string
         gen_key(const ck_body& r);
 
+        // execute the kernel corresponding to the expression
+        // res, r
         template <class _RES, class _EXPR>
         void
         execute(_RES& res, const _EXPR& r,
@@ -89,34 +96,6 @@ namespace ocl {
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
                    be::data_ptr b, size_t lmem_size=0);
     }
-
-    // Opencl kernel for expressions
-    template <class _RES, class _EXPR>
-    class expr_kernel {
-    public:
-        expr_kernel() = default;
-        static
-        void
-        execute(_RES& res, const _EXPR& r,
-                be::data_ptr b, size_t s,
-                const void* addr);
-    private:
-        // get the backend data pointer
-        static
-        be::data_ptr
-        backend_ptr(const _RES& res, const _EXPR& r);
-        // returns a cached kernel for (res, r) or calls gen_kernel
-        // and inserts the new kernel into the cache
-        static
-        be::kernel_handle&
-        get_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr& b, size_t lmem_size=0);
-        // generate a new kernel for (res, r)
-        static
-        be::kernel_handle
-        gen_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr& b, size_t lmem_size=0);
-    };
 
     // generate and execute an opencl kernel for an
     // expression
@@ -166,22 +145,6 @@ ocl::impl::gen_key(const ck_body& r)
     return r.body();
 }
 
-
-template <class _RES, class _SRC>
-ocl::be::data_ptr
-ocl::expr_kernel<_RES, _SRC>::
-backend_ptr(const _RES& res, const _SRC& r)
-{
-    be::data_ptr b=backend_data(res);
-    if (b == nullptr) {
-        b=backend_data(r);
-        if (b == nullptr) {
-            impl::missing_backend_data();
-        }
-    }
-    return b;
-}
-
 template <class _RES, class _SRC>
 void
 ocl::impl::
@@ -190,7 +153,6 @@ execute(_RES& res, const _SRC& r,
         const void* cookie)
 {
     be::event ev;
-#if USE_ARG_BUFFER > 0
     be::argument_buffer ab;
     // size argument first
     bind_non_buffer_args(s, ab);
@@ -221,8 +183,8 @@ execute(_RES& res, const _SRC& r,
     {
         std::unique_lock<be::kernel_handle> _lk(pk);
         unsigned buf_num=0;
-        bind_buffer_args(res, buf_num, pk.k());
-        bind_buffer_args(r, buf_num, pk.k());
+        bind_buffer_args(res, buf_num, pk.k(), ki._local_size);
+        bind_buffer_args(r, buf_num, pk.k(), ki._local_size);
         pk.k().set_arg(buf_num++, dev_ab);
         if (b->debug() != 0) {
             std::string kn=pk.k().name();
@@ -237,28 +199,10 @@ execute(_RES& res, const _SRC& r,
             // wait also for the argument buffer
             wl.insert(cpy_ev);
             ev=b->enqueue_1d_kernel(pk.k(), ki);
+            wl.clear();
         }
     }
     cpy_ev.wait();
-#else
-    be::kernel_handle pk=get_kernel(res, r, cookie, b);
-    // bind args
-    auto& dcq=b->dcq();
-    auto& d=dcq.d();
-    be::kexec_1d_info ki(d, pk.k(), s);
-    {
-        std::unique_lock<be::kernel_handle> _l(pk);
-        const auto& sc=s;
-        unsigned arg_num{0};
-        bind_args(pk.k(), sc, arg_num);
-        bind_args(pk.k(), res, arg_num);
-        bind_args(pk.k(), r, arg_num);
-        {
-            std::unique_lock<be::mutex> _lq(dcq.mtx());
-            ev=b->enqueue_1d_kernel(pk.k(), ki);
-        }
-    }
-#endif
     // otherwise we leak memory
     ev.wait();
 }
@@ -355,13 +299,8 @@ gen_kernel_src(_RES& res,
     static_cast<void>(addr);
     static_cast<void>(res);
     std::ostringstream s;
-#if USE_ARG_BUFFER == 0
-    s << "__kernel " << r._l.body();
-    k_name = r._l.name();
-#else
     // the real kernel follows now
     s << "inline " << r._l.body();
-#endif
     s << '\n';
     return ksrc_info(r._l.name(), s.str(), true);
 }
@@ -378,7 +317,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     std::ostringstream s;
     impl::insert_headers(s, lmem_size);
     s << ksi.source();
-#if USE_ARG_BUFFER>0
+
     std::ostringstream sa;
     sa << cookie;
     const std::string s_cookie=sa.str();
@@ -436,41 +375,8 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
       << concat_args(res, c) << ", "
       << concat_args(r, c) << ");\n";
     s << "}\n";
-#endif
-#if 1
     std::string ss=s.str();
     return compile(ss, k_name, b);
-#else
-    using namespace impl;
-    std::string ss(s.str());
-    if (b->debug() != 0) {
-        std::ostringstream st;
-        st << std::this_thread::get_id() << ": "
-           << k_name << ": --- source code ------------------\n"
-           << ss;
-        be::data::debug_print(st.str());
-    }
-    be::program pgm=be::program::create_with_source(ss, b->dcq().c());
-    try {
-        // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
-        // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
-        pgm.build("-cl-std=CL1.1 -cl-mad-enable");
-    }
-    catch (const be::error& e) {
-        std::cerr << "error info: " << e.what() << '\n';
-        std::cerr << pgm.build_log() << std::endl;
-        throw;
-    }
-    be::kernel k(pgm, k_name);
-    if (b->debug() != 0) {
-        std::ostringstream st;
-        st << std::this_thread::get_id() << ": "
-           << k_name << ": --- compiled with success --------\n";
-        be::data::debug_print(st.str());
-    }
-    be::kernel_handle pkl(pgm, k);
-    return pkl;
-#endif
 }
 
 template <class _RES, class _EXPR>

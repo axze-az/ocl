@@ -31,12 +31,17 @@ namespace ocl {
 
     }
 
+    
     namespace test {
         void
         test_custom_kernel();
+
+        void
+        test_local_mem();
     }
 
 }
+
 
 void
 ocl::test::test_custom_kernel()
@@ -129,10 +134,48 @@ ocl::test::test_custom_kernel()
         std::cout << be::demangle(typeid(ck3).name()) << std::endl;
         dvec<float> v5=ck3;
         dump(v5, "v5: v1*100 + 2 = 242");
+
+        const char* kbody4=
+            "__kernel void lmem(ulong n,\n"
+            "                   __global float* a0,\n"
+            "                   __global const float* a1,\n"
+            "                   __local float* a2)\n"
+            "{\n"
+            "}\n";
+        const char* kname4="lmem";
+        const local_mem_per_workitem<float> la(1);
+        auto ck4=custom_kernel<float>(kname4, kbody4, v1, la);
+
+        dvec<float> v6=ck4;
+        dump(v6, "v6: v1");
+    }
+}
+
+void
+ocl::test::test_local_mem()
+{
+    for (std::size_t i=0; i<3; ++i) {
+        const
+            dvec<float> v0({2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f});
+        dump(v0, "v0");
+        const char* kbody4=
+            "__kernel void lmem(ulong n,\n"
+            "                   __global float* a0,\n"
+            "                   __global const float* a1,\n"
+            "                   __local float* a2)\n"
+            "{\n"
+            "}\n";
+        const char* kname4="lmem";
+        // const local_mem_per_workitem<float> la(1);
+        auto ck4=custom_kernel<float>(kname4, kbody4, v0,
+                                      local_mem_per_workitem<float>(1));
+        std::cout << be::demangle(typeid(ck4).name()) << std::endl;
+        dvec<float> v6=ck4;
+        dump(v6, "v6: v0");
     }
 }
 
 int main()
 {
-    ocl::test::test_custom_kernel();
+    ocl::test::test_local_mem();
 }

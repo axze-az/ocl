@@ -4,9 +4,21 @@
 #include <ocl/config.h>
 #include <ocl/expr.h>
 #include <ocl/be/data.h>
+#include <ocl/be/type_2_name.h>
+#include <ocl/be/devices.h>
 
 namespace ocl {
 
+    // determines the amount of local memory per workitem
+    template <typename _T>
+    class local_mem_per_workitem {
+        unsigned _e;
+    public:
+        local_mem_per_workitem(unsigned e) : _e(e) {};
+        unsigned elements() const { return _e; }
+        unsigned bytes() const { return _e * sizeof(_T); }
+    };
+    
     namespace impl {
 
         // body of a custom function consisting of name and body
@@ -143,6 +155,37 @@ namespace ocl {
     be::data_ptr
     backend_data(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r);
 
+    // decl_non_buffer_args specialized for dvecs
+    template <typename _T>
+    std::string
+    decl_non_buffer_args(const local_mem_per_workitem<_T>& p,
+                         unsigned& arg_num);
+    
+    // declare buffer arguments, must increment arg_num if something
+    // generated
+    template <typename _T>
+    std::string
+    decl_buffer_args(const local_mem_per_workitem<_T>& p,
+                     unsigned& arg_num, bool read_only);
+
+    // bind non buffer arguments
+    template <typename _T>
+    void
+    bind_non_buffer_args(const local_mem_per_workitem<_T>& p,
+                         be::argument_buffer& a);
+
+    // bind buffer arguments
+    template <typename _T>
+    void
+    bind_buffer_args(const local_mem_per_workitem<_T>& p,
+                     unsigned& buf_num,
+                     be::kernel& k, unsigned wgs);
+
+    // concat_args specialized for dvecs
+    template <typename _T>
+    std::string
+    concat_args(const local_mem_per_workitem<_T>& p,
+                var_counters& c);
 }
 
 template <typename _T>
@@ -242,6 +285,73 @@ backend_data(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r)
         p=be::data::instance();
     }
     return p;
+}
+
+template <typename _T>
+std::string
+ocl::decl_non_buffer_args(const local_mem_per_workitem<_T>& p,
+                          unsigned& arg_num)
+{
+    static_cast<void>(p);
+    static_cast<void>(arg_num);
+    return std::string();
+}
+
+template <typename _T>
+std::string
+ocl::decl_buffer_args(const local_mem_per_workitem<_T>& p,
+                      unsigned& arg_num, bool read_only)
+{
+    std::ostringstream s;
+    s << spaces(4) << "__local " ;
+    s << be::type_2_name<_T>::v()
+      << "* arg" << arg_num << ",\n";
+    ++arg_num;
+    return s.str();
+}
+
+template <typename _T>
+void
+ocl::bind_buffer_args(const local_mem_per_workitem<_T>& p,
+                      unsigned& buf_num,
+                      be::kernel& k, unsigned wgs)
+{
+    // bind p.bytes() * wgs bytes local memory to k
+    if (be::data::instance()->debug() != 0) {
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << std::this_thread::get_id() << ": "
+          << kn << ": " << &p << ": binding local_mem_per_workitem<"
+          << be::type_2_name<_T>::v()<< "> with "
+          << p.elements()
+          << " elements and "
+          << wgs << " workitems "
+          << "to arg " << buf_num << '\n';
+        be::data::debug_print(s.str());
+    }
+    k.set_arg(buf_num, p.bytes()*wgs, (void*)0);
+    ++buf_num;
+}
+
+template <typename _T>
+void
+ocl::bind_non_buffer_args(const local_mem_per_workitem<_T>& t,
+                          be::argument_buffer& a)
+{
+    static_cast<void>(t);
+    static_cast<void>(a);
+}
+
+template <typename _T>
+std::string
+ocl::concat_args(const local_mem_per_workitem<_T>& r, var_counters& c)
+{
+    static_cast<void>(r);
+    std::ostringstream s;
+    s << "arg" << c._buf_num;
+    ++c._var_num;
+    ++c._buf_num;
+    return s.str();
 }
 
 // local variables:

@@ -133,7 +133,8 @@ namespace ocl {
     // bind buffer arguments
     template <typename _T>
     void
-    bind_buffer_args(const _T& t, unsigned& buf_num, be::kernel& k);
+    bind_buffer_args(const _T& t, unsigned& buf_num,
+                     be::kernel& k, unsigned wgs);
 
     // eval_args, returns the opencl source code
     // for all arguments of generated from r,
@@ -252,12 +253,14 @@ namespace ocl {
     void
     bind_buffer_args(const expr<_OP, _L, _R>& r,
                      unsigned& buf_num,
-                     be::kernel& k);
+                     be::kernel& k,
+                     unsigned wgs);
     template <class _OP, class _L>
     void
     bind_buffer_args(const expr<_OP, _L, void>& r,
                      unsigned& buf_num,
-                     be::kernel& k);
+                     be::kernel& k,
+                     unsigned wgs);
 
     // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
@@ -416,10 +419,13 @@ bind_non_buffer_args(const impl::ignored_arg<_T>& t, be::argument_buffer& a)
 
 template <typename _T>
 void
-ocl::bind_buffer_args(const _T& t, unsigned& buf_num, be::kernel& k)
+ocl::bind_buffer_args(const _T& t, unsigned& buf_num,
+                      be::kernel& k, unsigned wgs)
 {
     static_cast<void>(t);
     static_cast<void>(buf_num);
+    static_cast<void>(k);
+    static_cast<void>(wgs);
 }
 
 template <class _T>
@@ -758,19 +764,21 @@ template <class _OP, class _L, class _R>
 void
 ocl::bind_buffer_args(const expr<_OP, _L, _R>& e,
                       unsigned& buf_num,
-                      be::kernel& k)
+                      be::kernel& k,
+                      unsigned wgs)
 {
-    bind_buffer_args(e._l, buf_num, k);
-    bind_buffer_args(e._r, buf_num, k);
+    bind_buffer_args(e._l, buf_num, k, wgs);
+    bind_buffer_args(e._r, buf_num, k, wgs);
 }
 
 template <class _OP, class _L>
 void
 ocl::bind_buffer_args(const expr<_OP, _L, void>& e,
                       unsigned& buf_num,
-                      be::kernel& k)
+                      be::kernel& k,
+                      unsigned wgs)
 {
-    bind_buffer_args(e._l, buf_num, k);
+    bind_buffer_args(e._l, buf_num, k, wgs);
 }
 
 template <class _OP, class _L, class _R>

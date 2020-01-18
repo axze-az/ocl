@@ -36,15 +36,17 @@ namespace ocl {
     void
     bind_non_buffer_args(const dvec<_T>& t, be::argument_buffer& a);
 
-    // bind buffer arguments
+    // bind buffer arguments to kernel with workgroup size wgs
     template <typename _T>
     void
-    bind_buffer_args(const dvec<_T>& t, unsigned& buf_num, be::kernel& k);
+    bind_buffer_args(const dvec<_T>& t, unsigned& buf_num,
+                     be::kernel& k, unsigned wgs);
 
     // bind buffer arguments
     template <typename _T>
     void
-    bind_buffer_args(dvec<_T>& t, unsigned& buf_num, be::kernel& k);
+    bind_buffer_args(dvec<_T>& t, unsigned& buf_num,
+                     be::kernel& k, unsigned wgs);
 
     // store results
     template <typename _T>
@@ -991,8 +993,10 @@ ocl::bind_non_buffer_args(const dvec<_T>& t, be::argument_buffer& a)
 template <typename _T>
 void
 ocl::
-bind_buffer_args(const dvec<_T>& r, unsigned& buf_num, be::kernel& k)
+bind_buffer_args(const dvec<_T>& r, unsigned& buf_num,
+                 be::kernel& k, unsigned wgs)
 {
+    static_cast<void>(wgs);
     if (r.backend_data()->debug() != 0) {
         std::string kn=k.name();
         std::ostringstream s;
@@ -1010,8 +1014,10 @@ bind_buffer_args(const dvec<_T>& r, unsigned& buf_num, be::kernel& k)
 template <typename _T>
 void
 ocl::
-bind_buffer_args(dvec<_T>& r, unsigned& buf_num, be::kernel& k)
+bind_buffer_args(dvec<_T>& r, unsigned& buf_num,
+                 be::kernel& k, unsigned wgs)
 {
+    static_cast<void>(wgs);
     if (r.backend_data()->debug() != 0) {
         std::string kn=k.name();
         std::ostringstream s;
