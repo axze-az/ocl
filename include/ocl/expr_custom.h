@@ -329,7 +329,7 @@ ocl::bind_buffer_args(const local_mem_per_workitem<_T>& p,
           << "to arg " << buf_num << '\n';
         be::data::debug_print(s.str());
     }
-    k.set_arg(buf_num, p.bytes()*wgs, (void*)0);
+    k.set_arg(buf_num, p.bytes()*wgs, static_cast<const void*>(0));
     ++buf_num;
 }
 
