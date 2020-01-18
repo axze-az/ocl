@@ -16,6 +16,8 @@ namespace ocl {
             };
             // allow access to the stored data
             const char* data() const { return _v.data(); }
+            // allow access to the stored data
+            char* data() { return _v.data(); }
             // amount of data
             size_t size() const { return _v.size(); }
             // clear the buffer

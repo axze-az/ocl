@@ -162,21 +162,12 @@ execute(_RES& res, const _SRC& r,
     size_t ab_size=ab.size();
     auto& dcq=b->dcq();
     auto& c=dcq.c();
-    be::buffer dev_ab(c, ab_size, be::buffer::read_only);
-    auto& q=dcq.q();
+    be::buffer dev_ab(c, ab_size,
+                      be::buffer::read_only|be::buffer::copy_host_ptr,
+                      ab.data());
     auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
     auto& d=dcq.d();
-    be::event cpy_ev;
-    {
-        std::unique_lock<be::mutex> _lq(dcq_mtx);
-        cpy_ev=q.enqueue_write_buffer_async(dev_ab, 0,
-                                            ab_size,
-                                            ab.data());
-        q.flush();
-        // insert the event before we queue the kernel into the wait
-        // list
-    }
     size_t lmem_size=be::request_local_mem(d, ab_size);
     be::kernel_handle pk=get_kernel(res, r, cookie, b, lmem_size);
     be::kexec_1d_info ki(d, pk.k(), s);
@@ -196,13 +187,10 @@ execute(_RES& res, const _SRC& r,
         }
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
-            // wait also for the argument buffer
-            wl.insert(cpy_ev);
             ev=b->enqueue_1d_kernel(pk.k(), ki);
             wl.clear();
         }
     }
-    cpy_ev.wait();
     // otherwise we leak memory
     ev.wait();
 }
