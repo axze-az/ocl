@@ -64,9 +64,9 @@ ocl::all_of(dvec<_T>& v)
     const std::string k_name=std::string("all_of_") + tname;
     const std::string k_body=gen_all_of(tname);
     do {
-        auto ck=custom_kernel_with_size<uint64_t>(k_name, k_body,
-                                                  hdcnt, dcnt,
-                                                  local_mem_per_workitem<type>(1));
+        auto ck=custom_kernel_with_size<type>(k_name, k_body,
+                                              hdcnt, dcnt,
+                                              local_mem_per_workitem<type>(1));
         nz=ck;
         dcnt.copy_to_host(&hdcnt);
     } while (hdcnt>1);
