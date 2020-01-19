@@ -438,6 +438,14 @@ namespace ocl {
         };
 
         template <class _D>
+        struct cvt<dvec<_D> > {
+            static
+            std::string body(const std::string& l) {
+                return cvt<_D>::body(l);
+            }
+        };
+
+        template <class _D>
         struct cvt_rz {
             static
             std::string body(const std::string& l) {
@@ -447,6 +455,14 @@ namespace ocl {
                 res += l;
                 res += ")";
                 return res;
+            }
+        };
+
+        template <class _D>
+        struct cvt_rz<dvec<_D> > {
+            static
+            std::string body(const std::string& l) {
+                return cvt<_D>::body(l);
             }
         };
 
