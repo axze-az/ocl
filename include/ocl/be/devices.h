@@ -63,7 +63,8 @@ namespace ocl {
         size_t
         calc_local_size(const dev_info& di,
                         size_t global_size,
-                        size_t max_local_size);
+                        size_t max_local_size,
+                        size_t pref_local_size_multiple);
 
         // kernel execution info: calculates _local_size
         // and global_size with

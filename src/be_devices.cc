@@ -84,11 +84,18 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
             (d, CL_KERNEL_COMPILE_WORK_GROUP_SIZE);
     std::size_t local_size=k_req_local_size[0];
     if (local_size == 0) {
-        size_t k_local_size(k.get_work_group_info<size_t>
-            (d, CL_KERNEL_WORK_GROUP_SIZE));
+        size_t k_local_size=k.get_work_group_info<size_t>
+            (d, CL_KERNEL_WORK_GROUP_SIZE);
+        size_t k_pref_local_size_multiple=k.get_work_group_info<size_t>
+            (d, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE);
+        // group size must be larger than 1, otherwise reductions
+        // do not work
+        k_pref_local_size_multiple = std::max(k_pref_local_size_multiple,
+                                              size_t(2));
         local_size=calc_local_size(dev_info(d),
                                    s,
-                                   k_local_size);
+                                   k_local_size,
+                                   k_pref_local_size_multiple);
     }
     _local_size = local_size;
     size_t local_size_m_1 = local_size - 1;
@@ -128,12 +135,14 @@ ocl::be::request_local_mem(const dev_info& di, size_t lmem_req)
 std::size_t
 ocl::be::calc_local_size(const dev_info& di,
                          size_t global_size,
-                         size_t k_local_size)
+                         size_t k_local_size,
+                         size_t pref_local_size_multiple)
 {
     size_t cu=di._max_compute_units;
     size_t local_size = std::min(k_local_size, di._max_workgroup_size);
     // we want to have work on all cu's:
-    while (local_size * cu > global_size && local_size > 1) {
+    while (local_size * cu > global_size &&
+           local_size > pref_local_size_multiple) {
         local_size >>= 1;
     }
     return local_size;
