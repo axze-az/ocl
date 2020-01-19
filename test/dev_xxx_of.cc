@@ -20,7 +20,7 @@ std::string
 gen_all_of(const std::string& tname)
 {
     std::ostringstream s;
-    s <<"void all_of_"<< tname << "(ulong n,\n"
+    s <<"__kernel void all_of_"<< tname << "(ulong n,\n"
         "                     __global " << tname << "* ds,\n"
         "                     __global ulong* dcnt,\n"
         "                     __local " << tname << "* t)\n"
