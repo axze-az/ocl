@@ -41,7 +41,7 @@ if (has_ipo)
     set_property(TARGET ocl-so
         PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 endif()
-set_target_properties(ocl-so PROPERTIES SOVERSION "${OCLL_VERSION_MAJ}"
+set_target_properties(ocl-so PROPERTIES SOVERSION "${OCL_VERSION_MAJ}"
   VERSION "${OCL_VERSION_MAJ}.${OCL_VERSION_MIN}")
 
 if (LIBOPENCL)
