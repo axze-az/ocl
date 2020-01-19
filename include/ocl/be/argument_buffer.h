@@ -21,7 +21,7 @@ namespace ocl {
             // amount of data
             size_t size() const { return _v.size(); }
             // clear the buffer
-            void clear() { _v.clear(); }
+            void clear() { _v.clear(); _max_alignment=0; }
             // insert an argument into the buffer
             template <typename _T>
             void

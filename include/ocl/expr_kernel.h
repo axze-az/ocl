@@ -20,7 +20,7 @@ namespace ocl {
         be::kernel_handle
         compile(const std::string& s, const std::string& k_name,
                 be::data_ptr& b);
-        
+
         // throws an exception because of missing
         // backend data
         __attribute__((__noreturn__))
@@ -31,12 +31,12 @@ namespace ocl {
         template <typename _T>
         std::string
         gen_key(const _T& s);
-        
+
         // generate the second part of the key of a kernel
         template <typename _OP, typename _L, typename _R>
         std::string
         gen_key(const expr<_OP, _L, _R>& e);
-        
+
         // generate the second part of the key of a kernel
         template <typename _OP, typename _L>
         std::string
@@ -45,7 +45,7 @@ namespace ocl {
         // generate the second part of the key of a kernel
         std::string
         gen_key(const cf_body& r);
-        
+
         // generate the second part of the key of a kernel
         std::string
         gen_key(const ck_body& r);
@@ -245,16 +245,16 @@ gen_kernel_src(_RES& res, const _SRC& r, const void* cookie)
         be::type_2_name<unsigned long>::v() + " n";
     // argument generation
     unsigned arg_num{0};
-    s << eval_args(element_count, res, arg_num, false)
-      << ",\n";
-    s << eval_args("", r, arg_num, true);
-    s << "\n)\n";
-    // begin body
-    s << "{\n";
-
-    // global id
-    s << "    ulong gid = get_global_id(0);\n";
-    s << "    if (gid < n) {\n";
+    s << element_count << ",\n"
+      << eval_args(res, arg_num, false)
+      << ",\n"
+      << eval_args(r, arg_num, true)
+      << "\n)\n"
+      // begin body
+         "{\n"
+      // global id
+         "    ulong gid = get_global_id(0);\n"
+         "    if (gid < n) {\n";
     // temporary variables
     unsigned var_num{1};
     s << eval_vars(r, var_num, true)

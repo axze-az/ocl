@@ -144,3 +144,13 @@ ocl::dop::names::f_sqrt_base::body(const std::string& tname)
         "}\n";
     return fbody;
 }
+
+std::string
+ocl::dop::names::f_sel_base::
+body(const std::string& s, const std::string& on_true,
+     const std::string& on_false)
+{
+    std::string r="(( ";
+    r += s + ") ? (" + on_true + ") : (" + on_false + "))";
+    return r;
+}

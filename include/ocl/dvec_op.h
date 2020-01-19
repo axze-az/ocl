@@ -56,7 +56,7 @@ namespace ocl {
     // eval_args specialized for dvec
     template <class _T>
     std::string
-    eval_args(const std::string& p, const dvec<_T>& r,
+    eval_args(const dvec<_T>& r,
               unsigned& arg_num, bool ro);
     // eval_vars specialized for dvec
     template <class _T>
@@ -67,15 +67,6 @@ namespace ocl {
     template <class _T>
     std::string
     eval_results(dvec<_T>& r, unsigned& res_num);
-
-    // bind_args for non const arguments
-    template <class _T>
-    void
-    bind_args(be::kernel& k, dvec<_T>& r,  unsigned& arg_num);
-    // bind_args for const arguments
-    template <class _T>
-    void
-    bind_args(be::kernel& k, const dvec<_T>& r,  unsigned& arg_num);
 
     namespace dop {
 
@@ -141,7 +132,7 @@ namespace ocl {
         struct bit_not : public unary_func<names::bit_not, true>{};
 
         namespace names {
-            
+
             struct f_fabs {
                 constexpr
                 const char* operator()() const { return "fabs"; }
@@ -158,7 +149,7 @@ namespace ocl {
 
         template <class _T>
         struct abs_f : public unary_func<names::f_abs, false>{};
-        
+
         template <>
         struct abs_f< dvec<float> >
             : public unary_func<names::f_fabs, false> {
@@ -256,7 +247,7 @@ namespace ocl {
 
         template <class _T>
         struct exp10_f : public unary_func<names::f_exp10, false>{};
-        
+
         namespace names {
 
             struct add {
@@ -432,7 +423,7 @@ namespace ocl {
 
         template <class _T>
         struct pow_f : public binary_func<names::f_pow> {};
-        
+
         template <class _D>
         struct cvt {
             static
@@ -458,7 +449,7 @@ namespace ocl {
                 return res;
             }
         };
-        
+
         template <class _D>
         struct as {
             static
@@ -479,22 +470,24 @@ namespace ocl {
             }
         };
 
+
         // place holder for the arguments of select
         template <class _D>
         struct sel_data {
         };
 
+        namespace names {
+            struct f_sel_base {
+                static
+                std::string
+                body(const std::string& s,
+                     const std::string& on_true,
+                     const std::string& on_false);
+            };
+        }
+
         template <class _D>
-        struct sel_f {
-            static
-            std::string
-            body(const std::string& s,
-                 const std::string& on_true,
-                 const std::string& on_false) {
-                std::string r="(( ";
-                r += s + ") ? (" + on_true + ") : (" + on_false + "))";
-                return r;
-            }
+        struct f_sel : public names::f_sel_base {
         };
     }
 
@@ -513,7 +506,7 @@ namespace ocl {
     cvt_rz(const _S& s) {
         return expr<dop::cvt_rz<_D>, _S, void>(s);
     }
-    
+
     template <class _D, class _S>
     inline
     expr<dop::as<_D>, _S, void>
@@ -732,13 +725,13 @@ namespace ocl {
     template <typename _T, typename _U>
     auto
     select(const dvec<_U>& m, const dvec<_T>& ot, const _T& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, typename _U>
     auto
     select(const dvec<_U>& m, const _T& ot, const dvec<_T>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 #endif
@@ -746,26 +739,26 @@ namespace ocl {
     template <typename _T, typename _U>
     auto
     select(const dvec<_U>& m, const _T& ot, const _T& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, typename _U>
     auto
     select(const dvec<_U>& m, const dvec<_T>& ot, const dvec<_T>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, typename _U, typename _R>
     auto
     select(const dvec<_U>& m, const dvec<_T>& ot, const _R& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
     template <typename _T, typename _U, typename _L>
     auto
     select(const dvec<_U>& m, const _L& ot, const dvec<_T>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -775,7 +768,7 @@ namespace ocl {
     auto
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const _T ot, const _T& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T,
@@ -784,7 +777,7 @@ namespace ocl {
     auto
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const dvec<_T>& ot, const dvec<_T>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, template <typename _V> class _OPU,
@@ -793,7 +786,7 @@ namespace ocl {
     auto
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const dvec<_T>& ot, const _R& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -803,7 +796,7 @@ namespace ocl {
     auto
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const _L& ot, const dvec<_T>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -817,7 +810,7 @@ namespace ocl {
     select(const dvec<_U>& m,
            const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
            const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, typename _U,
@@ -828,7 +821,7 @@ namespace ocl {
     select(const dvec<_U>& m,
            const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
            const _R& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -840,7 +833,7 @@ namespace ocl {
     select(const dvec<_U>& m,
            const _L& ot,
            const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -855,7 +848,7 @@ namespace ocl {
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
            const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
     template <typename _T, template <typename _V> class _OPU,
@@ -867,7 +860,7 @@ namespace ocl {
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const expr<_OPL<dvec<_T> >, _LL, _LR>& ot,
            const _R& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
 
@@ -880,20 +873,20 @@ namespace ocl {
     select(const expr<_OPU<dvec<_U> >, _UL, _UR> & m,
            const _L& ot,
            const expr<_OPR<dvec<_T> >, _RL, _RR>& of) {
-        return make_expr<dop::sel_f<dvec<_T> > >(
+        return make_expr<dop::f_sel<dvec<_T> > >(
             m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
     }
-    
+
     // eval_ops specialized for expr<>
     template <class _T, class _L, class _R>
     std::string
-    eval_ops(const expr<dop::sel_f<dvec<_T> >, _L, _R>& e, unsigned& arg_num) {
+    eval_ops(const expr<dop::f_sel<dvec<_T> >, _L, _R>& e, unsigned& arg_num) {
         std::string m=eval_ops(e._l, arg_num);
         std::string ot=eval_ops(e._r._l, arg_num);
         std::string of=eval_ops(e._r._r, arg_num);
-        return dop::sel_f<dvec<_T> >::body(m, ot, of);
+        return dop::f_sel<dvec<_T> >::body(m, ot, of);
     }
-    
+
     // overload for float vectors with incorrectly rounded division
     template <typename _L, typename _R>
     std::string
@@ -1048,14 +1041,10 @@ ocl::store_result(dvec<_T>& r, var_counters& c)
 
 template <class _T>
 std::string
-ocl::eval_args(const std::string& p, const dvec<_T>& r, unsigned& arg_num,
-               bool ro)
+ocl::eval_args(const dvec<_T>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
     std::ostringstream s;
-    if (!p.empty()) {
-        s << p << ",\n";
-    }
     s << spaces(4) << "__global " ;
     if (ro) {
         s<< "const ";
@@ -1093,42 +1082,6 @@ std::string ocl::eval_results(dvec<_T>& r,
       << " v" << res_num << ';';
     ++res_num;
     return s.str();
-}
-
-template <class _T>
-void
-ocl::bind_args(be::kernel& k, dvec<_T>& r, unsigned& arg_num)
-{
-    if (r.backend_data()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": binding dvec<"
-          << be::type_2_name<_T>::v()<< "> with "
-          << r.size()
-          << " elements to arg " << arg_num << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(arg_num, r.buf());
-    ++arg_num;
-}
-
-template <class _T>
-void
-ocl::bind_args(be::kernel& k, const dvec<_T>& r, unsigned& arg_num)
-{
-    if (r.backend_data()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": binding const dvec<"
-          << be::type_2_name<_T>::v()<< "> with "
-          << r.size()
-          << " elements to arg " << arg_num << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(arg_num, r.buf());
-    ++arg_num;
 }
 
 template <typename _L, typename _R>

@@ -44,7 +44,7 @@ namespace ocl {
     make_expr(const _L& l) {
         return expr<_OP, _L, void>(l);
     }
-    
+
     namespace impl {
         // a template to allow encapsulation of payload into expressions
         template <typename _T>
@@ -65,7 +65,7 @@ namespace ocl {
     struct expr_traits<_T[_N]> {
         using type = impl::array_ptr<_T, _N>;
     };
-    
+
     struct spaces : public std::string {
         spaces(unsigned int n) : std::string(n, ' ') {}
     };
@@ -88,7 +88,7 @@ namespace ocl {
     template <typename _T, size_t _N>
     std::string
     decl_non_buffer_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num);
-    
+
     // ignored_arg are really ignored
     template <typename _T>
     std::string
@@ -123,7 +123,7 @@ namespace ocl {
     void
     bind_non_buffer_args(const impl::array_ptr<_T, _N>& t,
                          be::argument_buffer& a);
-    
+
     // bind ignored arguments
     template <typename _T>
     void
@@ -141,21 +141,17 @@ namespace ocl {
     // increments arg_num.
     template <class _T>
     std::string
-    eval_args(const std::string& p, const _T& r,
-              unsigned& arg_num, bool ro);
+    eval_args(const _T& r, unsigned& arg_num, bool ro);
     // eval_args for ignored args
     template <class _T>
     std::string
-    eval_args(const std::string& p, const impl::ignored_arg<_T>& t,
-              unsigned& arg_num, bool ro);
+    eval_args(const impl::ignored_arg<_T>& t, unsigned& arg_num, bool ro);
 
     // eval_args for array_ptr<_T, _N>
     template <class _T, size_t _N>
     std::string
-    eval_args(const std::string& p,
-              const impl::array_ptr<_T, _N>& t,
-              unsigned& arg_num, bool ro);
-    
+    eval_args(const impl::array_ptr<_T, _N>& t,unsigned& arg_num, bool ro);
+
     // eval_vars
     template <class _T>
     std::string
@@ -166,7 +162,7 @@ namespace ocl {
     std::string
     eval_vars(const impl::array_ptr<_T, _N>& r,
               unsigned& arg_num, bool read);
-    
+
     // eval_ops
     template <class _T>
     std::string eval_ops(const _T& r, unsigned& arg_num);
@@ -175,19 +171,6 @@ namespace ocl {
     template <class _T>
     std::string eval_results(_T& r, unsigned& res_num);
 
-    // bind_args for const arguments
-    template <class _T>
-    void bind_args(be::kernel& k, const _T& r,  unsigned& arg_num);
-
-    // bind_args for const arguments
-    template <class _T>
-    void bind_args(be::kernel& k, _T& r,  unsigned& arg_num);
-
-    template <class _T>
-    void bind_args(be::kernel& k, const impl::ignored_arg<_T>& r,
-                   unsigned& arg_num);
-
-    
     // backend_data specialized for expr
     template <class _OP, class _L, class _R>
     be::data_ptr backend_data(const expr<_OP, _L, _R>& a);
@@ -265,15 +248,13 @@ namespace ocl {
     // eval_args specialized for expr<>
     template <class _OP, class _L, class _R>
     std::string
-    eval_args(const std::string& p,
-              const expr<_OP, _L, _R>& r,
+    eval_args(const expr<_OP, _L, _R>& r,
               unsigned& arg_num,
               bool ro);
 
     template <class _OP, class _L>
     std::string
-    eval_args(const std::string& p,
-              const expr<_OP, _L, void>& r,
+    eval_args(const expr<_OP, _L, void>& r,
               unsigned& arg_num,
               bool ro);
 
@@ -296,17 +277,6 @@ namespace ocl {
     template <class _OP, class _L>
     std::string
     eval_ops(const expr<_OP, _L, void>& a, unsigned& arg_num);
-
-    // bind_args specialized for expr<>
-    template <class _OP, class _L, class _R>
-    void bind_args(be::kernel& k,
-                   const expr<_OP, _L, _R>& r,
-                   unsigned& arg_num);
-
-    template <class _OP, class _L>
-    void bind_args(be::kernel& k,
-                   const expr<_OP, _L, void>& r,
-                   unsigned& arg_num);
 
 }
 
@@ -429,17 +399,13 @@ ocl::bind_buffer_args(const _T& t, unsigned& buf_num,
 }
 
 template <class _T>
-std::string ocl::eval_args(const std::string& p,
-                           const _T& r,
-                           unsigned& arg_num,
-                           bool ro)
+std::string
+ocl::
+eval_args(const _T& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
     static_cast<void>(ro);
     std::ostringstream s;
-    if (!p.empty()) {
-        s << p << ",\n";
-    }
     s << spaces(4) ;
     s << be::type_2_name<_T>::v()
       << " arg"  << arg_num;
@@ -450,31 +416,22 @@ std::string ocl::eval_args(const std::string& p,
 template <class _T>
 std::string
 ocl::
-eval_args(const std::string& p,
-          const impl::ignored_arg<_T>& t,
-          unsigned& arg_num,
-          bool ro)
+eval_args(const impl::ignored_arg<_T>& t, unsigned& arg_num, bool ro)
 {
     static_cast<void>(t);
     static_cast<void>(arg_num);
     static_cast<void>(ro);
-    return p;
+    return std::string();
 }
 
 template <class _T, std::size_t _N>
 std::string
 ocl::
-eval_args(const std::string& p,
-          const impl::array_ptr<_T, _N>& r,
-          unsigned& arg_num,
-          bool ro)
+eval_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
     static_cast<void>(ro);
     std::ostringstream s;
-    if (!p.empty()) {
-        s << p << ",\n";
-    }
     s << spaces(4) ;
     s << "__arg_local ";
     if (ro)
@@ -483,7 +440,7 @@ eval_args(const std::string& p,
       << "* arg"  << arg_num;
     ++arg_num;
     return s.str();
-}    
+}
 
 template <class _T>
 std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
@@ -534,56 +491,6 @@ std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
     std::string a(s.str());
     ++arg_num;
     return a;
-}
-
-template <class _T>
-void
-ocl::bind_args(be::kernel& k, _T& r, unsigned& arg_num)
-{
-    if (be::data::instance()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": binding "
-          << be::type_2_name<_T>::v()
-          << " to arg " << arg_num
-          << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(arg_num, sizeof(_T), &r);
-    ++arg_num;
-}
-
-template <class _T>
-void
-ocl::bind_args(be::kernel& k, const _T& r, unsigned& arg_num)
-{
-    if (be::data::instance()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": binding const "
-          << be::type_2_name<_T>::v()
-          << " to arg " << arg_num
-          << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(arg_num, sizeof(_T), &r);
-    ++arg_num;
-}
-
-template <class _T>
-void
-ocl::bind_args(be::kernel& k, const impl::ignored_arg<_T>& r,
-               unsigned& arg_num)
-{
-    if (be::data::instance()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": ignoring argument\n";
-        be::data::debug_print(s.str());
-    }
 }
 
 template <class _OP, class _L, class _R>
@@ -688,22 +595,23 @@ concat_args(const expr<_OP, _L, _R>& e, var_counters& c)
 }
 
 template <class _OP, class _L, class _R>
-std::string ocl::eval_args(const std::string& p,
-                           const expr<_OP, _L, _R>& r,
-                           unsigned& arg_num,
-                           bool ro)
+std::string
+ocl::eval_args(const expr<_OP, _L, _R>& e, unsigned& arg_num, bool ro)
 {
-    std::string left(eval_args(p, r._l, arg_num, ro));
-    return eval_args(left, r._r, arg_num, ro);
+    std::string l=eval_args(e._l, arg_num, ro);
+    std::string r=eval_args(e._r, arg_num, ro);
+    if (l.empty())
+        return r;
+    if (r.empty())
+        return l;
+    return l + ",\n" + r;
 }
 
 template <class _OP, class _L>
-std::string ocl::eval_args(const std::string& p,
-                           const expr<_OP, _L, void>& r,
-                           unsigned& arg_num,
-                           bool ro)
+std::string
+ocl::eval_args(const expr<_OP, _L, void>& r, unsigned& arg_num, bool ro)
 {
-    std::string left(eval_args(p, r._l, arg_num, ro));
+    std::string left(eval_args(r._l, arg_num, ro));
     return left;
 }
 
@@ -713,7 +621,11 @@ std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
 {
     std::string l=eval_vars(a._l, arg_num, read);
     std::string r=eval_vars(a._r, arg_num, read);
-    return std::string(l + "\n"+  r);
+    if (l.empty())
+        return r;
+    if (r.empty())
+        return l;
+    return l + '\n' + r;
 }
 
 template <class _OP, class _L>
@@ -721,7 +633,7 @@ std::string ocl::eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
                            bool read)
 {
     auto l=eval_vars(a._l, arg_num, read);
-    return std::string(l + "\n");
+    return std::string(l + '\n');
 }
 
 template <class _OP, class _L, class _R>
@@ -779,21 +691,6 @@ ocl::bind_buffer_args(const expr<_OP, _L, void>& e,
                       unsigned wgs)
 {
     bind_buffer_args(e._l, buf_num, k, wgs);
-}
-
-template <class _OP, class _L, class _R>
-void ocl::bind_args(be::kernel& k, const expr<_OP, _L, _R>& r,
-                    unsigned& arg_num)
-{
-    bind_args(k, r._l, arg_num);
-    bind_args(k, r._r, arg_num);
-}
-
-template <class _OP, class _L>
-void ocl::bind_args(be::kernel& k, const expr<_OP, _L, void>& r,
-                    unsigned& arg_num)
-{
-    bind_args(k, r._l, arg_num);
 }
 
 // Local variables:
