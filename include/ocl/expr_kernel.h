@@ -288,7 +288,7 @@ gen_kernel_src(_RES& res,
     static_cast<void>(res);
     std::ostringstream s;
     // the real kernel follows now
-    s << "inline " << r._l.body();
+    s << r._l.body();
     s << '\n';
     return ksrc_info(r._l.name(), s.str(), true);
 }
