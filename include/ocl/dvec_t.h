@@ -108,9 +108,17 @@ namespace ocl {
         // copy the contents of the device buffer into p[0, size())
         void
         copy_to_host(_T* p) const;
-        // copy the contents of p[0, size()) into the device buffer
+        // copy the contents of the device buffer [offs, offs+cnt)
+        // into p[0, cnt)
+        void
+        copy_to_host(_T* p, size_t offs, size_t cnt) const;
+        // copy the contents of p into the device buffer
         void
         copy_from_host(const _T* p);
+        // copy the contents of p[0, cnt) into the device buffer
+        // [offs, offs+cnt)
+        void
+        copy_from_host(const _T* p, size_t offs, size_t cnt);
         // conversion operator to std::vector, forces move of
         // data to host
         explicit operator std::vector<_T> () const;
@@ -360,9 +368,27 @@ ocl::dvec<_T>::copy_to_host(_T* p)
 template <class _T>
 inline
 void
+ocl::dvec<_T>::copy_to_host(_T* p, size_t offs, size_t cnt)
+    const
+{
+    dvec_base::copy_to_host(p, offs*sizeof(_T), cnt*sizeof(_T));
+}
+
+
+template <class _T>
+inline
+void
 ocl::dvec<_T>::copy_from_host(const _T* p)
 {
     dvec_base::copy_from_host(p);
+}
+
+template <class _T>
+inline
+void
+ocl::dvec<_T>::copy_from_host(const _T* p, size_t offs, size_t cnt)
+{
+    dvec_base::copy_from_host(p, offs*sizeof(_T), cnt*sizeof(_T));
 }
 
 template <class _T>

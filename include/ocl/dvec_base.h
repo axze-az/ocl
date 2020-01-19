@@ -156,8 +156,13 @@ namespace ocl {
         void copy_on_device(const dvec_base& r);
         // host device copy
         void copy_from_host(const void* src);
+        // host device copy
+        void copy_from_host(const void* src, size_t buf_offs, size_t len);
         // device host copy
         void copy_to_host(void* dst)
+            const;
+        // device host copy
+        void copy_to_host(void* dst, size_t buf_offs, size_t len)
             const;
     public:
         // return the size of the dvec in bytes

@@ -152,6 +152,24 @@ ocl::dvec_base::copy_from_host(const void* p)
 }
 
 void
+ocl::dvec_base::copy_from_host(const void* p, size_t buf_offs, size_t s)
+{
+    if (__likely(s)) {
+        auto& dcq=_bed->dcq();
+        auto& q= dcq.q();
+        auto& wl=dcq.wl();
+        be::event ev;
+        {
+            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            ev=q.enqueue_write_buffer_async(_b, buf_offs, s, p, wl);
+            q.flush();
+            wl.clear();
+        }
+        ev.wait();
+    }
+}
+
+void
 ocl::dvec_base::copy_to_host(void* p)
     const
 {
@@ -164,6 +182,25 @@ ocl::dvec_base::copy_to_host(void* p)
         {
             std::unique_lock<be::mutex> _ql(dcq.mtx());
             ev= q.enqueue_read_buffer_async(_b, 0, s, p, wl);
+            q.flush();
+            wl.clear();
+        }
+        ev.wait();
+    }
+}
+
+void
+ocl::dvec_base::copy_to_host(void* p, size_t buf_offs, size_t s)
+    const
+{
+    if (__likely(s)) {
+        auto& dcq=_bed->dcq();
+        auto& q= dcq.q();
+        auto& wl=dcq.wl();
+        be::event ev;
+        {
+            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            ev= q.enqueue_read_buffer_async(_b, buf_offs, s, p, wl);
             q.flush();
             wl.clear();
         }
