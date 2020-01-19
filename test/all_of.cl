@@ -15,7 +15,7 @@ __kernel void all_of(ulong n,
     for (uint stride=lsz>>1; stride>0; stride >>=1) {
 #if 1
         uint pos= lid + stride;
-        TYPE vi= (lid < stride) & (pos < lsz) ? t[pos] : t[lid];
+        TYPE vi= (lid < stride) & (pos < lsz) ? t[pos] : 1;
         t[lid] &= vi;
 #else
         if (lid < stride) {
