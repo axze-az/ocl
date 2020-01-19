@@ -1,22 +1,21 @@
 
-__kernel
-void all_of(ulong n,
-            __global ulong* dcnt,
-            __global int* ds,
-            __local int* t)
+__kernel void all_of(ulong n,
+                     __global ulong* dcnt,
+                     __global TYPE* ds,
+                     __local TYPE* t)
 {
+    ulong gid= get_global_id(0);
     uint lid= get_local_id(0);
-    uint gid= get_global_id(0);
     uint lsz= get_local_size(0);
     // copy s[gid] into t[lid]
-    int v= gid < n ? ds[gid] : 1;
+    TYPE v= gid < n ? ds[gid] : 1;
     t[lid]=v != 0 ? 1: 0;
     barrier(CLK_LOCAL_MEM_FENCE);
     // loop over t[0, lsz)
     for (uint stride=lsz>>1; stride>0; stride >>=1) {
 #if 1
         uint pos= lid + stride;
-        int vi= (lid < stride) & (pos < lsz) ? t[pos] : t[lid];
+        TYPE vi= (lid < stride) & (pos < lsz) ? t[pos] : t[lid];
         t[lid] &= vi;
 #else
         if (lid < stride) {
@@ -28,7 +27,7 @@ void all_of(ulong n,
         barrier(CLK_LOCAL_MEM_FENCE);
     }
     if (lid == 0) {
-        uint grp_id=get_group_id(0);
+        ulong grp_id=get_group_id(0);
         ds[grp_id]=t[0];
     }
     if (gid == 0) {
@@ -36,6 +35,7 @@ void all_of(ulong n,
         dcnt[0]=grps;
     }
 }
+
 /*
  * local variables:
  * mode: c++
