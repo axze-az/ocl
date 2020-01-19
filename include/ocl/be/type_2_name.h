@@ -1,5 +1,5 @@
-#if !defined (__OCL_IMPL_TYPE_2_NAME_H__)
-#define __OCL_IMPL_TYPE_2_NAME_H__ 1
+#if !defined (__OCL_BE_TYPE_2_NAME_H__)
+#define __OCL_BE_TYPE_2_NAME_H__ 1
 
 #include <ocl/config.h>
 #include <cftal/vec.h>
