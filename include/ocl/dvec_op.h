@@ -26,11 +26,31 @@ namespace ocl {
     std::string
     decl_buffer_args(const dvec<_T>& t, unsigned& arg_num, bool ro);
 
+    namespace impl {
+        std::string
+        decl_buffer_args_dvec_t(const std::string_view& tname,
+                                unsigned& arg_num,
+                                bool ro);
+        std::string
+        decl_buffer_args_dvec_t(const char* tname,
+                                unsigned& arg_num,
+                                bool ro);
+        std::string
+        decl_buffer_args_dvec_t(const std::string& tname,
+                                unsigned& arg_num,
+                                bool ro);
+    }
+    
     // concat_args specialized for dvecs
     template <typename _T>
     std::string
     concat_args(const dvec<_T>& t, var_counters& c);
 
+    namespace impl {
+        std::string
+        concat_args_dvec_t(var_counters& c);
+    }
+    
     // bind non buffer arguments
     template <typename _T>
     void
@@ -48,26 +68,91 @@ namespace ocl {
     bind_buffer_args(dvec<_T>& t, unsigned& buf_num,
                      be::kernel& k, unsigned wgs);
 
+    namespace impl {
+        void
+        bind_buffer_args_dvec_t(const dvec_base& r,
+                                const std::string_view& tname,
+                                unsigned& buf_num,
+                                be::kernel& k,
+                                bool is_const,
+                                size_t elements);
+        void
+        bind_buffer_args_dvec_t(const dvec_base& r,
+                                const char* tname,
+                                unsigned& buf_num,
+                                be::kernel& k,
+                                bool ist_const,
+                                size_t elements);
+        void
+        bind_buffer_args_dvec_t(const dvec_base& r,
+                                const std::string& tname,
+                                unsigned& buf_num,
+                                be::kernel& k,
+                                bool is_const,
+                                size_t elements);
+    }
+    
     // store results
     template <typename _T>
     std::string
     store_result(dvec<_T>& t, var_counters& c);
 
+    namespace impl {
+        std::string
+        store_result_dvec_t(var_counters& c);
+    }
+    
     // eval_args specialized for dvec
     template <class _T>
     std::string
     eval_args(const dvec<_T>& r,
               unsigned& arg_num, bool ro);
+
+    namespace impl {
+        std::string
+        eval_args_dvec_t(const std::string_view& tname,
+                         unsigned& arg_num,
+                         bool ro);
+        std::string
+        eval_args_dvec_t(const char* tname,
+                         unsigned& arg_num,
+                         bool ro);
+        std::string
+        eval_args_dvec_t(const std::string& tname,
+                         unsigned& arg_num,
+                         bool ro);
+    }
+    
     // eval_vars specialized for dvec
     template <class _T>
     std::string
     eval_vars(const dvec<_T>& r, unsigned& arg_num, bool read);
 
+    namespace impl {
+        std::string
+        eval_vars_dvec_t(const std::string_view& tname,
+                         unsigned& arg_num,
+                         bool ro);
+        std::string
+        eval_vars_dvec_t(const char* tname,
+                         unsigned& arg_num,
+                         bool ro);
+        std::string
+        eval_vars_dvec_t(const std::string& tname,
+                         unsigned& arg_num,
+                         bool ro);
+    }
+    
     // store the results into a dvec
     template <class _T>
     std::string
     eval_results(dvec<_T>& r, unsigned& res_num);
 
+    namespace impl {
+        std::string
+        eval_results_dvec_t(unsigned& res_num);
+    }
+    
     namespace dop {
 
         struct unary_func_base {
@@ -248,6 +333,85 @@ namespace ocl {
         template <class _T>
         struct exp10_f : public unary_func<names::f_exp10, false>{};
 
+        namespace names {
+            struct f_log {
+                constexpr
+                const char* operator()() const { return "log"; }
+            };
+            struct f_log1p {
+                constexpr
+                const char* operator()() const { return "log1p"; }
+            };
+            struct f_log2 {
+                constexpr
+                const char* operator()() const { return "log2"; }
+            };
+            struct f_log10 {
+                constexpr
+                const char* operator()() const { return "log10"; }
+            };
+        }
+
+        template <class _T>
+        struct log_f : public unary_func<names::f_log, false>{};
+
+        template <class _T>
+        struct log1p_f : public unary_func<names::f_log1p, false>{};
+
+        template <class _T>
+        struct log2_f : public unary_func<names::f_log2, false>{};
+
+        template <class _T>
+        struct log10_f : public unary_func<names::f_log10, false>{};
+
+        namespace names {
+            struct f_sinh {
+                constexpr
+                const char* operator()() const { return "sinh"; }
+            };
+            struct f_cosh {
+                constexpr
+                const char* operator()() const { return "cosh"; }
+            };
+            struct f_tanh {
+                constexpr
+                const char* operator()() const { return "tanh"; }
+            };
+        }
+
+        template <class _T>
+        struct sinh_f : public unary_func<names::f_sinh, false>{};
+
+        template <class _T>
+        struct cosh_f : public unary_func<names::f_cosh, false>{};
+
+        template <class _T>
+        struct tanh_f : public unary_func<names::f_tanh, false>{};
+
+        namespace names {
+            struct f_sin {
+                constexpr
+                const char* operator()() const { return "sin"; }
+            };
+            struct f_cos {
+                constexpr
+                const char* operator()() const { return "cos"; }
+            };
+            struct f_tan {
+                constexpr
+                const char* operator()() const { return "tan"; }
+            };
+        }
+
+        template <class _T>
+        struct sin_f : public unary_func<names::f_sin, false>{};
+
+        template <class _T>
+        struct cos_f : public unary_func<names::f_cos, false>{};
+
+        template <class _T>
+        struct tan_f : public unary_func<names::f_tan, false>{};
+        
         namespace names {
 
             struct add {
@@ -558,10 +722,24 @@ namespace ocl {
     DEF_UNARY_FUNC(operator~, bit_not)
     DEF_UNARY_FUNC(abs, abs_f)
     DEF_UNARY_FUNC(sqrt, sqrt_f)
+
     DEF_UNARY_FUNC(exp, exp_f)
     DEF_UNARY_FUNC(expm1, expm1_f)
     DEF_UNARY_FUNC(exp2, exp2_f)
     DEF_UNARY_FUNC(exp10, exp10_f)
+
+    DEF_UNARY_FUNC(log, log_f)
+    DEF_UNARY_FUNC(log1p, log1p_f)
+    DEF_UNARY_FUNC(log2, log2_f)
+    DEF_UNARY_FUNC(log10, log10_f)
+
+    DEF_UNARY_FUNC(sinh, sinh_f)
+    DEF_UNARY_FUNC(cosh, cosh_f)
+    DEF_UNARY_FUNC(tanh, tanh_f)
+
+    DEF_UNARY_FUNC(sin, sin_f)
+    DEF_UNARY_FUNC(cos, cos_f)
+    DEF_UNARY_FUNC(tan, tan_f)
 
     // unary plus
     template <class _T>
@@ -736,21 +914,6 @@ namespace ocl {
     BINARY_FUNC(min, min_f)
     BINARY_FUNC(pow, pow_f)
 
-#if 0
-    // overloads for select
-    template <typename _T, typename _U>
-    auto
-    select(const dvec<_U>& m, const dvec<_T>& ot, const _T& of) {
-        return make_expr<dop::f_sel<dvec<_T> > >(
-            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
-    }
-    template <typename _T, typename _U>
-    auto
-    select(const dvec<_U>& m, const _T& ot, const dvec<_T>& of) {
-        return make_expr<dop::f_sel<dvec<_T> > >(
-            m, make_expr<dop::sel_data<dvec<_T> > >(ot, of));
-    }
-#endif
 
     template <typename _T, typename _U>
     auto
@@ -968,15 +1131,8 @@ std::string
 ocl::decl_buffer_args(const dvec<_T>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(4) << "__global ";
-    if (ro) {
-        s << "const ";
-    }
-    s << be::type_2_name<_T>::v()
-      << "* arg" << arg_num << ",\n";
-    ++arg_num;
-    return s.str();
+    return impl::decl_buffer_args_dvec_t(be::type_2_name<_T>::v(),
+                                         arg_num, ro);
 }
 
 template <typename _T>
@@ -984,11 +1140,7 @@ std::string
 ocl::concat_args(const dvec<_T>& r, var_counters& c)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << "arg" << c._buf_num;
-    ++c._var_num;
-    ++c._buf_num;
-    return s.str();
+    return impl::concat_args_dvec_t(c);
 }
 
 template <typename _T>
@@ -1006,18 +1158,10 @@ bind_buffer_args(const dvec<_T>& r, unsigned& buf_num,
                  be::kernel& k, unsigned wgs)
 {
     static_cast<void>(wgs);
-    if (r.backend_data()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": " << &r << ": binding const dvec<"
-          << be::type_2_name<_T>::v()<< "> with "
-          << r.size()
-          << " elements to arg " << buf_num << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(buf_num, r.buf());
-    ++buf_num;
+    impl::bind_buffer_args_dvec_t(r,
+                                  be::type_2_name<_T>::v(),
+                                  buf_num, k,
+                                  true, r.size());
 }
 
 template <typename _T>
@@ -1026,19 +1170,10 @@ ocl::
 bind_buffer_args(dvec<_T>& r, unsigned& buf_num,
                  be::kernel& k, unsigned wgs)
 {
-    static_cast<void>(wgs);
-    if (r.backend_data()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": " << &r << ": binding dvec<"
-          << be::type_2_name<_T>::v()<< "> with "
-          << r.size()
-          << " elements to arg " << buf_num << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(buf_num, r.buf());
-    ++buf_num;
+    impl::bind_buffer_args_dvec_t(r,
+                                  be::type_2_name<_T>::v(),
+                                  buf_num, k,
+                                  false, r.size());
 }
 
 template <typename _T>
@@ -1046,13 +1181,7 @@ std::string
 ocl::store_result(dvec<_T>& r, var_counters& c)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8)
-      << "arg" << c._buf_num
-      << "[gid] =";
-    ++c._var_num;
-    ++c._buf_num;
-    return s.str();
+    return impl::store_result_dvec_t(c);
 }
 
 template <class _T>
@@ -1060,15 +1189,8 @@ std::string
 ocl::eval_args(const dvec<_T>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(4) << "__global " ;
-    if (ro) {
-        s<< "const ";
-    }
-    s << be::type_2_name<_T>::v()
-      << "* arg"  << arg_num;
-    ++arg_num;
-    return s.str();
+    return impl::eval_args_dvec_t(be::type_2_name<_T>::v(),
+                                  arg_num, ro);
 }
 
 template <class _T>
@@ -1076,16 +1198,8 @@ std::string
 ocl::eval_vars(const dvec<_T>& r, unsigned& arg_num, bool read)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8) << be::type_2_name<_T>::v()
-      << " v" << arg_num;
-    if (read== true) {
-        s << " = arg"
-          << arg_num << "[gid];";
-    }
-    std::string a(s.str());
-    ++arg_num;
-    return a;
+    return impl::eval_vars_dvec_t(be::type_2_name<_T>::v(),
+                                  arg_num, read);
 }
 
 template <class _T>
@@ -1093,11 +1207,7 @@ std::string ocl::eval_results(dvec<_T>& r,
                               unsigned& res_num)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8) << "arg" << res_num << "[gid]="
-      << " v" << res_num << ';';
-    ++res_num;
-    return s.str();
+    return impl::eval_results_dvec_t(res_num);
 }
 
 template <typename _L, typename _R>

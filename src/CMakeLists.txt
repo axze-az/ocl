@@ -14,6 +14,7 @@ set (CSRCS
   be_data.cc
   dvec_base.cc
   dvec_t.cc
+  expr.cc
   dvec_op.cc
   expr_kernel.cc
   random.cc

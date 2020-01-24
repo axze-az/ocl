@@ -156,8 +156,15 @@ namespace ocl {
 #if 0
     extern template class dvec<double>;
     extern template class dvec<float>;
+    extern template class dvec<int64_t>;
+    extern template class dvec<uint64_t>;
     extern template class dvec<int32_t>;
     extern template class dvec<uint32_t>;
+    extern template class dvec<int16_t>;
+    extern template class dvec<uint16_t>;
+    extern template class dvec<char>;
+    extern template class dvec<unsigned char>;
+    extern template class dvec<signed char>;
 #endif
 }
 

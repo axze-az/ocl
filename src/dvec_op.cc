@@ -1,6 +1,202 @@
 #include "ocl/dvec_op.h"
 
 std::string
+ocl::impl::
+decl_buffer_args_dvec_t(const std::string_view& tname,
+                        unsigned& arg_num,
+                        bool ro)
+{
+    std::ostringstream s;
+    s << spaces(4) << "__global ";
+    if (ro) {
+        s << "const ";
+    }
+    s << tname
+      << "* arg" << arg_num << ",\n";
+    ++arg_num;
+    return s.str();
+}
+
+std::string
+ocl::impl::
+decl_buffer_args_dvec_t(const char* tname,
+                        unsigned& arg_num,
+                        bool ro)
+{
+    return decl_buffer_args_dvec_t(std::string_view(tname),
+                                   arg_num, ro);
+}
+
+std::string
+ocl::impl::
+decl_buffer_args_dvec_t(const std::string& tname,
+                        unsigned& arg_num,
+                        bool ro)
+{
+    return decl_buffer_args_dvec_t(std::string_view(tname),
+                                   arg_num, ro);
+}
+
+std::string
+ocl::impl::
+concat_args_dvec_t(var_counters& c)
+{
+    std::ostringstream s;
+    s << "arg" << c._buf_num;
+    ++c._var_num;
+    ++c._buf_num;
+    return s.str();
+}
+
+void
+ocl::impl::
+bind_buffer_args_dvec_t(const dvec_base& r,
+                        const std::string_view& tname,
+                        unsigned& buf_num,
+                        be::kernel& k,
+                        bool const_val,
+                        size_t elements)
+{
+    if (r.backend_data()->debug() != 0) {
+        std::string kn=k.name();
+        std::ostringstream s;
+        s << std::this_thread::get_id() << ": "
+          << kn << ": " << &r << ": binding ";
+        if (const_val)
+            s << "const ";
+        s << "dvec<"
+          << tname << "> with "
+          << elements
+          << " elements to arg " << buf_num << '\n';
+        be::data::debug_print(s.str());
+    }
+    k.set_arg(buf_num, r.buf());
+    ++buf_num;
+}
+
+void
+ocl::impl::
+bind_buffer_args_dvec_t(const dvec_base& r,
+                        const char* tname,
+                        unsigned& buf_num,
+                        be::kernel& k,
+                        bool const_val,
+                        size_t elements)
+{
+    return bind_buffer_args_dvec_t(r, std::string_view(tname),
+                                   buf_num, k, const_val, elements);
+}
+ 
+void
+ocl::impl::
+bind_buffer_args_dvec_t(const dvec_base& r,
+                        const std::string& tname,
+                        unsigned& buf_num,
+                        be::kernel& k,
+                        bool const_val,
+                        size_t elements)
+{
+    return bind_buffer_args_dvec_t(r, std::string_view(tname),
+                                   buf_num, k, const_val, elements);
+}
+
+std::string
+ocl::impl::
+store_result_dvec_t(var_counters& c)
+{
+    std::ostringstream s;
+    s << spaces(8)
+      << "arg" << c._buf_num
+      << "[gid] =";
+    ++c._var_num;
+    ++c._buf_num;
+    return s.str();
+}
+
+std::string
+ocl::impl::
+eval_args_dvec_t(const std::string_view& tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    std::ostringstream s;
+    s << spaces(4) << "__global " ;
+    if (ro) {
+        s<< "const ";
+    }
+    s << tname
+      << "* arg"  << arg_num;
+    ++arg_num;
+    return s.str();
+}
+
+std::string
+ocl::impl::
+eval_args_dvec_t(const char* tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    return eval_args_dvec_t(std::string_view(tname), arg_num, ro);
+}
+
+std::string
+ocl::impl::
+eval_args_dvec_t(const std::string& tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    return eval_args_dvec_t(std::string_view(tname), arg_num, ro);
+}
+
+
+std::string
+ocl::impl::
+eval_vars_dvec_t(const std::string_view& tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    std::ostringstream s;
+    s << spaces(8) << tname
+      << " v" << arg_num;
+    if (ro== true) {
+        s << " = arg"
+          << arg_num << "[gid];";
+    }
+    std::string a(s.str());
+    ++arg_num;
+    return a;
+}
+
+std::string
+ocl::impl::
+eval_vars_dvec_t(const char* tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    return eval_vars_dvec_t(std::string_view(tname), arg_num, ro);
+}
+
+std::string
+ocl::impl::
+eval_vars_dvec_t(const std::string& tname,
+                 unsigned& arg_num,
+                 bool ro)
+{
+    return eval_vars_dvec_t(std::string_view(tname), arg_num, ro);
+}
+
+std::string
+ocl::impl::
+eval_results_dvec_t(unsigned& res_num)
+{
+    std::ostringstream s;
+    s << spaces(8) << "arg" << res_num << "[gid]="
+      << " v" << res_num << ';';
+    ++res_num;
+    return s.str();
+}
+
+std::string
 ocl::dop::unary_func_base::body(const std::string& l, bool is_operator,
                                 const char* name)
 {
@@ -27,6 +223,7 @@ ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,
 {
     return body(l, r, is_operator, std::string(name));
 }
+
 // generate the body of an binary_func object
 std::string
 ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,

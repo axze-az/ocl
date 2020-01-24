@@ -102,16 +102,16 @@ namespace ocl {
 
     namespace impl {
         __cf_body
-        gen_horner(const std::string& tname,
-                   const std::string& coeff_tname,
+        gen_horner(const std::string_view& tname,
+                   const std::string_view& coeff_tname,
                    size_t n);
         __cf_body
-        gen_horner2(const std::string& tname,
-                    const std::string& coeff_tname,
+        gen_horner2(const std::string_view& tname,
+                    const std::string_view& coeff_tname,
                     size_t n);
         __cf_body
-        gen_horner4(const std::string& tname,
-                    const std::string& coeff_tname,
+        gen_horner4(const std::string_view& tname,
+                    const std::string_view& coeff_tname,
                     size_t _N);
     }
     
@@ -172,12 +172,12 @@ namespace ocl {
 
 ocl::impl::__cf_body
 ocl::impl::
-gen_horner(const std::string& tname,
-           const std::string& cname,
+gen_horner(const std::string_view& tname,
+           const std::string_view& cname,
            size_t n)
 {
     std::ostringstream s;
-    s << "horner_" << n;
+    s << "horner_" << n << '_' << tname << '_' << cname;
     const std::string hname=s.str();
     s.str("");
     s << tname << " " << hname << "( "
@@ -195,14 +195,13 @@ gen_horner(const std::string& tname,
 
 ocl::impl::__cf_body
 ocl::impl::
-gen_horner2(const std::string& tname,
-            const std::string& cname,
+gen_horner2(const std::string_view& tname,
+            const std::string_view& cname,
             size_t n)
 {
     std::ostringstream s;
-    s << "horner2_" << n;
+    s << "horner2_" << n << ' ' << tname << '_' << cname;
     const std::string hname=s.str();
-    s.str("");
     s.str("");
     s << tname << " " << hname << "( "
       << tname << " x, "
@@ -227,14 +226,13 @@ gen_horner2(const std::string& tname,
 
 ocl::impl::__cf_body
 ocl::impl::
-gen_horner4(const std::string& tname,
-            const std::string& cname,
+gen_horner4(const std::string_view& tname,
+            const std::string_view& cname,
             size_t n)
 {
     std::ostringstream s;
-    s << "horner4_" << n;
+    s << "horner4_" << n << '_' << tname << '_' << cname;
     const std::string hname=s.str();
-    s.str("");
     s.str("");
     s << tname << " " << hname << "( "
       << tname << " x, "

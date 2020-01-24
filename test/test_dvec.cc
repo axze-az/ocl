@@ -40,6 +40,7 @@ namespace ocl {
         public:
             ops(size_t n);
             bool perform();
+        private:
             bool check_res(const std::string& msg);
         };
 
@@ -179,7 +180,7 @@ ocl::test::ops<_T>::perform()
         "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
         "    float yn= a*xn;\n"
         "    yn= fma(xn, fma(yn, -b, a), yn);\n"
-        "    return yn;\n"
+<        "    return yn;\n"
         "}\n";
     _res=custom_func<float>(fname, fbody, _a0, _a1);
 #else
@@ -254,6 +255,9 @@ ocl::test::ops<_T>::perform()
 #endif
     _h_res = sqrt(_h_a0);
     rc &= check_res("sqrt");
+    // _res = rsqrt(_a0);
+    // _res = rsqrt(_h_a0);
+    // rc &= check_res("rsqrt");
     return rc;
 }
 

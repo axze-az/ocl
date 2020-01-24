@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <string_view>
 
 namespace ocl {
 
@@ -31,7 +32,6 @@ namespace ocl {
         typename expr_traits<_L>::type _l;
         constexpr expr(const _L& l) : _l{l} {};
     };
-
 
     template <class _OP, class _L, class _R>
     expr<_OP, _L, _R>
@@ -84,11 +84,44 @@ namespace ocl {
     std::string
     decl_non_buffer_args(const _T& p, unsigned& arg_num);
 
+    namespace impl {
+        std::string
+        decl_non_buffer_args_t(const std::string_view& tname,
+                               size_t alignment,
+                               unsigned& arg_num);
+        std::string
+        decl_non_buffer_args_t(const char* tname,
+                               size_t alignment,
+                               unsigned& arg_num);
+        std::string
+        decl_non_buffer_args_t(const std::string& tname,
+                               size_t alignment,
+                               unsigned& arg_num);
+    }
+    
     // generate the declarations for the member of the array
     template <typename _T, size_t _N>
     std::string
     decl_non_buffer_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num);
 
+    namespace impl {
+        std::string
+        decl_non_buffer_args_array_ptr(const std::string_view& tname,
+                                       size_t n,
+                                       size_t alignment,
+                                       unsigned& arg_num);
+        std::string
+        decl_non_buffer_args_array_ptr(const char* tname,
+                                       size_t n,
+                                       size_t alignment,
+                                       unsigned& arg_num);
+        std::string
+        decl_non_buffer_args_array_ptr(const std::string& tname,
+                                       size_t n,
+                                       size_t alignment,
+                                       unsigned& arg_num);
+    }
+    
     // ignored_arg are really ignored
     template <typename _T>
     std::string
@@ -113,6 +146,11 @@ namespace ocl {
     std::string
     concat_args(const _T& r, var_counters& c);
 
+    namespace impl {
+        std::string
+        concat_args_t(var_counters& c);
+    }
+    
     // bind non buffer arguments
     template <typename _T>
     void
@@ -142,6 +180,22 @@ namespace ocl {
     template <class _T>
     std::string
     eval_args(const _T& r, unsigned& arg_num, bool ro);
+
+    namespace impl {
+        std::string
+        eval_args_t(const std::string_view& tname,
+                    unsigned& arg_num,
+                    bool ro);
+        std::string
+        eval_args_t(const char* tname,
+                    unsigned& arg_num,
+                    bool ro);
+        std::string
+        eval_args_t(const std::string& tname,
+                    unsigned& arg_num,
+                    bool ro);
+    }
+
     // eval_args for ignored args
     template <class _T>
     std::string
@@ -152,21 +206,75 @@ namespace ocl {
     std::string
     eval_args(const impl::array_ptr<_T, _N>& t,unsigned& arg_num, bool ro);
 
+    namespace impl {
+        std::string
+        eval_args_array_ptr(const std::string_view& tname,
+                            unsigned& arg_num,
+                            bool ro);
+        std::string
+        eval_args_array_ptr(const char* tname,
+                            unsigned& arg_num,
+                            bool ro);
+        std::string
+        eval_args_array_ptr(const std::string& tname,
+                            unsigned& arg_num,
+                            bool ro);
+    }
+    
     // eval_vars
     template <class _T>
     std::string
     eval_vars(const _T& r, unsigned& arg_num, bool read);
 
+    namespace impl {
+        std::string
+        eval_vars_t(const std::string_view& tname,
+                    unsigned& arg_num,
+                    bool ro);
+        std::string
+        eval_vars_t(const char* tname,
+                    unsigned& arg_num,
+                    bool ro);
+        
+        std::string
+        eval_vars_t(const std::string& tname,
+                    unsigned& arg_num,
+                    bool ro);
+    }
+    
     // eval_vars
     template <class _T, size_t _N>
     std::string
     eval_vars(const impl::array_ptr<_T, _N>& r,
               unsigned& arg_num, bool read);
 
+    namespace impl {
+        std::string
+        eval_vars_array_ptr(const std::string_view& tname,
+                            unsigned& arg_num,
+                            bool ro);
+        
+
+        std::string
+        eval_vars_array_ptr(const char* tname,
+                            unsigned& arg_num,
+                            bool ro);
+        
+        std::string
+        eval_vars_array_ptr(const std::string& tname,
+                            unsigned& arg_num,
+                            bool ro);
+    }
+
     // eval_ops
     template <class _T>
     std::string eval_ops(const _T& r, unsigned& arg_num);
 
+    namespace impl {
+        std::string
+        eval_ops_t(unsigned& arg_num);
+    }
+    
     // eval_results, unimplemented
     template <class _T>
     std::string eval_results(_T& r, unsigned& res_num);
@@ -299,17 +407,15 @@ ocl::eval_size(const _T& t)
     return 1;
 }
 
+
 template <class _T>
 std::string
 ocl::decl_non_buffer_args(const _T& r, unsigned& arg_num)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(4) << be::type_2_name<_T>::v()
-      << " _a" << arg_num
-      << " __attribute__((aligned(" << alignof(_T) << ")));\n";
-    ++arg_num;
-    return s.str();
+    return impl::decl_non_buffer_args_t(be::type_2_name<_T>::v(),
+                                        alignof(_T),
+                                        arg_num);
 }
 
 template <class _T, std::size_t _N>
@@ -318,13 +424,9 @@ ocl::
 decl_non_buffer_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(4) << be::type_2_name<_T>::v()
-      << " _a" << arg_num
-      << "[" << _N
-      << "] __attribute__((aligned(" << alignof(_T) << ")));\n";
-    ++arg_num;
-    return s.str();
+    return impl::decl_non_buffer_args_array_ptr(be::type_2_name<_T>::v(),
+                                                _N, alignof(_T),
+                                                arg_num);
 }
 
 template <class _T>
@@ -351,11 +453,7 @@ std::string
 ocl::concat_args(const _T& r, var_counters& c)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << "pa->_a" << c._scalar_num;
-    ++c._var_num;
-    ++c._scalar_num;
-    return s.str();
+    return impl::concat_args_t(c);
 }
 
 template <typename _T>
@@ -404,13 +502,8 @@ ocl::
 eval_args(const _T& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
-    static_cast<void>(ro);
-    std::ostringstream s;
-    s << spaces(4) ;
-    s << be::type_2_name<_T>::v()
-      << " arg"  << arg_num;
-    ++arg_num;
-    return s.str();
+    return impl::eval_args_t(be::type_2_name<_T>::v(),
+                             arg_num, ro);
 }
 
 template <class _T>
@@ -430,16 +523,8 @@ ocl::
 eval_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num, bool ro)
 {
     static_cast<void>(r);
-    static_cast<void>(ro);
-    std::ostringstream s;
-    s << spaces(4) ;
-    s << "__arg_local ";
-    if (ro)
-        s << "const ";
-    s << be::type_2_name<_T>::v()
-      << "* arg"  << arg_num;
-    ++arg_num;
-    return s.str();
+    return impl::eval_args_array_ptr(be::type_2_name<_T>::v(),
+                                     arg_num, ro);
 }
 
 template <class _T>
@@ -447,16 +532,8 @@ std::string ocl::eval_vars(const _T& r, unsigned& arg_num,
                            bool read)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8) << be::type_2_name<_T>::v()
-      << " v" << arg_num;
-    if (read== true) {
-        s << " = arg"
-          << arg_num << ";";
-    }
-    std::string a(s.str());
-    ++arg_num;
-    return a;
+    return impl::eval_vars_t(be::type_2_name<_T>::v(),
+                             arg_num, read);
 }
 
 template <class _T, std::size_t _N>
@@ -466,31 +543,15 @@ eval_vars(const impl::array_ptr<_T, _N>& r, unsigned& arg_num,
           bool read)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << spaces(8)
-      << "__arg_local ";
-    if (read== true)
-        s << "const ";
-    s << be::type_2_name<_T>::v()
-      << "* v" << arg_num;
-    if (read== true) {
-        s << " = arg"
-          << arg_num << ";";
-    }
-    std::string a(s.str());
-    ++arg_num;
-    return a;
+    return impl::eval_vars_array_ptr(be::type_2_name<_T>::v(),
+                                     arg_num, read);
 }
 
 template <class _T>
 std::string ocl::eval_ops(const _T& r, unsigned& arg_num)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << "v" << arg_num;
-    std::string a(s.str());
-    ++arg_num;
-    return a;
+    return impl::eval_ops_t(arg_num);
 }
 
 template <class _OP, class _L, class _R>
