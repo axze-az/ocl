@@ -590,14 +590,16 @@ template <typename _T>
 typename ocl::dvec<_T>::mask_value_type
 ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
 {
+    auto p=v.backend_data();
     using type= typename dvec<_T>::mask_value_type;
     typename dvec<_T>::mask_type nz= v != _T(0);
-    dvec<uint64_t> dcnt(1);
+    dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=nz.size();
     do {
         // debug::dump(nz, "nz:");
         auto ck=custom_kernel_with_size<type>(nb.name(), nb.body(),
-                                              hdcnt, nz, dcnt,
+                                              hdcnt,
+                                              dcnt,
                                               local_mem_per_workitem<type>(1));
         nz=ck;
         dcnt.copy_to_host(&hdcnt);

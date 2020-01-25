@@ -2,43 +2,66 @@
 
 namespace ocl {
     namespace test {
-        void
+
+        bool
         test_xxx_of();
+
+        bool
+        expect(const std::string& msg, bool expect, bool res);
     }
 
 }
 
-void
+bool
+ocl::test::expect(const std::string& msg, bool expect, bool res)
+{
+    bool r=expect==res;
+    if (r==false) {
+        std::cout << msg << " failed\n";
+    }
+    return r;
+}
+
+
+
+bool
 ocl::test::test_xxx_of()
 {
-    for (int i=65; i<66; ++i) {
-        std::cout << "testing size " << i << std::endl;
-        std::vector h0(i, 2.4f);
-        dvec<float> v0(h0);
-        dvec<float>::mask_type t00= v0==0.0f;
-        std::cout << "all_of(v0==0.0f)=false  " << all_of(t00) << std::endl;
-        std::cout << "any_of(v0==0.0f)=false  " << any_of(t00) << std::endl;
-        std::cout << "none_of(v0==0.0f)=true  " << none_of(t00) << std::endl;
-        dvec<float>::mask_type t01= v0==2.4f;
-        std::cout << "all_of(v0==2.4f)=true   " << all_of(t01) << std::endl;
-        std::cout << "any_of(v0==2.4f)=true   " << any_of(t01) << std::endl;
-        std::cout << "none_of(v0==2.4f)=false " << none_of(t01) << std::endl;
-        h0.back() = 0.0f;
-        dvec<float> v1(h0);
-        dvec<float>::mask_type t10= v1==0.0f;
-        std::cout << "all_of(v1==0.0f)=false  " << all_of(t10) << std::endl;
-        std::cout << "any_of(v1==0.0f)=true   " << any_of(t10) << std::endl;
-        std::cout << "none_of(v1==0.0f)=false " << none_of(t10) << std::endl;
-        dvec<float>::mask_type t11= v1==2.4f;
-        std::cout << "all_of(v0==2.4f)=false   " << all_of(t11) << std::endl;
-        std::cout << "any_of(v0==2.4f)=true    " << any_of(t11) << std::endl;
-        std::cout << "none_of(v0==2.4f)=false  " << none_of(t11) << std::endl;
-        std::cout << std::endl;
+    bool r=true;
+    for (int j=0; j<1024; j+=16 ) {
+        for (int i=4; i<128; ++i) {
+            size_t s=j*1024 + i;
+            if ((i & 0xf)==0) {
+                std::cout << "testing size " << s << "\r" << std::flush;
+            }
+            std::vector h0(s, 2.4f);
+            dvec<float> v0(h0);
+            dvec<float>::mask_type t00= v0==0.0f;
+            r &= expect("all_of(v0==0.0f)=false  ", false, all_of(t00));
+            r &= expect("any_of(v0==0.0f)=false  ", false, any_of(t00));
+            r &= expect("none_of(v0==0.0f)=true  ", true, none_of(t00));
+            dvec<float>::mask_type t01= v0==2.4f;
+            r &= expect("all_of(v0==2.4f)=true   ", true, all_of(t01));
+            r &= expect("any_of(v0==2.4f)=true   ", true, any_of(t01));
+            r &= expect("none_of(v0==2.4f)=false ", false, none_of(t01));
+            h0.back() = 0.0f;
+            dvec<float> v1(h0);
+            dvec<float>::mask_type t10= v1==0.0f;
+            r &= expect("all_of(v1==0.0f)=false  ", false, all_of(t10));
+            r &= expect("any_of(v1==0.0f)=true   ", true, any_of(t10));
+            r &= expect("none_of(v1==0.0f)=false ", false, none_of(t10));
+            dvec<float>::mask_type t11= v1==2.4f;
+            r &= expect("all_of(v0==2.4f)=false   ", false, all_of(t11));
+            r &= expect("any_of(v0==2.4f)=true    ", true, any_of(t11));
+            r &= expect("none_of(v0==2.4f)=false  ", false, none_of(t11));
+        }
     }
+    std::cout << '\n';
+    return r;
 }
 
 int main()
 {
-    ocl::test::test_xxx_of();
-    return 0;
+    bool r=ocl::test::test_xxx_of();
+    return r==true ? 0 : 1;
 }
