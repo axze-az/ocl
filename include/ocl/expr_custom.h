@@ -18,7 +18,7 @@ namespace ocl {
         unsigned elements() const { return _e; }
         unsigned bytes() const { return _e * sizeof(_T); }
     };
-    
+
     namespace impl {
 
         // body of a custom function consisting of name and body
@@ -27,41 +27,36 @@ namespace ocl {
             std::string _body;
         public:
             __cf_body(const std::string& n,
-                      const std::string& b,
-                      std::size_t s)
-                : _name(n), _body(b) {}
-            __cf_body(const std::string& n,
                       const std::string& b)
                 : _name(n), _body(b) {}
             const std::string& name() const { return _name; }
             const std::string& body() const { return _body; }
         };
 
-        // allow encapsulation into expressions: 
+        // allow encapsulation into expressions:
         using cf_body = ignored_arg<__cf_body>;
-        
+
         // body of a custom kernel consisting of name, body and
         // size if wanted
-        class __ck_body {
-            std::string _name;
-            std::string _body;
+        class __ck_body : private __cf_body {
+            using base_type = __cf_body;
             std::optional<std::size_t> _s;
         public:
             __ck_body(const std::string& n,
                       const std::string& b,
                       std::size_t s)
-                : _name(n), _body(b), _s(s) {}
+                : base_type(n, b), _s(s) {}
             __ck_body(const std::string& n,
                       const std::string& b)
-                : _name(n), _body(b), _s() {}
-            const std::string& name() const { return _name; }
-            const std::string& body() const { return _body; }
+                : base_type(n, b), _s() {}
+            using base_type::name;
+            using base_type::body;
             const std::optional<std::size_t>& size() const {
                 return _s;
             }
         };
 
-        // allow encapsulation into expressions: 
+        // allow encapsulation into expressions:
         using ck_body = ignored_arg<__ck_body>;
 
     }
@@ -120,13 +115,13 @@ namespace ocl {
     std::string
     def_custom_func(std::set<std::string>& fnames,
                     const expr<_OP, _L, void>& e);
-    
+
     // overload for custom functions
     template <typename _OP, typename _R>
     std::string
     def_custom_func(std::set<std::string>& fnames,
                     const expr<dop::custom_f<_OP>, impl::cf_body, _R>& e );
-    
+
     // eval_ops overload for custom functions
     template <typename _OP, typename _R>
     std::string
@@ -144,7 +139,7 @@ namespace ocl {
     std::string
     eval_vars(const expr<dop::custom_f<_OP>, impl::cf_body, _R>& e,
               unsigned& arg_num, bool read);
-    
+
     // overload required to read out the size from a ck_body object
     template <typename _OP, typename _R>
     std::size_t
@@ -160,13 +155,28 @@ namespace ocl {
     std::string
     decl_non_buffer_args(const local_mem_per_workitem<_T>& p,
                          unsigned& arg_num);
-    
+
     // declare buffer arguments, must increment arg_num if something
     // generated
     template <typename _T>
     std::string
     decl_buffer_args(const local_mem_per_workitem<_T>& p,
                      unsigned& arg_num, bool read_only);
+
+    namespace impl {
+        std::string
+        decl_buffer_args_local_mem(const std::string_view& tname,
+                                   unsigned& arg_num,
+                                   bool ro);
+        std::string
+        decl_buffer_args_local_mem(const char* tname,
+                                   unsigned& arg_num,
+                                   bool ro);
+        std::string
+        decl_buffer_args_local_mem(const std::string& tname,
+                                   unsigned& arg_num,
+                                   bool ro);
+    }
 
     // bind non buffer arguments
     template <typename _T>
@@ -181,11 +191,43 @@ namespace ocl {
                      unsigned& buf_num,
                      be::kernel& k, unsigned wgs);
 
-    // concat_args specialized for dvecs
+    namespace impl {
+        void
+        bind_buffer_args_local_mem(const std::string_view& tname,
+                                   size_t bytes,
+                                   size_t elements,
+                                   size_t wg_size,
+                                   unsigned& buf_num,
+                                   be::kernel& k);
+
+        void
+        bind_buffer_args_local_mem(const char* tname,
+                                   size_t bytes,
+                                   size_t elements,
+                                   size_t wg_size,
+                                   unsigned& buf_num,
+                                   be::kernel& k);
+
+        void
+        bind_buffer_args_local_mem(const std::string& tname,
+                                   size_t bytes,
+                                   size_t elements,
+                                   size_t wg_size,
+                                   unsigned& buf_num,
+                                   be::kernel& k);
+
+    }
+
+    // concat_args specialized for local memory
     template <typename _T>
     std::string
     concat_args(const local_mem_per_workitem<_T>& p,
                 var_counters& c);
+
+    namespace impl {
+        std::string
+        concat_args_local_mem(var_counters& s);
+    }
 }
 
 template <typename _T>
@@ -229,30 +271,30 @@ def_custom_func(std::set<std::string>& fnames,
     }
     return s;
 }
-    
+
 template <typename _OP, typename _R>
 std::string
 ocl::
 eval_ops(const expr<dop::custom_f<_OP>, impl::cf_body, _R>& e,
          unsigned& arg_num)
 {
-    std::ostringstream s;
-    s << e._l.name() << "(";
-    s << eval_ops(e._r, arg_num);
-    s << ")";
-    return s.str();
+    std::string s= e._l.name() + '(';
+    s += eval_ops(e._r, arg_num);
+    s += ')';
+    return s;
 };
 
 template <typename _OP, typename _L, typename _R>
 std::string
 ocl::
 eval_ops(const expr<dop::custom_arg<_OP>, _L, _R>& e,
-         unsigned& arg_num) {
+         unsigned& arg_num)
+{
     std::string l=eval_ops(e._l, arg_num);
     std::string r=eval_ops(e._r, arg_num);
     return l + ", " + r;
 };
-    
+
 template <class _OP, typename _R>
 std::string
 ocl::
@@ -302,12 +344,8 @@ std::string
 ocl::decl_buffer_args(const local_mem_per_workitem<_T>& p,
                       unsigned& arg_num, bool read_only)
 {
-    std::ostringstream s;
-    s << spaces(4) << "__local " ;
-    s << be::type_2_name<_T>::v()
-      << "* arg" << arg_num << ",\n";
-    ++arg_num;
-    return s.str();
+    return impl::decl_buffer_args_local_mem(be::type_2_name<_T>::v(),
+                                            arg_num, read_only);
 }
 
 template <typename _T>
@@ -316,21 +354,10 @@ ocl::bind_buffer_args(const local_mem_per_workitem<_T>& p,
                       unsigned& buf_num,
                       be::kernel& k, unsigned wgs)
 {
-    // bind p.bytes() * wgs bytes local memory to k
-    if (be::data::instance()->debug() != 0) {
-        std::string kn=k.name();
-        std::ostringstream s;
-        s << std::this_thread::get_id() << ": "
-          << kn << ": " << &p << ": binding local_mem_per_workitem<"
-          << be::type_2_name<_T>::v()<< "> with "
-          << p.elements()
-          << " elements and "
-          << wgs << " workitems "
-          << "to arg " << buf_num << '\n';
-        be::data::debug_print(s.str());
-    }
-    k.set_arg(buf_num, p.bytes()*wgs, static_cast<const void*>(0));
-    ++buf_num;
+    impl::bind_buffer_args_local_mem(be::type_2_name<_T>::v(),
+                                     p.bytes()*wgs,
+                                     p.elements(), wgs,
+                                     buf_num, k);
 }
 
 template <typename _T>
@@ -347,11 +374,7 @@ std::string
 ocl::concat_args(const local_mem_per_workitem<_T>& r, var_counters& c)
 {
     static_cast<void>(r);
-    std::ostringstream s;
-    s << "arg" << c._buf_num;
-    ++c._var_num;
-    ++c._buf_num;
-    return s.str();
+    return impl::concat_args_local_mem(c);
 }
 
 // local variables:
