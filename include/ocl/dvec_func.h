@@ -596,14 +596,12 @@ ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
     dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=nz.size();
     do {
-        // debug::dump(nz, "nz:");
-        auto ck=custom_kernel_with_size<type>(
-            nb.name(), nb.body(), hdcnt,
-            dcnt, local_mem_per_workitem<type>(1));
-        nz=ck;
+        // Note: in custom kernels the left hand side may be
+        // read also from the kernel:
+        nz=custom_kernel_with_size<type>(nb.name(), nb.body(),
+                                         hdcnt, dcnt,
+                                         local_mem_per_workitem<type>(1));
         dcnt.copy_to_host(&hdcnt);
-        // std::cout << "new size " << hdcnt << std::endl;
-        // debug::dump(nz, "nz:");
     } while (hdcnt>1);
     // copy only one element from nz
     type r;

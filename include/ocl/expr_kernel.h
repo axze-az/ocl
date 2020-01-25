@@ -293,7 +293,6 @@ gen_kernel_src(_RES& res,
     return ksrc_info(r._l.name(), s.str(), true);
 }
 
-
 template <class _RES, class _SRC>
 ocl::be::kernel_handle
 ocl::impl::

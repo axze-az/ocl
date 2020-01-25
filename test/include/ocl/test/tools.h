@@ -16,7 +16,7 @@ namespace ocl {
         make_vec(std::size_t s, const _T& v) {
             return dvec<_T>(s, v);
         }
-
+        
         template <typename _T>
         void
         dump(const dvec<_T>& v, const std::string& pfx="") {
