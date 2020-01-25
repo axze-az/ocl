@@ -2,11 +2,7 @@
 #define __OCL_IMPL_DEVICES_H__ 1
 
 #include <ocl/config.h>
-#define CL_TARGET_OPENCL_VERSION 120
-#define BOOST_COMPUTE_HAVE_THREAD_LOCAL 1
-#define BOOST_COMPUTE_THREAD_SAFE 1
-#define BOOST_DISABLE_ASSERTS 1
-#include <boost/compute/core.hpp>
+#include <ocl/be/types.h>
 #include <iosfwd>
 #include <stdexcept>
 #include <string>
@@ -16,18 +12,6 @@
 namespace ocl {
 
     namespace be {
-
-        namespace bc= boost::compute;
-
-        using error = bc::opencl_error;
-        using program = bc::program;
-        using context = bc::context;
-        using device = bc::device;
-        using queue = bc::command_queue;
-        using buffer = bc::buffer;
-        using kernel = bc::kernel;
-        using event = bc::event;
-        using wait_list = bc::wait_list;
 
         struct device_type {
             enum type {
