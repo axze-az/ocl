@@ -51,3 +51,131 @@ body(const std::string& s, const std::string& on_true,
     return r;
 }
 
+ocl::impl::__ck_body
+ocl::impl::
+gen_all_of(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "all_of_" << tname;
+    std::string kname=s.str();
+    s.str("");
+    s <<"void " << kname << "(\n"
+        "    ulong n,\n"
+        "    __global " << tname << "* d,\n"
+        "    __global " << tname << "* s,\n"
+        "    __global ulong* dcnt,\n"
+        "    __local " << tname << "* t\n"
+        ")\n"
+        "{\n"
+        "    ulong gid= get_global_id(0);\n"
+        "    uint lid= get_local_id(0);\n"
+        "    uint lsz= get_local_size(0);\n"
+        "    // copy s[gid] into t[lid]\n"
+        "    " << tname << " v= gid < n ? s[gid] : 1;\n"
+        "    t[lid]=v != 0 ? 1: 0;\n"
+        "    barrier(CLK_LOCAL_MEM_FENCE);\n"
+        "    // loop over t[0, lsz)\n"
+        "    for (uint stride=lsz>>1; stride>0; stride >>=1) {\n"
+        "        if (lid < stride) {\n"
+        "            uint pos=lid + stride;\n"
+        "            int vi= pos < lsz ? t[pos] : 1;\n"
+        "            t[lid] &= vi;\n"
+        "        }\n"
+        "    }\n"
+        "    if (lid == 0) {\n"
+        "        ulong grp_id=get_group_id(0);\n"
+        "        d[grp_id]=t[0];\n"
+        "    }\n"
+        "    if (gid == 0) {\n"
+        "        ulong grps=get_num_groups(0);\n"
+        "        dcnt[0]=grps;\n"
+        "    }\n"
+        "}\n";
+    return __ck_body(kname, s.str());
+}
+
+ocl::impl::__ck_body
+ocl::impl::
+gen_none_of(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "none_of_" << tname;
+    std::string kname=s.str();
+    s.str("");
+    s <<"void " << kname << "(\n"
+        "    ulong n,\n"
+        "    __global " << tname << "* d,\n"
+        "    __global " << tname << "* s,\n"
+        "    __global ulong* dcnt,\n"
+        "    __local " << tname << "* t\n"
+        ")\n"
+        "{\n"
+        "    ulong gid= get_global_id(0);\n"
+        "    uint lid= get_local_id(0);\n"
+        "    uint lsz= get_local_size(0);\n"
+        "    // copy s[gid] into t[lid]\n"
+        "    " << tname << " v= gid < n ? s[gid] : 0;\n"
+        "    t[lid]=v != 0 ? 1: 0;\n"
+        "    barrier(CLK_LOCAL_MEM_FENCE);\n"
+        "    // loop over t[0, lsz)\n"
+        "    for (uint stride=lsz>>1; stride>0; stride >>=1) {\n"
+        "        if (lid < stride) {\n"
+        "            uint pos=lid + stride;\n"
+        "            int vi= pos < lsz ? t[pos] : 0;\n"
+        "            t[lid] |= vi;\n"
+        "        }\n"
+        "    }\n"
+        "    if (lid == 0) {\n"
+        "        ulong grp_id=get_group_id(0);\n"
+        "        d[grp_id]=t[0];\n"
+        "    }\n"
+        "    if (gid == 0) {\n"
+        "        ulong grps=get_num_groups(0);\n"
+        "        dcnt[0]=grps;\n"
+        "    }\n"
+        "}\n";
+    return __ck_body(kname, s.str());
+}
+
+ocl::impl::__ck_body
+ocl::impl::
+gen_any_of(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "any_of_" << tname;
+    std::string kname=s.str();
+    s.str("");
+    s <<"void " << kname << "(\n"
+        "    ulong n,\n"
+        "    __global " << tname << "* d,\n"
+        "    __global " << tname << "* s,\n"
+        "    __global ulong* dcnt,\n"
+        "    __local " << tname << "* t\n"
+        ")\n"
+        "{\n"
+        "    ulong gid= get_global_id(0);\n"
+        "    uint lid= get_local_id(0);\n"
+        "    uint lsz= get_local_size(0);\n"
+        "    // copy s[gid] into t[lid]\n"
+        "    " << tname << " v= gid < n ? s[gid] : 0;\n"
+        "    t[lid]=v != 0 ? 1: 0;\n"
+        "    barrier(CLK_LOCAL_MEM_FENCE);\n"
+        "    // loop over t[0, lsz)\n"
+        "    for (uint stride=lsz>>1; stride>0; stride >>=1) {\n"
+        "        if (lid < stride) {\n"
+        "            uint pos=lid + stride;\n"
+        "            int vi= pos < lsz ? t[pos] : 0;\n"
+        "            t[lid] |= vi;\n"
+        "        }\n"
+        "    }\n"
+        "    if (lid == 0) {\n"
+        "        ulong grp_id=get_group_id(0);\n"
+        "        d[grp_id]=t[0];\n"
+        "    }\n"
+        "    if (gid == 0) {\n"
+        "        ulong grps=get_num_groups(0);\n"
+        "        dcnt[0]=grps;\n"
+        "    }\n"
+        "}\n";
+    return __ck_body(kname, s.str());
+}

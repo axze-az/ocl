@@ -521,6 +521,34 @@ namespace ocl {
     def_custom_func(
         std::set<std::string>& fnames,
         const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e );
+
+    namespace impl {
+        __ck_body
+        gen_all_of(const std::string_view& tname);
+
+        __ck_body
+        gen_any_of(const std::string_view& tname);
+
+        __ck_body
+        gen_none_of(const std::string_view& tname);
+
+        template <typename _T>
+        typename dvec<_T>::mask_value_type
+        xxx_of(const __ck_body& nb, const dvec<_T>& z);
+
+    }
+    
+    template <typename _T>
+    bool
+    all_of(const dvec<_T>& v);
+
+    template <typename _T>
+    bool
+    none_of(const dvec<_T>& v);
+
+    template <typename _T>
+    bool
+    any_of(const dvec<_T>& v);
 }
 
 // overload for float vectors with incorrectly rounded sqrt
@@ -556,6 +584,63 @@ ocl::def_custom_func(
         fnames.insert(fn);
     }
     return s;
+}
+
+template <typename _T>
+typename ocl::dvec<_T>::mask_value_type
+ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
+{
+    using type= typename dvec<_T>::mask_value_type;
+    typename dvec<_T>::mask_type nz= v != _T(0);
+    dvec<uint64_t> dcnt(1);
+    uint64_t hdcnt=nz.size();
+    do {
+        // debug::dump(nz, "nz:");
+        auto ck=custom_kernel_with_size<type>(nb.name(), nb.body(),
+                                              hdcnt, nz, dcnt,
+                                              local_mem_per_workitem<type>(1));
+        nz=ck;
+        dcnt.copy_to_host(&hdcnt);
+        // std::cout << "new size " << hdcnt << std::endl;
+        // debug::dump(nz, "nz:");
+    } while (hdcnt>1);
+    // copy only one element from nz
+    type r;
+    nz.copy_to_host(&r, 0, 1);
+    return r;
+}
+
+template <typename _T>
+bool
+ocl::all_of(dvec<_T>& v)
+{
+    using type= typename dvec<_T>::mask_value_type;
+    const auto tname=be::type_2_name<type>::v();
+    auto nb=impl::gen_all_of(tname);
+    auto r=impl::xxx_of(nb, v);
+    return r!=0;
+}
+
+template <typename _T>
+bool
+ocl::none_of(dvec<_T>& v)
+{
+    using type= typename dvec<_T>::mask_value_type;
+    const auto tname=be::type_2_name<type>::v();
+    auto nb=impl::gen_none_of(tname);
+    auto r=impl::xxx_of(nb, v);
+    return r==0;
+}
+
+template <typename _T>
+bool
+ocl::any_of(dvec<_T>& v)
+{
+    using type= typename dvec<_T>::mask_value_type;
+    const auto tname=be::type_2_name<type>::v();
+    auto nb=impl::gen_any_of(tname);
+    auto r=impl::xxx_of(nb, v);
+    return r!=0;
 }
 
 // local variables:

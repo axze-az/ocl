@@ -83,14 +83,12 @@ ocl::test::ops<_T>::check_res(const std::string& msg)
     _cmp_res = select(((_res == _h_res_d) |
                        ((_res != _res) & (_h_res_d != _h_res_d))),
                       -1, 0);
-    // copy back comparison result
-    _cmp_res.copy_to_host(&_h_cmp_res[0]);
-    // dump(_h_cmp_res, "cmp res:");
-    bool res=all_of(_h_cmp_res);
+    bool res=all_of(_cmp_res);
     if (res==false) {
         _res.copy_to_host(&_h_d_res[0]);
-    }
-    if (res==false) {
+        // copy back comparison result
+        _cmp_res.copy_to_host(&_h_cmp_res[0]);
+        // dump(_h_cmp_res, "cmp res:");
         std::cout << "\nFAILED: " << msg <<std::endl;
         std::cout << std::scientific
                   << std::setprecision(10);
