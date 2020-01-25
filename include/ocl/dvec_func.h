@@ -597,10 +597,9 @@ ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
     uint64_t hdcnt=nz.size();
     do {
         // debug::dump(nz, "nz:");
-        auto ck=custom_kernel_with_size<type>(nb.name(), nb.body(),
-                                              hdcnt,
-                                              dcnt,
-                                              local_mem_per_workitem<type>(1));
+        auto ck=custom_kernel_with_size<type>(
+            nb.name(), nb.body(), hdcnt,
+            dcnt, local_mem_per_workitem<type>(1));
         nz=ck;
         dcnt.copy_to_host(&hdcnt);
         // std::cout << "new size " << hdcnt << std::endl;
