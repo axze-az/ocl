@@ -1,5 +1,6 @@
 #include <ocl/ocl.h>
 #include <ocl/random.h>
+#include <ocl/test/tools.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -146,7 +147,6 @@ const std::uint64_t ocl::rand48::M=(1ULL<<48);
 const std::uint64_t ocl::rand48::MM=(M-1);
 const float ocl::rand48::REC= 1.0f/uint32_t(-1);
 
-
 template <typename _T, std::size_t _N>
 void
 ocl::rnd_distribution<_T, _N>::insert(const _T& v)
@@ -157,12 +157,13 @@ ocl::rnd_distribution<_T, _N>::insert(const _T& v)
           << " lt " << _min;
         throw std::runtime_error(e.str());
     }
-#if 0
+#if 1
     if (v > _max) {
         std::ostringstream e;
         e << "invalid entry " << v
           << " gt " << _max;
-        throw std::runtime_error(e.str());
+        std::cout << e.str() << std::endl;
+        // throw std::runtime_error(e.str());
     }
 #endif
     _T offset = (v - _min) * _rec_interval * (_N);
@@ -203,7 +204,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 256*1024;
+        const unsigned _N = 32*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -217,52 +218,39 @@ int main()
         }
 #else
         using namespace ocl;
-
+#if 0
         std::vector<std::uint64_t> gid(_N, 0ull);
         for (std::size_t i=0; i<gid.size(); ++i)
             gid[i] = i;
         dvec<std::uint64_t> dg=gid;
-        //ocl::rand48 t;
+        // ocl::rand48 t;
         ocl::srand t;
         t.seed(dg);
-
-        ocl::rnd_distribution<float, 25> dst(0, 1.0);
-        dvec<float> f;
-
-        for (int i=0; i<20000; ++i) {
-            f=t.nextf();
-            // if ((i & 0xff)==0xff) {
-            //    std::cout << "iteration " << i << std::endl;
-            // }
-            std::vector<float> fh(f);
-#if 1
-            for (std::size_t j=0; j<fh.size(); ++j) {
-                try {
-                    dst.insert(fh[j]);
-                }
-                catch (...) {
-                    for (std::size_t j=0; j<fh.size(); ++j) {
-                        std::cout << std::setw(2) << j
-                                  << ": " << fh[j] << std::endl;
-                    }
-                    throw;
-                }
-
-            }
-#endif
-
-#if 1
-            if ((i & (256-1)) == (256-1)) {
-#if 1
-                std::cout << '.' << std::flush;
 #else
+        ocl::rand t(_N);
+#endif
+        ocl::rnd_distribution<float, 40> dst(0, 1.0);
+        dvec<float> f;
+        for (int k=0; k<72; ++k) {
+            for (int i=0; i<4; ++i) {
+                f=t.nextf();
+                std::vector<float> fh(f);
                 for (std::size_t j=0; j<fh.size(); ++j) {
-                    std::cout << std::setw(2) << j
-                              << ": " << fh[j] << std::endl;
+                    try {
+                        dst.insert(fh[j]);
+                    }
+                    catch (...) {
+                        for (std::size_t j=0; j<fh.size(); ++j) {
+                            std::cout << std::setw(2) << j
+                                      << ": " << fh[j] << std::endl;
+                        }
+                        throw;
+                    }
+                    
                 }
-#endif
+                // test::dump(f, "result vec");
             }
-#endif
+            std::cout << '.' << std::flush;
         }
 #endif
 

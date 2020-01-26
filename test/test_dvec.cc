@@ -11,7 +11,7 @@
 #include <cmath>
 #include <random>
 
-#define USE_DEVICE_COMPARE 0
+#define USE_DEVICE_COMPARE 1
 
 namespace ocl {
 

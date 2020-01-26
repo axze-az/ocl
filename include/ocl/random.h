@@ -34,6 +34,33 @@ namespace ocl {
             return (cvt<dvec<float> >(next()) * _R());
         }
     };
+
+    class rand {
+        dvec<std::uint32_t> _next;
+
+        static
+        dvec<std::uint32_t>
+        vgid(std::size_t s, be::data_ptr p);
+    public:
+        constexpr static const std::uint32_t max_val() {
+            return 0x7fffffff;
+        }
+        rand(std::size_t s);
+        rand(std::size_t s, be::data_ptr p);
+        // set a new seed and size
+        void
+        seed(const dvec<uint32_t>& v) {
+            _next = v;
+        }
+        std::size_t size() const { return _next.size(); }
+        // return a vector with random contents
+        dvec<std::int32_t>
+        next();
+        // return a float vector with random contents
+        // in [0, 1.0f)
+        dvec<float>
+        nextf();
+    };
     
 }
 
