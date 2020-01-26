@@ -11,6 +11,8 @@
 #include <cmath>
 #include <random>
 
+#define USE_DEVICE_COMPARE 0
+
 namespace ocl {
 
     namespace test {
@@ -75,7 +77,7 @@ template <typename _T>
 bool
 ocl::test::ops<_T>::check_res(const std::string& msg)
 {
-#if 1
+#if USE_DEVICE_COMPARE>0
     // copy host results to device
     _h_res_d.copy_from_host(&_h_res[0]);
     // compare on device and make the result buffer compatible with
