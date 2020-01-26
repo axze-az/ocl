@@ -154,6 +154,15 @@ namespace ocl {
     auto
     horner(const dvec<_T>& x, const _C(&ci)[_N]);
 
+    template <typename _T, typename _C, size_t _N>
+    auto
+    horner2(const dvec<_T>& x, const dvec<_T>& x2, const _C(&ci)[_N]);
+    
+    template <typename _T, typename _C, size_t _N>
+    auto
+    horner4(const dvec<_T>& x, const dvec<_T>& x2, const dvec<_T>& x4,
+            const _C(&ci)[_N]);
+
     namespace test {
 
         const int VEC_SIZE=1;
@@ -200,7 +209,7 @@ gen_horner2(const std::string_view& tname,
             size_t n)
 {
     std::ostringstream s;
-    s << "horner2_" << n << ' ' << tname << '_' << cname;
+    s << "horner2_" << n << '_' << tname << '_' << cname;
     const std::string hname=s.str();
     s.str("");
     s << tname << " " << hname << "( "
@@ -215,9 +224,9 @@ gen_horner2(const std::string_view& tname,
         s << "    r0=x2*r0+c["<< i<<"];\n";
         s << "    r1=x2*r1+c["<< i+1<<"];\n";
     }
-    s << "    " << tname << " r= x*r0+r1\n";
+    s << "    " << tname << " r= x*r0+r1;\n";
     if ( n & 1) {
-        s << "    r = x*r + c[" << n-1 << "]\n";
+        s << "    r = x*r + c[" << n-1 << "];\n";
     }
     s << "    return r;\n"
          "}\n";
@@ -270,7 +279,7 @@ gen_horner4(const std::string_view& tname,
         s << "    " << tname << " a= x2*r + c["<< n-2 << "];\n";
         s << "    " << tname
           << " b= x2*c["<< n-3 << "] + c["<< n - 1 << "];\n";
-        s << "    r = x*a +b\n;";
+        s << "    r = x*a +b;\n";
         break;
     }
     s << "    return r;\n"
@@ -283,8 +292,8 @@ auto
 ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
 {
 #if 1
-    const std::string tname= be::type_2_name<_T>::v();
-    const std::string cname= be::type_2_name<_C>::v();
+    const auto tname= be::type_2_name<_T>::v();
+    const auto cname= be::type_2_name<_C>::v();
     auto hb=impl::gen_horner(tname, cname, _N);
     return custom_func<_T>(hb.name(), hb.body(), x, a); 
 #else
@@ -293,6 +302,28 @@ ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
     using _T_t= const dvec<_T>&;
     return impl::unroll_horner<_T_t, _C, _N, _N-1>::v(x, a[0], pa);
 #endif
+}
+
+template <typename _T, typename _C, size_t _N>
+auto
+ocl::horner2(const dvec<_T>& x, const dvec<_T>& x2,
+             const _C(&a)[_N])
+{
+    const auto tname= be::type_2_name<_T>::v();
+    const auto cname= be::type_2_name<_C>::v();
+    auto hb=impl::gen_horner2(tname, cname, _N);
+    return custom_func<_T>(hb.name(), hb.body(), x, x2, a); 
+}
+
+template <typename _T, typename _C, size_t _N>
+auto
+ocl::horner4(const dvec<_T>& x, const dvec<_T>& x2, const dvec<_T>& x4,
+             const _C(&a)[_N])
+{
+    const auto tname= be::type_2_name<_T>::v();
+    const auto cname= be::type_2_name<_C>::v();
+    auto hb=impl::gen_horner4(tname, cname, _N);
+    return custom_func<_T>(hb.name(), hb.body(), x, x2, x4, a); 
 }
 
 template <typename _X, typename _C1, typename _C0>
@@ -424,6 +455,8 @@ ocl::test::test_horner(const dvec<float>& x)
         log_c8,  log_c7,  log_c6,  log_c5,  log_c4,
         log_c3,  log_c2,  log_c1
     };
+    vf_type x2=x*x;
+    vf_type x4=x*x*x*x;
     for (int i=0; i<512; ++i) {
 #if 0
         vf_type y0=horner(x,
@@ -434,6 +467,8 @@ ocl::test::test_horner(const dvec<float>& x)
                           log_c3,  log_c2,  log_c1);
 #endif
         vf_type y1=horner(x, ci);
+        vf_type y2=horner2(x, x2, ci);
+        vf_type y4=horner4(x, x2, x4, ci);
         // vi_type eq=y0 == y1;
         // vi_type eq0=y0 == 1.0f;
     }

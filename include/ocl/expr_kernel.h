@@ -100,7 +100,20 @@ namespace ocl {
     // generate and execute an opencl kernel for an
     // expression
     template <class _RES, class _EXPR>
-    void execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
+    void
+    execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
+
+    // generate and execute a custom kernel for r
+    template <typename _OP, typename _R>
+    void
+    execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+                   size_t s, be::data_ptr b);
+
+    // generate and execute a custom kernel for r
+    template <class _RES, typename _OP, typename _R>
+    void
+    execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+                   size_t s);
 }
 
 template <typename _T>
@@ -358,10 +371,14 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     }
     var_counters c{0};
     s << "    " << k_func_name << "("
-      << "pa->_n, "
-      << concat_args(res, c) << ", "
-      << concat_args(r, c) << ");\n";
-    s << "}\n";
+      << "pa->_n, ";
+    // custom kernels may have no result:
+    std::string ra=concat_args(res, c);
+    if (!ra.empty()) {
+        s << ra << ", ";
+    }
+    s << concat_args(r, c) << ");\n"
+         "}\n";
     std::string ss=s.str();
     return compile(ss, k_name, b);
 }
@@ -376,6 +393,28 @@ ocl::execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
     const void* pv=reinterpret_cast<const void*>(pf);
     impl::execute(res, r, b, s, pv);
 }
+
+template <typename _OP, typename _R>
+void
+ocl::
+execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+               size_t s, be::data_ptr b)
+{
+    struct tag {};
+    impl::ignored_arg<tag> v;
+    execute(v, r, b, s);
+}
+
+template <class _RES, typename _OP, typename _R>
+void
+ocl::
+execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
+               size_t s)
+{
+    execute_custom(r, s, be::data::instance());
+}
+
+
 
 // Local variables:
 // mode: c++

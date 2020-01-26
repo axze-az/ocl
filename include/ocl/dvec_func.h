@@ -537,7 +537,7 @@ namespace ocl {
         xxx_of(const __ck_body& nb, const dvec<_T>& z);
 
     }
-    
+
     template <typename _T>
     bool
     all_of(const dvec<_T>& v);
@@ -598,9 +598,9 @@ ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
     do {
         // Note: in custom kernels the left hand side may be
         // read also from the kernel:
-        nz=custom_kernel_with_size<type>(nb.name(), nb.body(),
-                                         hdcnt, dcnt,
-                                         local_mem_per_workitem<type>(1));
+        auto k=custom_kernel<type>(nb.name(), nb.body(),
+                                   nz, dcnt, local_mem_per_workitem<type>(1));
+        execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
     } while (hdcnt>1);
     // copy only one element from nz
@@ -611,7 +611,7 @@ ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
 
 template <typename _T>
 bool
-ocl::all_of(dvec<_T>& v)
+ocl::all_of(const dvec<_T>& v)
 {
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
@@ -622,7 +622,7 @@ ocl::all_of(dvec<_T>& v)
 
 template <typename _T>
 bool
-ocl::none_of(dvec<_T>& v)
+ocl::none_of(const dvec<_T>& v)
 {
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
@@ -633,7 +633,7 @@ ocl::none_of(dvec<_T>& v)
 
 template <typename _T>
 bool
-ocl::any_of(dvec<_T>& v)
+ocl::any_of(const dvec<_T>& v)
 {
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
