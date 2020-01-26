@@ -265,9 +265,8 @@ def_custom_func(std::set<std::string>& fnames,
 {
     const std::string& fn=e._l.name();
     std::string s;
-    if (fnames.find(fn) == fnames.end()) {
+    if (fnames.insert(fn).second == true) {
         s = e._l.body() + '\n';
-        fnames.insert(fn);
     }
     return s;
 }

@@ -701,16 +701,16 @@ std::string ocl::eval_results(dvec<_T>& r,
 
 template <typename _L, typename _R>
 std::string
-ocl::def_custom_func(std::set<std::string>& fnames,
-                     const expr<dop::div<dvec<float>>, _L, _R>& e )
+ocl::
+def_custom_func(std::set<std::string>& fnames,
+                const expr<dop::div<dvec<float>>, _L, _R>& e )
 {
     static_cast<void>(e);
     using d_t=dop::names::div_fix<float>;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.find(fn) == fnames.end()) {
+    if (fnames.insert(fn).second == true) {
         s = d_t::func_body() + '\n';
-        fnames.insert(fn);
     }
     return s;
 }
@@ -718,7 +718,8 @@ ocl::def_custom_func(std::set<std::string>& fnames,
 // overload for float vectors with incorrectly rounded division
 template <std::size_t _N, typename _L, typename _R>
 std::string
-ocl::def_custom_func(
+ocl::
+def_custom_func(
     std::set<std::string>& fnames,
     const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e )
 {
@@ -726,9 +727,8 @@ ocl::def_custom_func(
     using d_t=dop::names::div_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.find(fn) == fnames.end()) {
+    if (fnames.insert(fn).second == true) {
         s = d_t::func_body() + '\n';
-        fnames.insert(fn);
     }
     return s;
 }

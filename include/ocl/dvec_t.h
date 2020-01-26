@@ -370,7 +370,7 @@ ocl::dvec<_T>::operator=(const expr<_OP<dvec<_T> >, _L, _R>& r)
     if (s) {
         be::data_ptr p=ocl::backend_data(r);
         be::data_ptr pm=backend_data();
-        if (s <= size() && pm==p) {
+        if (s == size() && pm==p) {
             execute(*this, r, p, s);
         } else {
             if (p == nullptr)
