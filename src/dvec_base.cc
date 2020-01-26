@@ -20,9 +20,11 @@ ocl::dvec_base::dvec_base(std::size_t s)
 
 ocl::dvec_base::dvec_base(std::size_t s, const void* p)
     : base_type(), _bed{be::data::instance()},
-      _b{_bed->dcq().c(), s}
+      _b{_bed->dcq().c(), s,
+         be::buffer::read_write|be::buffer::copy_host_ptr,
+         const_cast<void*>(p)}
 {
-    copy_from_host(p);
+    // copy_from_host(p);
 }
 
 ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s)
@@ -33,9 +35,11 @@ ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s)
 
 ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s, const void* p)
     : base_type(), _bed{pbe},
-      _b{_bed->dcq().c(), s}
+      _b{_bed->dcq().c(), s,
+         be::buffer::read_write|be::buffer::copy_host_ptr,
+         const_cast<void*>(p)}
 {
-    copy_from_host(p);
+    // copy_from_host(p);
 }
 
 ocl::dvec_base::dvec_base(const dvec_base& r)

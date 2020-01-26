@@ -246,7 +246,7 @@ gen_kernel_src(_RES& res, const _SRC& r, const void* cookie)
     s << "k_" << cookie;
     std::string k_name(s.str());
     s.str("");
-    std::set<std::string> fnames;
+    be::kernel_functions fnames;
     s << def_custom_func(fnames, r);
 
     // the real kernel follows now

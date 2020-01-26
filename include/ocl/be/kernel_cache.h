@@ -31,18 +31,6 @@ namespace ocl {
             void lock() { _h->_m.lock(); }
             void unlock() { _h->_m.unlock(); }
         };
-        
-        // for mesa we need the keep the programs
-        struct pgm_kernel_lock {
-            program _p;
-            kernel _k;
-            std::shared_ptr<mutex> _m;
-            pgm_kernel_lock(const program& p,
-                            const kernel& k) :
-                _p(p), _k(k), _m(new mutex()) {}
-            void lock() { _m->lock(); }
-            void unlock() { _m->unlock(); }
-        };
 
         class kernel_cache {
             using kmap_t = std::map<kernel_key, kernel_handle>;

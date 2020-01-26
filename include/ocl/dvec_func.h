@@ -512,14 +512,14 @@ namespace ocl {
     // overload for float vectors with incorrectly rounded sqrt
     template <typename _L>
     std::string
-    def_custom_func(std::set<std::string>& fnames,
+    def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::sqrt_f<dvec<float>>, _L, void>& e );
 
     // overload for float vectors with incorrectly rounded sqrt
     template <std::size_t _N, typename _L>
     std::string
     def_custom_func(
-        std::set<std::string>& fnames,
+        be::kernel_functions& fnames,
         const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e );
 
     namespace impl {
@@ -555,14 +555,14 @@ namespace ocl {
 template <typename _L>
 std::string
 ocl::
-def_custom_func(std::set<std::string>& fnames,
+def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::sqrt_f<dvec<float>>, _L, void>& e )
 {
     static_cast<void>(e);
     using d_t=dop::names::f_sqrt_fix<float>;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.insert(fn).second == true) {
+    if (fnames.insert(fn) == true) {
         s = d_t::func_body() + '\n';
     }
     return s;
@@ -573,14 +573,14 @@ template <std::size_t _N, typename _L>
 std::string
 ocl::
 def_custom_func(
-    std::set<std::string>& fnames,
+    be::kernel_functions& fnames,
     const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e )
 {
     static_cast<void>(e);
     using d_t=dop::names::f_sqrt_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.insert(fn).second == true) {
+    if (fnames.insert(fn) == true) {
         s = d_t::func_body() + '\n';
     }
     return s;

@@ -30,7 +30,7 @@ ocl::test::test_custom_func()
     std::cout << ocl::be::demangle(typeid(e).name()) << std::endl;
     auto t1=custom_func<float>(fname0, fbody0, v0, v0, 2.0f) +
         custom_func<float>(fname0, fbody0, v0, v0, 2.0f);
-    std::set<std::string> fnames;
+    be::kernel_functions fnames;
     std::cout << def_custom_func(fnames, t1);
     dvec<float> v1=t1;
     dump(v1, "v1: (v0+v0+2.0f)+(v0+v0+2.0f) = 2.0f*6.8f=13.6f");

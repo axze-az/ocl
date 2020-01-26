@@ -569,14 +569,14 @@ namespace ocl {
     // overload for float vectors with incorrectly rounded division
     template <typename _L, typename _R>
     std::string
-    def_custom_func(std::set<std::string>& fnames,
+    def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::div<dvec<float>>, _L, _R>& e );
 
     // overload for float vectors with incorrectly rounded division
     template <std::size_t _N, typename _L, typename _R>
     std::string
     def_custom_func(
-        std::set<std::string>& fnames,
+        be::kernel_functions& fnames,
         const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e );
 
 }
@@ -702,14 +702,14 @@ std::string ocl::eval_results(dvec<_T>& r,
 template <typename _L, typename _R>
 std::string
 ocl::
-def_custom_func(std::set<std::string>& fnames,
+def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::div<dvec<float>>, _L, _R>& e )
 {
     static_cast<void>(e);
     using d_t=dop::names::div_fix<float>;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.insert(fn).second == true) {
+    if (fnames.insert(fn) == true) {
         s = d_t::func_body() + '\n';
     }
     return s;
@@ -720,14 +720,14 @@ template <std::size_t _N, typename _L, typename _R>
 std::string
 ocl::
 def_custom_func(
-    std::set<std::string>& fnames,
+    be::kernel_functions& fnames,
     const expr<dop::div<dvec<cftal::vec<float, _N>>>, _L, _R>& e )
 {
     static_cast<void>(e);
     using d_t=dop::names::div_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
     std::string s;
-    if (fnames.insert(fn).second == true) {
+    if (fnames.insert(fn) == true) {
         s = d_t::func_body() + '\n';
     }
     return s;

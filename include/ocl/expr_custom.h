@@ -4,6 +4,7 @@
 #include <ocl/config.h>
 #include <ocl/expr.h>
 #include <ocl/be/data.h>
+#include <ocl/be/kernel_functions.h>
 #include <ocl/be/type_2_name.h>
 #include <ocl/be/devices.h>
 
@@ -102,24 +103,24 @@ namespace ocl {
     // support for custom functions: definition of the body
     template <typename _T>
     std::string
-    def_custom_func(std::set<std::string>& fnames, const _T& l);
+    def_custom_func(be::kernel_functions& fnames, const _T& l);
 
     // overload for any expressions
     template <typename _OP, typename _L, typename _R>
     std::string
-    def_custom_func(std::set<std::string>& fnames,
+    def_custom_func(be::kernel_functions& fnames,
                     const expr<_OP, _L, _R>& e);
 
     // overload for expressions with only one argument
     template <typename _OP, typename _L>
     std::string
-    def_custom_func(std::set<std::string>& fnames,
+    def_custom_func(be::kernel_functions& fnames,
                     const expr<_OP, _L, void>& e);
 
     // overload for custom functions
     template <typename _OP, typename _R>
     std::string
-    def_custom_func(std::set<std::string>& fnames,
+    def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::custom_f<_OP>, impl::cf_body, _R>& e );
 
     // eval_ops overload for custom functions
@@ -232,7 +233,7 @@ namespace ocl {
 
 template <typename _T>
 std::string
-ocl::def_custom_func(std::set<std::string>& fnames, const _T& l)
+ocl::def_custom_func(be::kernel_functions& fnames, const _T& l)
 {
     static_cast<void>(fnames);
     static_cast<void>(l);
@@ -241,7 +242,7 @@ ocl::def_custom_func(std::set<std::string>& fnames, const _T& l)
 
 template <typename _OP, typename _L, typename _R>
 std::string
-ocl::def_custom_func(std::set<std::string>& fnames,
+ocl::def_custom_func(be::kernel_functions& fnames,
                      const expr<_OP, _L, _R>& e)
 {
     std::string l=def_custom_func(fnames, e._l);
@@ -251,7 +252,7 @@ ocl::def_custom_func(std::set<std::string>& fnames,
 
 template <typename _OP, typename _L>
 std::string
-ocl::def_custom_func(std::set<std::string>& fnames,
+ocl::def_custom_func(be::kernel_functions& fnames,
                      const expr<_OP, _L, void>& e)
 {
     return def_custom_func(fnames, e._l);
@@ -260,12 +261,12 @@ ocl::def_custom_func(std::set<std::string>& fnames,
 template <typename _OP, typename _R>
 std::string
 ocl::
-def_custom_func(std::set<std::string>& fnames,
+def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::custom_f<_OP>, impl::cf_body, _R>& e )
 {
     const std::string& fn=e._l.name();
     std::string s;
-    if (fnames.insert(fn).second == true) {
+    if (fnames.insert(fn) == true) {
         s = e._l.body() + '\n';
     }
     return s;
