@@ -1,6 +1,7 @@
 #include <ocl/ocl.h>
 #include <ocl/random.h>
 #include <ocl/test/tools.h>
+#include <cftal/lvec.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -139,7 +140,98 @@ namespace ocl {
     std::ostream& operator<<(std::ostream& s,
                              const rnd_distribution<_T, _N>& d);
 
+    class rnd_histogram {
+        float _min;
+        float _max;
+        float _rec_interval;
+        std::uint32_t _n;
+        dvec<std::uint32_t> _val;
+    public:
+        rnd_histogram(const float& min_val, const float& max_val,
+                      std::uint32_t n,
+                      be::data_ptr p=be::data::instance())
+            : _min(min_val), _max(max_val),
+              _rec_interval(float(1)/(_max - _min)),
+              _n(n),
+              _val(p, _n+2, 0) {}
+        void
+        insert(const dvec<float>& v);
+        std::vector<std::uint32_t>
+        values() const { return std::vector<std::uint32_t>(_val); }
+        const float& min_val() const { return _min; }
+        const float& max_val() const { return _max; }
+        const std::uint32_t& n() const { return _n; }
+    };
+
+    std::ostream& operator<<(std::ostream& s,
+                             const rnd_histogram& d);
 }
+
+void
+ocl::rnd_histogram::insert(const dvec<float>& v)
+{
+    const char* kname="update_histogram_float";
+    const char* ksrc=
+        "void\n"
+        "update_histogram_float(ulong n,\n"
+        "                       __global uint* h,\n"
+        "                       int entries,\n"
+        "                       float min_val,\n"
+        "                       float max_val,\n"
+        "                       float rec_interval,\n"
+        "                       __global const float* s)\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        float v=s[gid];\n"
+        "        float offset = (v - min_val) * rec_interval * entries;\n"
+        "        uint o= offset;\n"
+        "        if (v > max_val) {\n"
+        "            o=entries + 1;\n"
+        "        }\n"
+        "        if (v < min_val) {\n"
+        "            o=entries;\n"
+        "        }\n"
+        "        atomic_add(h+o, 1);\n"
+        "    }\n"
+        "}\n";
+    auto ck=custom_kernel<int>(kname, ksrc,
+                               _val,
+                               n(),
+                               min_val(), max_val(), _rec_interval,
+                               v);
+    execute_custom(ck, v.size(), _val.backend_data());
+}
+
+std::ostream&
+ocl::operator<<(std::ostream& s, const rnd_histogram& d)
+{
+    const float& min_v= d.min_val();
+    const float& max_v= d.max_val();
+    const float interval= max_v - min_v;
+
+    auto dd=d.values();
+    std::size_t _N=d.n();
+    std::uint64_t n=0;
+    for (auto b= std::cbegin(dd), e=std::cend(dd); b!=e; ++b) {
+        n+= *b;
+    }
+    const double rn=1.0/n;
+
+    for (std::size_t i=0; i<_N; ++i) {
+        float v= min_v + (i * interval)/_N;
+        double rt= dd[i] * rn;
+        s << std::setprecision(6) << std::fixed;
+        s << std::setw(8) << v << ' '
+          << std::setw(8) << dd[i]
+          << ' ' << rt
+          << std::endl;
+    }
+    std::cout << "below: " << dd[_N] << std::endl;
+    std::cout << "above: " << dd[_N+1] << std::endl;
+    return s;
+}
+
 
 const std::uint64_t ocl::rand48::A=0x5DEECE66Dul;
 const std::uint64_t ocl::rand48::C=0xBL;
@@ -198,7 +290,6 @@ std::ostream& ocl::operator<<(std::ostream& s,
     return s;
 }
 
-
 int main()
 {
     try {
@@ -229,12 +320,16 @@ int main()
 #else
         ocl::rand t(_N);
 #endif
-        ocl::rnd_distribution<float, 40> dst(0, 1.0);
+        // ocl::rnd_distribution<float, 40> dst(0, 1.0);
+        ocl::rnd_histogram hdst(0, 1.0f, 40);
         dvec<float> f;
+        cftal::lvec<float > fh(_N);
         for (int k=0; k<72; ++k) {
-            for (int i=0; i<4; ++i) {
+            for (int i=0; i<8; ++i) {
                 f=t.nextf();
-                std::vector<float> fh(f);
+                hdst.insert(f);
+#if 0
+                f.copy_to_host(&fh[0]);
                 for (std::size_t j=0; j<fh.size(); ++j) {
                     try {
                         dst.insert(fh[j]);
@@ -248,13 +343,15 @@ int main()
                     }
                     
                 }
+#endif
                 // test::dump(f, "result vec");
             }
             std::cout << '.' << std::flush;
         }
 #endif
 
-        std::cout << std::endl << dst << std::endl;
+        // std::cout << std::endl << dst << std::endl;
+        std::cout << std::endl << hdst << std::endl;
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()
