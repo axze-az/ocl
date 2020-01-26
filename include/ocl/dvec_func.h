@@ -595,11 +595,11 @@ ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
     typename dvec<_T>::mask_type nz= v != _T(0);
     dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=nz.size();
+    // Note: in custom kernels the left hand side may be
+    // read also from the kernel:
+    auto k=custom_kernel<type>(nb.name(), nb.body(),
+                               nz, dcnt, local_mem_per_workitem<type>(1));
     do {
-        // Note: in custom kernels the left hand side may be
-        // read also from the kernel:
-        auto k=custom_kernel<type>(nb.name(), nb.body(),
-                                   nz, dcnt, local_mem_per_workitem<type>(1));
         execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
     } while (hdcnt>1);
