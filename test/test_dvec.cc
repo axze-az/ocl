@@ -192,7 +192,7 @@ ocl::test::ops<_T>::perform()
         "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
         "    float yn= a*xn;\n"
         "    yn= fma(xn, fma(yn, -b, a), yn);\n"
-<        "    return yn;\n"
+        "    return yn;\n"
         "}\n";
     _res=custom_func<float>(fname, fbody, _a0, _a1);
 #else

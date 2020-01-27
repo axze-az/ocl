@@ -51,6 +51,10 @@ namespace ocl {
         public:
             error(cl_int code);
             error(cl_int code, const char* file, unsigned line);
+            error(const error& r);
+            error(error&& r);
+            error& operator=(const error& r);
+            error& operator=(error&& r);
             virtual ~error();
             // check code and throw if required
             static

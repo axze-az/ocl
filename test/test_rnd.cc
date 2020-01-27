@@ -98,7 +98,7 @@ namespace ocl {
         dvec<float>
         drand48() {
             next();
-            return cvt<dvec<float> >(_state);
+            return cvt<dvec<float>>(_state);
         }
 
         void
@@ -108,7 +108,7 @@ namespace ocl {
 
         dvec<float>
         nextf() {
-            dvec<float> t=cvt<dvec<float> >(drand48()) * REC;
+            dvec<float> t=cvt<dvec<float> >(drand48() & 0xffffff) * REC;
             dvec<float> r=max(min(t, 1.0f), 0.0f);
             return r;
         }
@@ -237,7 +237,7 @@ const std::uint64_t ocl::rand48::A=0x5DEECE66Dul;
 const std::uint64_t ocl::rand48::C=0xBL;
 const std::uint64_t ocl::rand48::M=(1ULL<<48);
 const std::uint64_t ocl::rand48::MM=(M-1);
-const float ocl::rand48::REC= 1.0f/uint32_t(-1);
+const float ocl::rand48::REC= 0x1p-24f;
 
 template <typename _T, std::size_t _N>
 void
@@ -295,7 +295,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 32*1024*1024;
+        const unsigned _N = 16*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -325,7 +325,7 @@ int main()
         dvec<float> f;
         cftal::lvec<float > fh(_N);
         for (int k=0; k<72; ++k) {
-            for (int i=0; i<8; ++i) {
+            for (int i=0; i<4; ++i) {
                 f=t.nextf();
                 hdst.insert(f);
 #if 0
@@ -341,7 +341,7 @@ int main()
                         }
                         throw;
                     }
-                    
+
                 }
 #endif
                 // test::dump(f, "result vec");
