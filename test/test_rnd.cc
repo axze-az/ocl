@@ -340,37 +340,40 @@ int main()
         ocl::rand t(_N);
 #endif
         // ocl::rnd_distribution<float, 40> dst(0, 1.0);
-        ocl::rnd_histogram hdst(0, 1.0f, 20);
+        ocl::rnd_histogram hdst(0, 1.0f, 25);
         dvec<float> f;
         cftal::lvec<float > fh(_N);
-        for (int k=0; k<72; ++k) {
-            for (int i=0; i<256; ++i) {
-                f=t.nextf();
-                hdst.insert(f);
+        for (int l=0; l<16; ++l) {
+            for (int k=0; k<72; ++k) {
+                for (int i=0; i<16; ++i) {
+                    f=t.nextf();
+                    hdst.insert(f);
 #if 0
-                f.copy_to_host(&fh[0]);
-                for (std::size_t j=0; j<fh.size(); ++j) {
-                    try {
-                        dst.insert(fh[j]);
-                    }
-                    catch (...) {
-                        for (std::size_t j=0; j<fh.size(); ++j) {
-                            std::cout << std::setw(2) << j
-                                      << ": " << fh[j] << std::endl;
+                    f.copy_to_host(&fh[0]);
+                    for (std::size_t j=0; j<fh.size(); ++j) {
+                        try {
+                            dst.insert(fh[j]);
                         }
-                        throw;
+                        catch (...) {
+                            for (std::size_t j=0; j<fh.size(); ++j) {
+                                std::cout << std::setw(2) << j
+                                          << ": " << fh[j] << std::endl;
+                            }
+                            throw;
+                        }
+                        
                     }
-
-                }
 #endif
-                // test::dump(f, "result vec");
+                    // test::dump(f, "result vec");
+                }
+                std::cout << '.' << std::flush;
             }
-            std::cout << '.' << std::flush;
+            std::cout << '\n';
         }
 #endif
 
         // std::cout << std::endl << dst << std::endl;
-        std::cout << std::endl << hdst << std::endl;
+        std::cout << hdst << std::endl;
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught ocl::impl::error: " << e.what()
