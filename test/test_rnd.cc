@@ -145,7 +145,9 @@ namespace ocl {
         float _max;
         float _rec_interval;
         std::uint32_t _n;
+        // values low
         dvec<std::uint32_t> _val;
+        // values high
         dvec<std::uint32_t> _val_hi;
     public:
         rnd_histogram(const float& min_val, const float& max_val,
@@ -342,7 +344,7 @@ int main()
         dvec<float> f;
         cftal::lvec<float > fh(_N);
         for (int k=0; k<72; ++k) {
-            for (int i=0; i<128; ++i) {
+            for (int i=0; i<256; ++i) {
                 f=t.nextf();
                 hdst.insert(f);
 #if 0

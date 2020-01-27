@@ -677,8 +677,9 @@ ocl::eval_args(const expr<_OP, _L, void>& r, unsigned& arg_num, bool ro)
 }
 
 template <class _OP, class _L, class _R>
-std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
-                           bool read)
+std::string
+ocl::
+eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num, bool read)
 {
     std::string l=eval_vars(a._l, arg_num, read);
     std::string r=eval_vars(a._r, arg_num, read);
@@ -690,11 +691,12 @@ std::string ocl::eval_vars(const expr<_OP, _L, _R>& a, unsigned& arg_num,
 }
 
 template <class _OP, class _L>
-std::string ocl::eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num,
-                           bool read)
+std::string
+ocl::
+eval_vars(const expr<_OP, _L, void>& a, unsigned& arg_num, bool read)
 {
     auto l=eval_vars(a._l, arg_num, read);
-    return std::string(l + '\n');
+    return l;
 }
 
 template <class _OP, class _L, class _R>
