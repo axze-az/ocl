@@ -146,6 +146,7 @@ namespace ocl {
         float _rec_interval;
         std::uint32_t _n;
         dvec<std::uint32_t> _val;
+        dvec<std::uint32_t> _val_hi;
     public:
         rnd_histogram(const float& min_val, const float& max_val,
                       std::uint32_t n,
@@ -153,11 +154,12 @@ namespace ocl {
             : _min(min_val), _max(max_val),
               _rec_interval(float(1)/(_max - _min)),
               _n(n),
-              _val(p, _n+2, 0) {}
+              _val(p, _n+2, 0),
+              _val_hi(_val) {}
         void
         insert(const dvec<float>& v);
-        std::vector<std::uint32_t>
-        values() const { return std::vector<std::uint32_t>(_val); }
+        std::vector<std::uint64_t>
+        values() const;
         const float& min_val() const { return _min; }
         const float& max_val() const { return _max; }
         const std::uint32_t& n() const { return _n; }
@@ -175,6 +177,7 @@ ocl::rnd_histogram::insert(const dvec<float>& v)
         "void\n"
         "update_histogram_float(ulong n,\n"
         "                       __global uint* h,\n"
+        "                       __global uint* h_hi,\n"
         "                       int entries,\n"
         "                       float min_val,\n"
         "                       float max_val,\n"
@@ -192,16 +195,30 @@ ocl::rnd_histogram::insert(const dvec<float>& v)
         "        if (v < min_val) {\n"
         "            o=entries;\n"
         "        }\n"
-        "        atomic_add(h+o, 1);\n"
+        "        uint old=atomic_add(h+o, 1);\n"
+        "        if (old == 0xffffffff) {\n"
+        "            atomic_add(h_hi+o, 1);\n"
+        "        }\n"
         "    }\n"
         "}\n";
     auto ck=custom_kernel<int>(kname, ksrc,
                                _val,
+                               _val_hi,
                                n(),
                                min_val(), max_val(), _rec_interval,
                                v);
     execute_custom(ck, v.size(), _val.backend_data());
 }
+
+std::vector<std::uint64_t>
+ocl::rnd_histogram::values()
+    const
+{
+    dvec<uint64_t> r= ((cvt<dvec<uint64_t> >(_val_hi)) << 32)
+        +(cvt<dvec<uint64_t> >(_val));
+    return std::vector<uint64_t>(r);
+}
+
 
 std::ostream&
 ocl::operator<<(std::ostream& s, const rnd_histogram& d)
@@ -295,7 +312,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 16*1024*1024;
+        const unsigned _N = 32*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -321,11 +338,11 @@ int main()
         ocl::rand t(_N);
 #endif
         // ocl::rnd_distribution<float, 40> dst(0, 1.0);
-        ocl::rnd_histogram hdst(0, 1.0f, 40);
+        ocl::rnd_histogram hdst(0, 1.0f, 20);
         dvec<float> f;
         cftal::lvec<float > fh(_N);
         for (int k=0; k<72; ++k) {
-            for (int i=0; i<4; ++i) {
+            for (int i=0; i<128; ++i) {
                 f=t.nextf();
                 hdst.insert(f);
 #if 0
