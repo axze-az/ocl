@@ -1,5 +1,6 @@
 #include <cftal/vec.h>
 #include <ocl/ocl.h>
+#include <ocl/random.h>
 #include <ocl/test/tools.h>
 #include <iostream>
 #include <iomanip>
@@ -62,6 +63,16 @@ ocl::test::ops<_T>::ops(size_t n)
       _h_d_res(n),
       _h_res(n), _h_a0(n), _h_a1(n)
 {
+#if 1
+    const _T min_val=-2.0;
+    const _T max_val=2.0;
+    rand rnd(n);
+    rnd.seed_times_global_id(n);
+    _a0 = uniform_float_random_vector(rnd, min_val, max_val);
+    _a1 = uniform_float_random_vector(rnd, min_val, max_val);
+    _a0.copy_to_host(&_h_a0[0]);
+    _a1.copy_to_host(&_h_a1[0]);
+#else
     std::mt19937_64 rnd;
     rnd.seed(n);
     std::uniform_real_distribution<_T> distrib(_T(-2.0), _T(2.0));
@@ -71,6 +82,7 @@ ocl::test::ops<_T>::ops(size_t n)
     }
     _a0.copy_from_host(&_h_a0[0]);
     _a1.copy_from_host(&_h_a1[0]);
+#endif
 }
 
 template <typename _T>

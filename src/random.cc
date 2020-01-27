@@ -30,6 +30,12 @@ ocl::rand::rand(std::size_t s, be::data_ptr p)
 {
 }
 
+void
+ocl::rand::rand::seed_times_global_id(uint32_t s)
+{
+    _next=vgid(_next.size(), _next.backend_data())*s;
+}
+
 ocl::dvec<int32_t>
 ocl::rand::next()
 {
@@ -92,4 +98,12 @@ ocl::rand::nextf()
     auto ck=custom_kernel<float>(kname, ksrc, _next);
     dvec<float> r(ck);
     return r;
+}
+
+ocl::dvec<float>
+ocl::
+uniform_float_random_vector(rand& rnd, float min_val, float max_val)
+{
+    const float range=max_val - min_val;
+    return ((rnd.nextf() * range) + min_val);
 }

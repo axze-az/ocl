@@ -6,20 +6,21 @@
 
 namespace ocl {
 
+#if 0
     class srand {
         dvec<std::uint32_t> _next;
     public:
 
         constexpr static const std::uint32_t max_val() { return 0x7fff; }
         constexpr static const float _R() { return 1.0f/32768.f; }
-        
+
         srand() : _next() {}
         srand(const dvec<uint32_t>& gid) : _next{gid} {}
-        void 
+        void
         seed(const dvec<uint64_t>& gid){
             _next = cvt<dvec<uint32_t> >(gid);
         }
-        void 
+        void
         seed(const dvec<uint32_t>& gid){
             _next = gid;
         }
@@ -34,6 +35,7 @@ namespace ocl {
             return (cvt<dvec<float> >(next()) * _R());
         }
     };
+#endif
 
     class rand {
         dvec<std::uint32_t> _next;
@@ -52,6 +54,10 @@ namespace ocl {
         seed(const dvec<uint32_t>& v) {
             _next = v;
         }
+
+        void
+        seed_times_global_id(uint32_t n);
+
         std::size_t size() const { return _next.size(); }
         // return a vector with random contents
         dvec<std::int32_t>
@@ -61,11 +67,15 @@ namespace ocl {
         dvec<float>
         nextf();
     };
-    
+
+
+    dvec<float>
+    uniform_float_random_vector(rand& rnd,
+                                float min_val, float max_val);
 }
 
 
 // Local variables:
 // mode: c++
 // end:
-#endif // __OCL_RANDOM_H__ 
+#endif // __OCL_RANDOM_H__
