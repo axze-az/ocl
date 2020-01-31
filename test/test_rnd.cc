@@ -34,86 +34,6 @@ namespace ocl {
         next = seed;
     }
 #endif
-#if 0
-    class srand {
-        dvec<std::uint32_t> _next;
-    public:
-        srand() : _next() {}
-        srand(const dvec<uint32_t>& gid) : _next{gid} {}
-        void
-        seed(const dvec<uint64_t>& gid){
-            _next = cvt_to<dvec<uint32_t> >(gid);
-        }
-        void
-        seed(const dvec<uint32_t>& gid){
-            _next = gid;
-        }
-        // dvec<uint32_t>
-        auto
-        next() {
-            _next = (_next * 1103515245 + 12345);
-            return (_next>>16) & 0x7fff;
-        }
-        auto
-        nextf() {
-            return (cvt_to<dvec<float>>(next()) * (1.0f/32768.f));
-        }
-    };
-#endif
-
-    // template <class _T>
-    class rand48 {
-        dvec<std::uint64_t> _state;
-
-        static const std::uint64_t A;
-        static const std::uint64_t C;
-        static const std::uint64_t M;
-        static const std::uint64_t MM;
-        static const float REC;
-
-        inline
-        void
-        next() {
-            _state= ((_state * A + C) & MM);
-        }
-    public:
-        // returns non negative numbers between 0 and 2^31
-        inline
-        dvec<std::int32_t>
-        lrand48() {
-            next();
-            return cvt<dvec<std::int32_t> >(_state) & (0x7fffffff);
-        }
-
-        // returns non negative numbers between -2^31 and 2^31
-        inline
-        dvec<std::int32_t>
-        mrand48() {
-            next();
-            return cvt<dvec<std::int32_t> >(_state);
-        }
-
-        // returns floating point variables in interval [0, 1.0)
-        inline
-        dvec<float>
-        drand48() {
-            next();
-            return cvt<dvec<float>>(_state);
-        }
-
-        void
-        seed(const dvec<uint64_t>& gid){
-            _state = ((gid * 65536) | 0x330E) & MM;
-        }
-
-        dvec<float>
-        nextf() {
-            dvec<float> t=cvt<dvec<float> >(drand48() & 0xffffff) * REC;
-            dvec<float> r=max(min(t, 1.0f), 0.0f);
-            return r;
-        }
-    };
-
 
     //
     template <typename _T, std::size_t _N>
@@ -221,7 +141,6 @@ ocl::rnd_histogram::values()
     return std::vector<uint64_t>(r);
 }
 
-
 std::ostream&
 ocl::operator<<(std::ostream& s, const rnd_histogram& d)
 {
@@ -251,13 +170,6 @@ ocl::operator<<(std::ostream& s, const rnd_histogram& d)
     return s;
 }
 
-
-const std::uint64_t ocl::rand48::A=0x5DEECE66Dul;
-const std::uint64_t ocl::rand48::C=0xBL;
-const std::uint64_t ocl::rand48::M=(1ULL<<48);
-const std::uint64_t ocl::rand48::MM=(M-1);
-const float ocl::rand48::REC= 0x1p-24f;
-
 template <typename _T, std::size_t _N>
 void
 ocl::rnd_distribution<_T, _N>::insert(const _T& v)
@@ -268,7 +180,6 @@ ocl::rnd_distribution<_T, _N>::insert(const _T& v)
           << " lt " << _min;
         throw std::runtime_error(e.str());
     }
-#if 1
     if (v > _max) {
         std::ostringstream e;
         e << "invalid entry " << v
@@ -276,7 +187,6 @@ ocl::rnd_distribution<_T, _N>::insert(const _T& v)
         std::cout << e.str() << std::endl;
         // throw std::runtime_error(e.str());
     }
-#endif
     _T offset = (v - _min) * _rec_interval * (_N);
     std::uint32_t o= offset;
     _val[o] +=1;
@@ -314,7 +224,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 32*1024*1024;
+        const unsigned _N = 8*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -328,14 +238,8 @@ int main()
         }
 #else
         using namespace ocl;
-#if 0
-        std::vector<std::uint64_t> gid(_N, 0ull);
-        for (std::size_t i=0; i<gid.size(); ++i)
-            gid[i] = i;
-        dvec<std::uint64_t> dg=gid;
-        // ocl::rand48 t;
-        ocl::srand t;
-        t.seed(dg);
+#if 1
+        ocl::rand48 t(_N);
 #else
         ocl::rand t(_N);
 #endif
@@ -343,9 +247,9 @@ int main()
         ocl::rnd_histogram hdst(0, 1.0f, 25);
         dvec<float> f;
         cftal::lvec<float > fh(_N);
-        for (int l=0; l<16; ++l) {
+        for (int l=0; l<1; ++l) {
             for (int k=0; k<72; ++k) {
-                for (int i=0; i<16; ++i) {
+                for (int i=0; i<1; ++i) {
                     f=t.nextf();
                     hdst.insert(f);
 #if 0
@@ -376,7 +280,7 @@ int main()
         std::cout << hdst << std::endl;
     }
     catch (const ocl::be::error& e) {
-        std::cout << "caught ocl::impl::error: " << e.what()
+        std::cout << "caught ocl::be::error: " << e.what()
                   << '\n'
                   << e.error_string()
                   << std::endl;

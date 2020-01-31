@@ -37,12 +37,15 @@ namespace ocl {
     };
 #endif
 
-    class rand {
-        dvec<std::uint32_t> _next;
-
+    class random_base {
+    protected:
         static
         dvec<std::uint32_t>
-        vgid(std::size_t s, be::data_ptr p);
+        fill_with_global_id(std::size_t s, be::data_ptr p);
+    };
+    
+    class rand : private random_base {
+        dvec<std::uint32_t> _next;
     public:
         constexpr static const std::uint32_t max_val() {
             return 0x7fffffff;
@@ -69,6 +72,31 @@ namespace ocl {
     };
 
 
+    class rand48 : private random_base {
+        dvec<std::uint64_t> _state;
+        static const std::uint64_t A;
+        static const std::uint64_t C;
+        static const std::uint64_t M;
+        static const std::uint64_t MM;
+        void
+        next();
+    public:
+        rand48(size_t s, be::data_ptr p= be::data::instance());
+        // returns non negative numbers between 0 and 2^31
+        dvec<std::int32_t>
+        lrand48();
+        // returns numbers between -2^31 and 2^31
+        dvec<std::int32_t>
+        mrand48();
+        // returns floating point values in interval [0, 1.0)
+        dvec<float>
+        drand48();
+        void
+        seed(const dvec<uint64_t>& gid);
+        dvec<float>
+        nextf();
+    };
+    
     dvec<float>
     uniform_float_random_vector(rand& rnd,
                                 float min_val, float max_val);

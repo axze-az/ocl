@@ -1,7 +1,8 @@
 #include "ocl/random.h"
 
 ocl::dvec<std::uint32_t>
-ocl::rand::vgid(std::size_t s, be::data_ptr p)
+ocl::random_base::
+fill_with_global_id(std::size_t s, be::data_ptr p)
 {
     ocl::dvec<std::uint32_t> r(p, s);
     if (s) {
@@ -21,19 +22,19 @@ ocl::rand::vgid(std::size_t s, be::data_ptr p)
 }
 
 ocl::rand::rand(std::size_t s)
-    : _next(vgid(s, be::data::instance()))
+    : _next(fill_with_global_id(s, be::data::instance()))
 {
 }
 
 ocl::rand::rand(std::size_t s, be::data_ptr p)
-    : _next(vgid(s, p))
+    : _next(fill_with_global_id(s, p))
 {
 }
 
 void
 ocl::rand::rand::seed_times_global_id(uint32_t s)
 {
-    _next=vgid(_next.size(), _next.backend_data())*s;
+    _next=fill_with_global_id(_next.size(), _next.backend_data())*s;
 }
 
 ocl::dvec<int32_t>
@@ -98,6 +99,71 @@ ocl::rand::nextf()
     auto ck=custom_kernel<float>(kname, ksrc, _next);
     dvec<float> r(ck);
     return r;
+}
+
+const std::uint64_t ocl::rand48::A=0x5DEECE66Dul;
+const std::uint64_t ocl::rand48::C=0xBL;
+const std::uint64_t ocl::rand48::M=(1ULL<<48);
+const std::uint64_t ocl::rand48::MM=(M-1);
+
+void
+ocl::rand48::
+next()
+{
+    _state= ((_state * A + C) & MM);
+}
+
+
+ocl::rand48::
+rand48(size_t s, be::data_ptr p)
+    : _state(
+        (((cvt<dvec<std::uint64_t> >(fill_with_global_id(s, p)) << 16)
+          | 0x330E)) & MM)
+{
+}
+
+ocl::dvec<std::int32_t>
+ocl::rand48::
+lrand48()
+{
+    next();
+    // return cvt<dvec<std::int32_t> >(_state) & (0x7fffffff);
+    const unsigned shift=48-32+1;
+    return cvt<dvec<std::int32_t> >(_state >> shift);
+}
+
+inline
+ocl::dvec<std::int32_t>
+ocl::rand48::
+mrand48()
+{
+    next();
+    const unsigned shift=48-32;
+    return cvt<dvec<std::int32_t> >(_state>>shift);
+}
+
+ocl::dvec<float>
+ocl::rand48::
+drand48()
+{
+    next();
+    const unsigned shift=48-24;
+    return cvt<dvec<float>>(_state >>shift) * 0x1p-24f;
+    // return cvt<dvec<float>>(_state & 0xffffff) * 0x1p-24f;
+}
+
+void
+ocl::rand48::
+seed(const dvec<uint64_t>& gid)
+{
+    _state = ((gid * 65536) | 0x330E) & MM;
+}
+
+ocl::dvec<float>
+ocl::rand48::
+nextf()
+{
+    return drand48();
 }
 
 ocl::dvec<float>
