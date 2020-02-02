@@ -98,7 +98,7 @@ namespace ocl {
                                size_t alignment,
                                unsigned& arg_num);
     }
-    
+
     // generate the declarations for the member of the array
     template <typename _T, size_t _N>
     std::string
@@ -121,7 +121,7 @@ namespace ocl {
                                        size_t alignment,
                                        unsigned& arg_num);
     }
-    
+
     // ignored_arg are really ignored
     template <typename _T>
     std::string
@@ -150,7 +150,7 @@ namespace ocl {
         std::string
         concat_args_t(var_counters& c);
     }
-    
+
     // bind non buffer arguments
     template <typename _T>
     void
@@ -220,7 +220,7 @@ namespace ocl {
                             unsigned& arg_num,
                             bool ro);
     }
-    
+
     // eval_vars
     template <class _T>
     std::string
@@ -235,13 +235,13 @@ namespace ocl {
         eval_vars_t(const char* tname,
                     unsigned& arg_num,
                     bool ro);
-        
+
         std::string
         eval_vars_t(const std::string& tname,
                     unsigned& arg_num,
                     bool ro);
     }
-    
+
     // eval_vars
     template <class _T, size_t _N>
     std::string
@@ -253,13 +253,13 @@ namespace ocl {
         eval_vars_array_ptr(const std::string_view& tname,
                             unsigned& arg_num,
                             bool ro);
-        
+
 
         std::string
         eval_vars_array_ptr(const char* tname,
                             unsigned& arg_num,
                             bool ro);
-        
+
         std::string
         eval_vars_array_ptr(const std::string& tname,
                             unsigned& arg_num,
@@ -274,7 +274,7 @@ namespace ocl {
         std::string
         eval_ops_t(unsigned& arg_num);
     }
-    
+
     // eval_results, unimplemented
     template <class _T>
     std::string eval_results(_T& r, unsigned& res_num);

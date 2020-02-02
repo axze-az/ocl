@@ -156,3 +156,29 @@ ocl::impl::missing_backend_data()
 {
     throw std::runtime_error("missing backend data");
 }
+
+void
+ocl::impl::
+print_arg_buffer_info(be::kernel& k, size_t ab_size)
+{
+    std::string kn=k.name();
+    std::ostringstream st;
+    st << std::this_thread::get_id() << ": "
+        << kn << ": binding argument buffer of size "
+        << ab_size << '\n';
+    be::data::debug_print(st.str());
+}
+
+void
+ocl::impl::
+print_cached_kernel_info(be::kernel_cache::iterator f,
+                         const be::kernel_key& kk)
+{
+    std::string kn=f->second.k().name();
+    std::ostringstream s;
+    s << std::this_thread::get_id() << ": "
+        << kn << ": using cached kernel " << kk
+        << '\n';
+    be::data::debug_print(s.str());
+}
+

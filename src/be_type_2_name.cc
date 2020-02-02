@@ -1,6 +1,7 @@
 #include "ocl/be/type_2_name.h"
 #include <cxxabi.h>
 #include <memory>
+#include <sstream>
 
 std::string
 ocl::be::demangle( const char* mangled_name )
@@ -13,3 +14,18 @@ ocl::be::demangle( const char* mangled_name )
     return ptr.get() ;
 }
 
+std::string
+ocl::be::
+type_2_name_vec_t(const char* tname, size_t n)
+{
+    return type_2_name_vec_t(std::string_view(tname), n);
+}
+
+std::string
+ocl::be::
+type_2_name_vec_t(const std::string_view& tname, size_t n)
+{
+    std::ostringstream s;
+    s << tname << n;
+    return s.str();
+}

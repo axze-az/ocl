@@ -2,8 +2,9 @@
 #define __OCL_BE_TYPE_2_NAME_H__ 1
 
 #include <ocl/config.h>
+#include <ocl/types.h>
 #include <cftal/vec.h>
-#include <sstream>
+#include <string_view>
 #include <typeinfo>
 
 namespace ocl {
@@ -110,14 +111,17 @@ namespace ocl {
             }
         };
 
+        std::string
+        type_2_name_vec_t(const char* tname, size_t n);
+        std::string
+        type_2_name_vec_t(const std::string_view& tname, size_t n);
+
         template <typename _T, std::size_t _N>
         struct type_2_name<cftal::vec<_T, _N> > {
             static_assert(_N <= 16, "invalid vector size for OpenCL");
             static
-            const std::string v() {
-                std::ostringstream s;
-                s << type_2_name<_T>::v() <<  _N;
-                return s.str();
+            std::string v() {
+                return type_2_name(type_2_name<_T>::v(), _N);
             }
         };
 

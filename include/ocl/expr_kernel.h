@@ -4,6 +4,7 @@
 #include <ocl/config.h>
 #include <ocl/expr.h>
 #include <ocl/expr_custom.h>
+#include <ocl/dvec_base.h>
 #include <thread>
 #include <chrono>
 
@@ -50,6 +51,9 @@ namespace ocl {
         std::string
         gen_key(const ck_body& r);
 
+        void
+        print_arg_buffer_info(be::kernel& k, size_t ab_size);
+
         // execute the kernel corresponding to the expression
         // res, r
         template <class _RES, class _EXPR>
@@ -57,6 +61,11 @@ namespace ocl {
         execute(_RES& res, const _EXPR& r,
                 be::data_ptr b, size_t s,
                 const void* addr);
+
+        void
+        print_cached_kernel_info(be::kernel_cache::iterator f,
+                                 const be::kernel_key& kk);
+
         // returns a cached kernel for (res, r) or calls gen_kernel
         // and inserts the new kernel into the cache
         template <class _RES, class _EXPR>
@@ -178,7 +187,6 @@ execute(_RES& res, const _SRC& r,
     be::buffer dev_ab(c, ab_size,
                       be::buffer::read_only|be::buffer::copy_host_ptr,
                       ab.data());
-    auto& wl=dcq.wl();
     auto& dcq_mtx=dcq.mtx();
     auto& d=dcq.d();
     size_t lmem_size=be::request_local_mem(d, ab_size);
@@ -191,17 +199,11 @@ execute(_RES& res, const _SRC& r,
         bind_buffer_args(r, buf_num, pk.k(), ki._local_size);
         pk.k().set_arg(buf_num++, dev_ab);
         if (b->debug() != 0) {
-            std::string kn=pk.k().name();
-            std::ostringstream st;
-            st << std::this_thread::get_id() << ": "
-               << kn << ": binding argument buffer of size "
-               << ab_size << '\n';
-            be::data::debug_print(st.str());
+            print_arg_buffer_info(pk.k(), ab_size);
         }
         {
             std::unique_lock<be::mutex> _lq(dcq_mtx);
             ev=b->enqueue_1d_kernel(pk.k(), ki);
-            wl.clear();
         }
     }
     // otherwise we leak memory
@@ -226,12 +228,7 @@ get_kernel(_RES& res, const _SRC& r, const void* cookie,
         f = ir.first;
     } else {
         if (b->debug() != 0) {
-            std::string kn=f->second.k().name();
-            std::ostringstream s;
-            s << std::this_thread::get_id() << ": "
-              << kn << ": using cached kernel " << kk
-              << '\n';
-            be::data::debug_print(s.str());
+            print_cached_kernel_info(f, kk);
         }
     }
     return f->second;
@@ -299,11 +296,9 @@ gen_kernel_src(_RES& res,
 {
     static_cast<void>(addr);
     static_cast<void>(res);
-    std::ostringstream s;
     // the real kernel follows now
-    s << r._l.body();
-    s << '\n';
-    return ksrc_info(r._l.name(), s.str(), true);
+    std::string s = r._l.body() + '\n';
+    return ksrc_info(r._l.name(), s, true);
 }
 
 template <class _RES, class _SRC>
@@ -315,12 +310,11 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     ksrc_info ksi=gen_kernel_src(res, r, cookie);
     std::string k_name = ksi.name();
     std::ostringstream s;
+    s << cookie;
+    const std::string s_cookie=s.str();
+    s.str("");
     impl::insert_headers(s, lmem_size);
     s << ksi.source();
-
-    std::ostringstream sa;
-    sa << cookie;
-    const std::string s_cookie=sa.str();
     std::string k_arg_name("arg_" + s_cookie);
     std::string k_func_name(k_name);
     k_name=std::string("e_") + s_cookie;

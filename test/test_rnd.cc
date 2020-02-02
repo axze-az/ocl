@@ -247,9 +247,9 @@ int main()
         ocl::rnd_histogram hdst(0, 1.0f, 25);
         dvec<float> f;
         cftal::lvec<float > fh(_N);
-        for (int l=0; l<1; ++l) {
+        for (int l=0; l<4; ++l) {
             for (int k=0; k<72; ++k) {
-                for (int i=0; i<1; ++i) {
+                for (int i=0; i<256; ++i) {
                     f=t.nextf();
                     hdst.insert(f);
 #if 0
@@ -265,7 +265,7 @@ int main()
                             }
                             throw;
                         }
-                        
+
                     }
 #endif
                     // test::dump(f, "result vec");

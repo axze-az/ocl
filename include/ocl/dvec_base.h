@@ -127,7 +127,7 @@ namespace ocl {
         be::data_ptr _bed;
         // backend buffer object
         be::buffer _b;
-    protected:
+    public:
         // destructor
         ~dvec_base();
         // default constructor
