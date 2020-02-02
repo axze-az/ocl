@@ -84,9 +84,17 @@ namespace ocl {
                      void* res, size_t* ret_res)
                 const;
 
+            std::string
+            get_info_string(cl_device_info id)
+                const;
+
             template <typename _T>
             _T get_info(cl_device_info id)
-                const;
+                const {
+                _T res;
+                get_info(id, sizeof(res), &res, nullptr);
+                return res;
+            }
 
             std::string name() const;
             std::string vendor() const;

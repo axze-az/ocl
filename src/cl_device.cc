@@ -95,6 +95,20 @@ get_info(cl_device_info id, size_t res_size,
     error::throw_on(cr, __FILE__, __LINE__);
 }
 
+std::string
+ocl::cl::device::
+get_info_string(cl_device_info id)
+    const
+{
+    size_t ret_res;
+    auto cr=clGetDeviceInfo(_id, id, 0, nullptr, &ret_res);
+    error::throw_on(cr, __FILE__, __LINE__);
+    std::vector<char> s(ret_res);
+    cr=clGetDeviceInfo(_id, id, ret_res, &s[0], 0);
+    error::throw_on(cr, __FILE__, __LINE__);
+    return std::string(&s[0], ret_res);
+}
+
 bool
 ocl::cl::
 device::is_subdevice()
@@ -106,11 +120,89 @@ device::is_subdevice()
                             sizeof(cl_device_id), &parent_id, nullptr);
     if (cr == CL_SUCCESS)
         return parent_id != 0;
-    return false;
-#else
-    return false;
 #endif
+    return false;
 }
+
+std::string
+ocl::cl::device::
+name() const
+{
+    return get_info_string(CL_DEVICE_NAME);
+}
+    
+std::string
+ocl::cl::device::
+vendor() const
+{
+    return get_info_string(CL_DEVICE_VENDOR);
+}
+
+std::string ocl::cl::device::
+driver_version() const
+{
+    return get_info_string(CL_DRIVER_VERSION);
+}
+
+std::vector<std::string>
+ocl::cl::device::
+extensions() const
+{
+    std::string s=get_info_string(CL_DEVICE_EXTENSIONS);
+    std::vector<std::string> r;
+    size_t l=s.length();
+    for (size_t i=0; i<l; ) {
+        size_t n=s.find_first_of("\t ", i);
+        if (n == std::string::npos)
+            n=l;
+        std::string ei=s.substr(i, n-i);
+        r.emplace_back(ei);
+        i=n+1;
+    }
+    return r;
+}
+
+uint64_t
+ocl::cl::device::
+global_memory_size() const
+{
+    return get_info<uint64_t>(CL_DEVICE_GLOBAL_MEM_SIZE);
+}
+
+uint64_t
+ocl::cl::device::
+local_memory_size() const
+{
+    return get_info<uint64_t>(CL_DEVICE_LOCAL_MEM_SIZE);
+}
+
+uint32_t
+ocl::cl::device::
+address_bits() const
+{
+    return get_info<uint32_t>(CL_DEVICE_ADDRESS_BITS);
+}
+
+uint32_t
+ocl::cl::device::
+compute_units() const
+{
+    return get_info<uint32_t>(CL_DEVICE_MAX_COMPUTE_UNITS);
+}
+
+uint32_t ocl::cl::device::
+max_work_group_size() const
+{
+    return get_info<uint32_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+}
+    
+uint32_t
+ocl::cl::device::
+max_work_iterm_dimensions() const
+{
+    return get_info<uint32_t>(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
+}
+
 
 #if 0
 
