@@ -2,6 +2,7 @@
 #define __OCL_BE_TYPES_H__ 1
 
 #include <ocl/config.h>
+#include <ocl/types.h>
 
 #define USE_BOOST_COMPUTE 1
 
@@ -31,6 +32,7 @@ namespace ocl {
 #define CL_TARGET_OPENCL_VERSION 120
 #include <CL/cl.h>
 #include <stdexcept>
+#include <vector>
 
 namespace ocl {
     namespace be {
@@ -48,6 +50,13 @@ namespace ocl {
 
         class error : public std::runtime_error {
             cl_int _code;
+            using base_type = std::runtime_error;
+            static
+            std::string
+            to_string(cl_int code);
+            static
+            std::string
+            to_string(cl_int code, const char* file, unsigned line);
         public:
             error(cl_int code);
             error(cl_int code, const char* file, unsigned line);
@@ -69,6 +78,11 @@ namespace ocl {
         class device {
             cl_device_id _id;
         public:
+            enum type {
+                cpu = CL_DEVICE_TYPE_CPU,
+                gpu = CL_DEVICE_TYPE_GPU,
+                accelerator = CL_DEVICE_TYPE_ACCELERATOR
+            };
             device();
             device(cl_device_id, bool retain=true);
             device(const device& r);
@@ -78,6 +92,21 @@ namespace ocl {
             ~device();
             cl_device_id& operator()() { return _id; }
             const cl_device_id& operator()() const { return _id;}
+
+            void
+            get_info(uint32_t id, size_t res_size,
+                     void* res, size_t* ret_res)
+                const;
+
+            template <typename _T>
+            _T get_info(uint32_t id)
+                const;
+
+            std::string name() const;
+            std::string vendor() const;
+            std::string driver_version() const;
+            std::vector<std::string>
+            extensions() const;
             uint64_t global_memory_size() const;
             uint64_t local_memory_size() const;
             uint32_t address_bits() const;

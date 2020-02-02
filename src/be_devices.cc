@@ -110,7 +110,6 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
     }
 }
 
-
 std::size_t
 ocl::be::request_local_mem(const device& d, size_t lmem_req)
 {
