@@ -12,30 +12,14 @@
 #define BOOST_COMPUTE_THREAD_SAFE 1
 #define BOOST_DISABLE_ASSERTS 1
 #include <boost/compute/core.hpp>
+#endif
 
-namespace ocl {
-    namespace be {
-        namespace bc= boost::compute;
-        using error = bc::opencl_error;
-        using program = bc::program;
-        using context = bc::context;
-        using device = bc::device;
-        using queue = bc::command_queue;
-        using buffer = bc::buffer;
-        using kernel = bc::kernel;
-        using event = bc::event;
-        using wait_list = bc::wait_list;
-    }
-}
-#else
-
-#define CL_TARGET_OPENCL_VERSION 120
 #include <CL/cl.h>
 #include <stdexcept>
 #include <vector>
 
 namespace ocl {
-    namespace be {
+    namespace cl {
 
         class error;
         class device;
@@ -92,14 +76,16 @@ namespace ocl {
             ~device();
             cl_device_id& operator()() { return _id; }
             const cl_device_id& operator()() const { return _id;}
-
+            bool
+            is_subdevice() const;
+            
             void
-            get_info(uint32_t id, size_t res_size,
+            get_info(cl_device_info id, size_t res_size,
                      void* res, size_t* ret_res)
                 const;
 
             template <typename _T>
-            _T get_info(uint32_t id)
+            _T get_info(cl_device_info id)
                 const;
 
             std::string name() const;
@@ -132,9 +118,24 @@ namespace ocl {
     }
 }
 
-
+namespace ocl {
+    namespace be {
+#if USE_BOOST_COMPUTE>0
+        namespace bc= boost::compute;
+#else
+        namespace bc= cl;
 #endif
-
+        using error = bc::opencl_error;
+        using program = bc::program;
+        using context = bc::context;
+        using device = bc::device;
+        using queue = bc::command_queue;
+        using buffer = bc::buffer;
+        using kernel = bc::kernel;
+        using event = bc::event;
+        using wait_list = bc::wait_list;
+    }
+}
 
 // local variables:
 // mode: c++

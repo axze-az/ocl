@@ -1,3 +1,119 @@
+#include "ocl/be/types.h"
+
+ocl::cl::device::device() : _id(0) 
+{
+}
+
+ocl::cl::
+device::device(cl_device_id id, bool retain)
+    : _id(id)
+{
+#if CL_TARGET_OPENCL_VERSION>=120
+    if (_id && is_subdevice()) {
+        auto cr=clRetainDevice(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+#else
+    static_cast<void>(retain);
+#endif
+}
+
+ocl::cl::
+device::device(const device& r)
+    : _id(r._id)
+{
+#if CL_TARGET_OPENCL_VERSION>=120
+    if (_id && is_subdevice()) {
+        auto cr=clRetainDevice(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+#endif
+}
+
+ocl::cl::
+device::device(device&& r)
+    : _id(r._id)
+{
+    r._id = 0;
+}
+
+ocl::cl::device&
+ocl::cl::device::
+operator=(const device& r)
+{
+    if (this != &r) {
+#if CL_TARGET_OPENCL_VERSION>=120
+        if (_id && is_subdevice()) {
+            auto cr=clReleaseDevice(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+#endif
+        _id = r._id;
+#if CL_TARGET_OPENCL_VERSION>=120
+        if (_id && is_subdevice()) {
+            auto cr=clRetainDevice(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+#endif
+    }
+    return *this;
+}
+
+ocl::cl::device&
+ocl::cl::
+device::operator=(device&& r)
+{
+#if CL_TARGET_OPENCL_VERSION>=120
+    if (_id && is_subdevice()) {
+        auto cr=clReleaseDevice(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+#endif
+    _id = r._id;
+    r._id =0;
+    return *this;
+}
+
+ocl::cl::
+device::~device()
+{
+#if CL_TARGET_OPENCL_VERSION>=120
+    if (_id && is_subdevice()) {
+        auto cr=clReleaseDevice(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+#endif
+}
+
+void
+ocl::cl::device::
+get_info(cl_device_info id, size_t res_size,
+         void* res, size_t* ret_res)
+    const
+{
+    auto cr=clGetDeviceInfo(_id, id, res_size, res, ret_res);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+bool
+ocl::cl::
+device::is_subdevice()
+    const
+{
+#if CL_TARGET_OPENCL_VERSION >= 120
+    cl_device_id parent_id;
+    auto cr=clGetDeviceInfo(_id, CL_DEVICE_PARENT_DEVICE, 
+                            sizeof(cl_device_id), &parent_id, nullptr);
+    if (cr == CL_SUCCESS)
+        return parent_id != 0;
+    return false;
+#else
+    return false;
+#endif
+}
+
+#if 0
+
 class device
 {
 public:
@@ -626,3 +742,4 @@ BOOST_COMPUTE_DETAIL_DEFINE_GET_INFO_SPECIALIZATIONS(device,
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_DEVICE_HPP
+

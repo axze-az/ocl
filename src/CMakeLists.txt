@@ -6,11 +6,11 @@ set(has_ipo, FALSE)
 #check_ipo_support(RESULT has_ipo)
 
 set (CSRCS
-  be_error.cc
+  cl_error.cc
 #  be_buffer.cc
 #  be_queue.cc
-#  be_context.cc
-#  be_device.cc
+#  cl_context.cc
+  cl_device.cc
 #  be_event.cc
 #  be_kernel.cc
 #  be_memory_object.cc

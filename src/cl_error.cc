@@ -1,9 +1,8 @@
 #include "ocl/be/types.h"
-#if USE_BOOST_COMPUTE == 0
 #include <sstream>
 
 std::string
-ocl::be::error::to_string(cl_int code)
+ocl::cl::error::to_string(cl_int code)
 {
     switch(code){
     case CL_SUCCESS:
@@ -87,7 +86,7 @@ ocl::be::error::to_string(cl_int code)
     case CL_INVALID_BUFFER_SIZE: return "Invalid Buffer Size";
     case CL_INVALID_MIP_LEVEL: return "Invalid MIP Level";
     case CL_INVALID_GLOBAL_WORK_SIZE: return "Invalid Global Work Size";
-#ifdef BOOST_COMPUTE_CL_VERSION_1_2
+#if CL_TARGET_OPENCL_VERSION>=120
     case CL_COMPILE_PROGRAM_FAILURE: return "Compile Program Failure";
     case CL_LINKER_NOT_AVAILABLE: return "Linker Not Available";
     case CL_LINK_PROGRAM_FAILURE: return "Link Program Failure";
@@ -98,8 +97,8 @@ ocl::be::error::to_string(cl_int code)
     case CL_INVALID_COMPILER_OPTIONS: return "Invalid Compiler Options";
     case CL_INVALID_LINKER_OPTIONS: return "Invalid Linker Options";
     case CL_INVALID_DEVICE_PARTITION_COUNT: return "Invalid Device Partition Count";
-#endif // BOOST_COMPUTE_CL_VERSION_1_2
-#ifdef BOOST_COMPUTE_CL_VERSION_2_0
+#endif 
+#if CL_TARGET_OPENCL_VERSION>=200
     case CL_INVALID_PIPE_SIZE: return "Invalid Pipe Size";
     case CL_INVALID_DEVICE_QUEUE: return "Invalid Device Queue";
 #endif
@@ -111,30 +110,36 @@ ocl::be::error::to_string(cl_int code)
 }
 
 std::string
-ocl::be::error::to_string(cl_int code, const char* file, unsigned line)
+ocl::cl::error::to_string(cl_int code, const char* file, unsigned line)
 {
     std::ostringstream s;
     s << to_string(code) << ' ' << file << ':' << line;
     return s.str();
 }
     
-ocl::be::error::error(cl_int code)
+ocl::cl::error::error(cl_int code)
     : base_type(to_string(code)), _code(code)
 {
 }
 
-ocl::be::error::error(const error& r)
+ocl::cl::error::error(cl_int code, const char* file, unsigned line)
+    : base_type(to_string(code, file, line)), _code(code)
+{
+}
+
+
+ocl::cl::error::error(const error& r)
     : base_type(r), _code(r._code)
 {
 }
 
-ocl::be::error::error(error&& r)
+ocl::cl::error::error(error&& r)
     : base_type(std::move(r)), _code(std::move(r._code))
 {
 }
 
-ocl::be::error&
-ocl::be::error::operator=(const error& r)
+ocl::cl::error&
+ocl::cl::error::operator=(const error& r)
 {
     if (&r != this) {
         base_type::operator=(r);
@@ -143,21 +148,20 @@ ocl::be::error::operator=(const error& r)
     return *this;
 }
 
-ocl::be::error&
-ocl::be::error::operator=(error&& r)
+ocl::cl::error&
+ocl::cl::error::operator=(error&& r)
 {
     base_type::operator=(std::move(r));
-    _code = std::move(_code);
+    _code = std::move(r._code);
     return *this;
 }
 
-ocl::be::error::~error()
+ocl::cl::error::~error()
 {
 }
 
-
 void
-ocl::be::error::
+ocl::cl::error::
 throw_on(cl_int code)
 {
     if (code != CL_SUCCESS)
@@ -165,10 +169,10 @@ throw_on(cl_int code)
 }
 
 void
-ocl::be::error::
+ocl::cl::error::
 throw_on(cl_int code, const char* file, unsigned line)
 {
     if (code != CL_SUCCESS)
         throw error(code, file, line);
 }
-#endif
+
