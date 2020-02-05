@@ -4,6 +4,7 @@
 #include <ocl/config.h>
 #include <ocl/be/devices.h>
 #include <ocl/be/kernel_key.h>
+#include <memory>
 #include <mutex>
 #include <map>
 

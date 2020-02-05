@@ -1,3 +1,78 @@
+#include "ocl/be/types.h"
+
+ocl::cl::program::
+program() : _id(0)
+{
+}
+
+ocl::cl::program::
+program(const program &r)
+    : _id(r._id)
+{
+    if (_id){
+        auto cr=clRetainProgram(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::program::
+program(program &&r)
+    : _id(r._id)
+{
+    r._id = 0;
+}
+
+ocl::cl::program&
+ocl::cl::program::
+operator=(const program &r)
+{
+    if(this != &r){
+        if (_id){
+            auto cr=clReleaseProgram(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+        _id = r._id;
+        if (_id){
+            auto cr=clRetainProgram(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+    }
+    return *this;
+}
+
+ocl::cl::program&
+ocl::cl::program::
+operator=(program&& r)
+{
+    if(_id){
+        auto cr=clReleaseProgram(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+    _id = r._id;
+    r._id = 0;
+    return *this;
+}
+
+ocl::cl::program::
+~program()
+{
+    if (_id){
+        auto cr=clReleaseProgram(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::program::
+program(cl_program k, bool retain)
+    : _id(k)
+{
+    if (_id && retain) {
+        auto cr=clRetainProgram(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -796,3 +871,4 @@ BOOST_COMPUTE_DETAIL_DEFINE_GET_INFO_SPECIALIZATIONS(program,
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_PROGRAM_HPP
+#endif

@@ -1,3 +1,4 @@
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -256,3 +257,4 @@ inline boost::compute::platform device::platform() const
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_PLATFORM_HPP
+#endif

@@ -1,3 +1,89 @@
+#include "ocl/be/types.h"
+
+ocl::cl::context::
+context() : _id(0)
+{
+}
+
+ocl::cl::context::
+context(const context &r)
+    : _id(r._id)
+{
+    if (_id){
+        auto cr=clRetainContext(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::context::
+context(context &&r)
+    : _id(r._id)
+{
+    r._id = 0;
+}
+
+ocl::cl::context&
+ocl::cl::context::
+operator=(const context &r)
+{
+    if(this != &r){
+        if (_id){
+            auto cr=clReleaseContext(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+        _id = r._id;
+        if (_id){
+            auto cr=clRetainContext(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+    }
+    return *this;
+}
+
+ocl::cl::context&
+ocl::cl::context::
+operator=(context&& r)
+{
+    if(_id){
+        auto cr=clReleaseContext(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+    _id = r._id;
+    r._id = 0;
+    return *this;
+}
+
+ocl::cl::context::
+~context()
+{
+    if (_id){
+        auto cr=clReleaseContext(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::context::
+context(cl_context c, bool retain)
+    : _id(c)
+{
+    if (_id && retain) {
+        auto cr=clRetainContext(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::context::
+context(const device& d, const cl_context_properties* p)
+{
+    cl_device_id device_id = d();
+    cl_int err = 0;
+    _id = clCreateContext(p, 1, &device_id, 0, 0, &err);
+    if (_id == 0) {
+        error::throw_on(err, __FILE__, __LINE__);
+    }
+}
+
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -243,3 +329,4 @@ BOOST_COMPUTE_DETAIL_DEFINE_GET_INFO_SPECIALIZATIONS(context,
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_CONTEXT_HPP
+#endif

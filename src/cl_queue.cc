@@ -1,3 +1,89 @@
+#include "ocl/be/types.h"
+
+ocl::cl::queue::
+queue() : _id(0)
+{
+}
+
+ocl::cl::queue::
+queue(const queue &r)
+    : _id(r._id)
+{
+    if (_id){
+        auto cr=clRetainCommandQueue(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::queue::
+queue(queue &&r)
+    : _id(r._id)
+{
+    r._id = 0;
+}
+
+ocl::cl::queue&
+ocl::cl::queue::
+operator=(const queue &r)
+{
+    if(this != &r){
+        if (_id){
+            auto cr=clReleaseCommandQueue(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+        _id = r._id;
+        if (_id){
+            auto cr=clRetainCommandQueue(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+    }
+    return *this;
+}
+
+ocl::cl::queue&
+ocl::cl::queue::
+operator=(queue&& r)
+{
+    if(_id){
+        auto cr=clReleaseCommandQueue(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+    _id = r._id;
+    r._id = 0;
+    return *this;
+}
+
+ocl::cl::queue::
+~queue()
+{
+    if (_id){
+        auto cr=clReleaseCommandQueue(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::queue::
+queue(cl_command_queue k, bool retain)
+    : _id(k)
+{
+    if (_id && retain) {
+        auto cr=clRetainCommandQueue(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::queue::
+queue(const context& c, const device& d,
+      cl_command_queue_properties p)
+{
+    cl_int err = 0;
+    _id = clCreateCommandQueue(c(), d(), p, &err);
+    if (!_id) {
+        error::throw_on(err, __FILE__, __LINE__);
+    }
+}
+    
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -2006,3 +2092,4 @@ BOOST_COMPUTE_DETAIL_DEFINE_GET_INFO_SPECIALIZATIONS(command_queue,
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_COMMAND_QUEUE_HPP
+#endif

@@ -7,15 +7,16 @@ set(has_ipo, FALSE)
 
 set (CSRCS
   cl_error.cc
-#  be_buffer.cc
-#  be_queue.cc
-#  cl_context.cc
+  cl_mem_object.cc
+  cl_buffer.cc
+  cl_queue.cc
+  cl_context.cc
   cl_device.cc
-#  be_event.cc
-#  be_kernel.cc
-#  be_memory_object.cc
+  cl_event.cc
+  cl_wait_list.cc
+  cl_kernel.cc
 #  be_platform.cc
-#  be_program.cc
+  cl_program.cc
 #  be_system.cc
 #  be_user_event.cc
 #  be_version.cc

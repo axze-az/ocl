@@ -1,3 +1,99 @@
+#include "ocl/be/types.h"
+ 
+ocl::cl::kernel::
+kernel() : _id(0)
+{
+}
+
+ocl::cl::kernel::
+kernel(const kernel &r)
+    : _id(r._id)
+{
+    if (_id){
+        auto cr=clRetainKernel(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::kernel::
+kernel(kernel &&r)
+    : _id(r._id)
+{
+    r._id = 0;
+}
+
+ocl::cl::kernel&
+ocl::cl::kernel::
+operator=(const kernel &r)
+{
+    if(this != &r){
+        if (_id){
+            auto cr=clReleaseKernel(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+        _id = r._id;
+        if (_id){
+            auto cr=clRetainKernel(_id);
+            error::throw_on(cr, __FILE__, __LINE__);
+        }
+    }
+    return *this;
+}
+
+ocl::cl::kernel&
+ocl::cl::kernel::
+operator=(kernel&& r)
+{
+    if(_id){
+        auto cr=clReleaseKernel(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+    _id = r._id;
+    r._id = 0;
+    return *this;
+}
+
+ocl::cl::kernel::
+~kernel()
+{
+    if (_id){
+        auto cr=clReleaseKernel(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+ocl::cl::kernel::
+kernel(cl_kernel k, bool retain)
+    : _id(k)
+{
+    if (_id && retain) {
+        auto cr=clRetainKernel(_id);
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
+void
+ocl::cl::kernel::
+info(cl_kernel_info i, size_t s, void* res, size_t* rs)
+    const
+{
+    cl_int cr=clGetKernelInfo(_id, i, s, res, rs);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+void
+ocl::cl::kernel::
+work_group_info(const device& d,
+                cl_kernel_work_group_info i,
+                size_t s, void* res, size_t* rs)
+    const
+{
+    cl_int cr=clGetKernelWorkGroupInfo(_id, d(), i, s, res, rs);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -531,3 +627,4 @@ struct set_kernel_arg<char>
 } // end namespace boost
 
 #endif // BOOST_COMPUTE_KERNEL_HPP
+#endif

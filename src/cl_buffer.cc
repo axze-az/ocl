@@ -1,3 +1,22 @@
+#include "ocl/be/types.h"
+
+ocl::cl::buffer::
+buffer(const context& context, size_t size, cl_mem_flags flags,
+       void *host_ptr)
+{
+    cl_int err = 0;
+    cl_mem& _id=(*this)();
+    _id = clCreateBuffer(context(),
+                         flags,
+                         (std::max)(size, size_t(1)),
+                         host_ptr,
+                         &err);
+    if(!_id){
+        error::throw_on(err, __FILE__, __LINE__);
+    }
+}
+
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -225,3 +244,4 @@ struct set_kernel_arg<buffer>
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_BUFFER_HPP
+#endif
