@@ -52,7 +52,7 @@ _T
 test_func(const _T& a, const _T& b)
 {
     // return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
-    return 42.0 + (a+b)/(a-b) - 6.0 + (a+b)*(a-b) + 2.0;
+    return 42 + (a+b)/(a-b) - 6 + (a+b)*(a-b) + 2;
     // return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
     //    ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
 }

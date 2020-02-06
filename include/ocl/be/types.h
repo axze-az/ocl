@@ -365,7 +365,7 @@ namespace ocl {
                        size_t ps, void* p, size_t* rps)
                 const;
 
-                std::string build_log() const;
+            std::string build_log() const;
 
             void
             build(const std::string& options = std::string());
