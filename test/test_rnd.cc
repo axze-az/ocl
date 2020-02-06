@@ -161,7 +161,8 @@ ocl::operator<<(std::ostream& s, const rnd_histogram& d)
         double rt= dd[i] * rn;
         s << std::setprecision(6) << std::fixed;
         s << std::setw(8) << v << ' '
-          << std::setw(8) << dd[i]
+          << std::setw(10) << dd[i]
+          << std::setprecision(10)
           << ' ' << rt
           << std::endl;
     }
@@ -249,7 +250,7 @@ int main()
         cftal::lvec<float > fh(_N);
         for (int l=0; l<4; ++l) {
             for (int k=0; k<72; ++k) {
-                for (int i=0; i<256; ++i) {
+                for (int i=0; i<16; ++i) {
                     f=t.nextf();
                     hdst.insert(f);
 #if 0
