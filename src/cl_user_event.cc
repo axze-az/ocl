@@ -1,3 +1,4 @@
+#if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013-2014 Kyle Lutz <kyle.r.lutz@gmail.com>
 //
@@ -86,3 +87,4 @@ public:
 } // end boost namespace
 
 #endif // BOOST_COMPUTE_EVENT_HPP
+#endif

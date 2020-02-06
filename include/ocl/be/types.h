@@ -51,14 +51,31 @@ namespace ocl {
             error& operator=(const error& r);
             error& operator=(error&& r);
             virtual ~error();
+            std::string error_string() const {
+                return what();
+            }
             // check code and throw if required
             static
             void
-            throw_on(cl_int code);
+            _throw_on(cl_int code);
             // check code and throw if required
             static
             void
-            throw_on(cl_int code, const char* file, unsigned line);
+            _throw_on(cl_int code, const char* file, unsigned line);
+
+            static
+            void
+            throw_on(cl_int code) {
+                if (code != CL_SUCCESS)
+                    _throw_on(code);
+            }
+
+            static
+            void
+            throw_on(cl_int code, const char* file, unsigned line) {
+                if (code != CL_SUCCESS)
+                    _throw_on(code, file, line);
+            }
         };
 
         class device {
@@ -80,7 +97,7 @@ namespace ocl {
             const cl_device_id& operator()() const { return _id;}
             bool
             is_subdevice() const;
-            
+
             void
             get_info(cl_device_info id, size_t res_size,
                      void* res, size_t* ret_res)
@@ -193,7 +210,7 @@ namespace ocl {
                    void *host_ptr = nullptr);
             size_t size() const;
         };
-        
+
         class event {
             cl_event _id;
         public:
@@ -265,7 +282,7 @@ namespace ocl {
             void clear();
             const cl_event* get_event_ptr() const;
             void reserve(size_t new_capacity);
-            void insert(const event &event); 
+            void insert(const event &event);
             void wait() const;
             const event& operator[](size_t pos) const;
             event& operator[](size_t pos);
@@ -289,6 +306,9 @@ namespace ocl {
             kernel(cl_kernel k, bool retain=true);
             cl_kernel& operator()() { return _id; }
             const cl_kernel& operator()() const { return _id;}
+
+            kernel(const program& pgm, const std::string& kname);
+
             std::string name() const;
             void
             info(cl_kernel_info i, size_t s, void* res, size_t* rs)
@@ -298,6 +318,25 @@ namespace ocl {
                             cl_kernel_work_group_info i, size_t s,
                             void* res, size_t* rs)
                 const;
+            template <typename _T>
+            _T
+            get_work_group_info(const device& d, cl_kernel_work_group_info i)
+                const {
+                _T r;
+                work_group_info(d, i, sizeof(_T), &r, nullptr);
+                return r;
+            }
+            void
+            set_arg(size_t index, size_t size, const void* value);
+            template <class _T>
+            void
+            set_arg(size_t index, const _T& value) {
+                set_arg(index, sizeof(_T), &value);
+            }
+            void
+            set_arg(size_t index, const mem_object& mem) {
+                set_arg(index, sizeof(cl_mem), &mem());
+            }
         };
 
         class program {
@@ -312,6 +351,29 @@ namespace ocl {
             program(cl_program p, bool retain=true);
             cl_program& operator()() { return _id; }
             const cl_program& operator()() const { return _id;}
+
+            void
+            info(cl_program_info i, size_t ps, void* p, size_t* rps)
+                const;
+
+            std::vector<device>
+            get_devices()
+                const;
+
+            void
+            build_info(const device& d, cl_program_build_info i,
+                       size_t ps, void* p, size_t* rps)
+                const;
+
+                std::string build_log() const;
+
+            void
+            build(const std::string& options = std::string());
+
+            static
+            program
+            create_with_source(const std::string &source,
+                               const context& context);
         };
 
         class queue {
@@ -354,21 +416,111 @@ namespace ocl {
                 migrate_content_undefined =
                 CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED
             };
-#endif 
+#endif
             queue(const context& c, const device& d,
                   cl_command_queue_properties p=0);
+
+            event
+            enqueue_copy_buffer(const buffer &src_buffer,
+                                const buffer &dst_buffer,
+                                size_t src_offset,
+                                size_t dst_offset,
+                                size_t size,
+                                const wait_list&events = wait_list());
+            event
+            enqueue_read_buffer(const buffer &buffer,
+                                size_t offset,
+                                size_t size,
+                                void *host_ptr,
+                                const wait_list &events = wait_list());
+            event
+            enqueue_read_buffer_async(const buffer &buffer,
+                                      size_t offset,
+                                      size_t size,
+                                      void *host_ptr,
+                                      const wait_list &events = wait_list());
+            event
+            enqueue_write_buffer(const buffer &buffer,
+                                 size_t offset,
+                                 size_t size,
+                                 const void *host_ptr,
+                                 const wait_list &events = wait_list());
+            event
+            enqueue_write_buffer_async(const buffer &buffer,
+                                       size_t offset,
+                                       size_t size,
+                                       const void *host_ptr,
+                                       const wait_list &events = wait_list());
+            event
+            enqueue_nd_range_kernel(const kernel &kernel,
+                                    size_t work_dim,
+                                    const size_t* global_work_offset,
+                                    const size_t* global_work_size,
+                                    const size_t* local_work_size,
+                                    const wait_list& events = wait_list());
+            event
+            enqueue_1d_range_kernel(const kernel &kernel,
+                                    size_t global_work_offset,
+                                    size_t global_work_size,
+                                    size_t local_work_size,
+                                    const wait_list& events = wait_list()) {
+                return enqueue_nd_range_kernel(
+                    kernel, 1,
+                    &global_work_offset,
+                    &global_work_size,
+                    local_work_size ? &local_work_size : nullptr,
+                    events);
+            }
+            void flush();
+            void finish();
         };
 
         class platform {
             cl_platform_id _id;
+            std::string
+            info(cl_platform_info i)
+                const;
         public:
+            platform (cl_platform_id id) : _id(id) {}
             cl_platform_id& operator()() { return _id; }
             const cl_platform_id& operator()() const { return _id;}
+            void
+            info(cl_platform_info i, size_t s, void* p, size_t* rps)
+                const;
+
+            std::string name() const { return info(CL_PLATFORM_NAME); }
+
+            std::string
+            vendor() const { return info(CL_PLATFORM_VENDOR); }
+
+            std::string
+            profile() const { return info(CL_PLATFORM_PROFILE); }
+
+            std::string
+            version() const { return info(CL_PLATFORM_VERSION); }
+
+            size_t
+            device_count(cl_device_type type)
+                const;
+
+            std::vector<device>
+            devices(cl_device_type = CL_DEVICE_TYPE_ALL)
+                const;
         };
-        
+
+        class system {
+        public:
+            static
+            std::vector<platform>
+            platforms();
+
+            static
+            std::vector<device>
+            devices();
+        };
     }
 }
-    
+
 namespace ocl {
     namespace be {
 #if USE_BOOST_COMPUTE>0

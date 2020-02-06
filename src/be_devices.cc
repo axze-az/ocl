@@ -80,7 +80,7 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
     : _local_size(), _global_size(), _size(s)
 {
     auto k_req_local_size=
-        k.get_work_group_info<std::vector<std::size_t> >
+        k.get_work_group_info<std::array<size_t, 3> >
             (d, CL_KERNEL_COMPILE_WORK_GROUP_SIZE);
     std::size_t local_size=k_req_local_size[0];
     if (local_size == 0) {

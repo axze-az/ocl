@@ -2,6 +2,7 @@
 #define __OCL_EXPR_H__ 1
 
 #include <ocl/config.h>
+#include <ocl/types.h>
 #include <ocl/be/data.h>
 #include <ocl/be/type_2_name.h>
 #include <ocl/be/argument_buffer.h>

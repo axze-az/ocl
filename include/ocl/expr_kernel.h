@@ -8,8 +8,6 @@
 #include <thread>
 #include <chrono>
 
-#define USE_ARG_BUFFER 1
-
 namespace ocl {
 
     namespace impl {
@@ -127,7 +125,8 @@ namespace ocl {
 
 template <typename _T>
 std::string
-ocl::impl::gen_key(const _T& r)
+ocl::impl::
+gen_key(const _T& r)
 {
     static_cast<void>(r);
     return std::string();
@@ -135,7 +134,8 @@ ocl::impl::gen_key(const _T& r)
 
 template <typename _OP, typename _L, typename _R>
 std::string
-ocl::impl::gen_key(const expr<_OP, _L, _R>& r)
+ocl::impl::
+gen_key(const expr<_OP, _L, _R>& r)
 {
     std::string sl=gen_key(r._l);
     std::string sr=gen_key(r._r);
@@ -148,21 +148,24 @@ ocl::impl::gen_key(const expr<_OP, _L, _R>& r)
 
 template <typename _OP, typename _L>
 std::string
-ocl::impl::gen_key(const expr<_OP, _L, void>& r)
+ocl::impl::
+gen_key(const expr<_OP, _L, void>& r)
 {
     return gen_key(r._l);
 }
 
 inline
 std::string
-ocl::impl::gen_key(const cf_body& r)
+ocl::impl::
+gen_key(const cf_body& r)
 {
     return r.body();
 }
 
 inline
 std::string
-ocl::impl::gen_key(const ck_body& r)
+ocl::impl::
+gen_key(const ck_body& r)
 {
     return r.body();
 }
@@ -250,12 +253,10 @@ gen_kernel_src(_RES& res, const _SRC& r, const void* cookie)
     s << "inline void " << k_name;
     s << "\n(\n";
     const char nl='\n';
-    // element count:
-    std::string element_count=spaces(4) +
-        be::type_2_name<unsigned long>::v() + " n";
     // argument generation
     unsigned arg_num{0};
-    s << element_count << ",\n"
+    // element count is the first argument
+    s << "    "  << be::type_2_name<unsigned long>::v() << " n,\n"
       << eval_args(res, arg_num, false)
       << ",\n"
       << eval_args(r, arg_num, true)
@@ -379,7 +380,8 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
 
 template <class _RES, class _EXPR>
 void
-ocl::execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
+ocl::
+execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
 {
     // auto pf=execute<_RES, _EXPR>;
     void (*pf)(_RES&, const _EXPR&, be::data_ptr, size_t) =
@@ -407,8 +409,6 @@ execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
 {
     execute_custom(r, s, be::data::instance());
 }
-
-
 
 // Local variables:
 // mode: c++

@@ -2,6 +2,7 @@
 #define __OCL_BE_DATA_H__ 1
 
 #include <ocl/config.h>
+#include <ocl/types.h>
 #include <ocl/be/kernel_cache.h>
 #include <ocl/be/dev_ctx_queue.h>
 #include <memory> // for shared_ptr

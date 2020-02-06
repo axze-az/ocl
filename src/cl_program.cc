@@ -72,6 +72,85 @@ program(cl_program k, bool retain)
     }
 }
 
+std::vector<ocl::cl::device>
+ocl::cl::program::
+get_devices()
+    const
+{
+    size_t nn=0;
+    info(CL_PROGRAM_DEVICES, 0, nullptr, &nn);
+    std::vector<cl_device_id> d(nn/sizeof(cl_device_id));
+    info(CL_PROGRAM_DEVICES, nn, &d[0], nullptr);
+    std::vector<device> vd;
+    for (const auto& di : d) {
+        vd.push_back(device(di));
+    }
+    return vd;
+}
+
+void
+ocl::cl::program::
+info(cl_program_info i, size_t ps, void* p, size_t* rps)
+    const
+{
+    cl_int cr=clGetProgramInfo(_id, i, ps, p, rps);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+void
+ocl::cl::program::
+build_info(const device& d, cl_program_build_info i,
+           size_t ps, void* p, size_t* rps)
+    const
+{
+    cl_int cr=clGetProgramBuildInfo(_id, d(), i, ps, p, rps);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+std::string
+ocl::cl::program::
+build_log()
+    const
+{
+    device d=get_devices().front();
+    size_t cnt=0;
+    build_info(d, CL_PROGRAM_BUILD_LOG, 0, nullptr, &cnt);
+    std::vector<char> vc(cnt, 0);
+    build_info(d, CL_PROGRAM_BUILD_LOG, cnt, &vc[0], nullptr);
+    std::string r(&vc[0], cnt-1);
+    return r;
+}
+
+void
+ocl::cl::program::
+build(const std::string& options)
+{
+    const char *options_string = 0;
+    if(!options.empty()){
+        options_string = options.c_str();
+    }
+    cl_int cr=clBuildProgram(_id, 0, 0, options_string, 0, 0);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
+
+ocl::cl::program
+ocl::cl::program::
+create_with_source(const std::string& source,
+                   const context& context)
+{
+    const char *source_string = source.c_str();
+    cl_int cr=0;
+    cl_program p = clCreateProgramWithSource(context(),
+                                             1,
+                                             &source_string,
+                                             0,
+                                             &cr);
+    if(!p){
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+    return program(p, false);
+}
+
 #if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>

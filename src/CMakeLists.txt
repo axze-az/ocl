@@ -15,11 +15,10 @@ set (CSRCS
   cl_event.cc
   cl_wait_list.cc
   cl_kernel.cc
-#  be_platform.cc
+  cl_platform.cc
   cl_program.cc
-#  be_system.cc
+  cl_system.cc
 #  be_user_event.cc
-#  be_version.cc
   be_devices.cc
   be_kernel_key.cc
   be_kernel_cache.cc

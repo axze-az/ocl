@@ -1,5 +1,5 @@
 #include "ocl/be/types.h"
- 
+
 ocl::cl::kernel::
 kernel() : _id(0)
 {
@@ -72,6 +72,16 @@ kernel(cl_kernel k, bool retain)
     }
 }
 
+ocl::cl::kernel::
+kernel(const program& pgm, const std::string& kname)
+{
+    cl_int cr = 0;
+    _id = clCreateKernel(pgm(), kname.c_str(), &cr);
+    if (_id == 0) {
+        error::throw_on(cr, __FILE__, __LINE__);
+    }
+}
+
 void
 ocl::cl::kernel::
 info(cl_kernel_info i, size_t s, void* res, size_t* rs)
@@ -79,6 +89,19 @@ info(cl_kernel_info i, size_t s, void* res, size_t* rs)
 {
     cl_int cr=clGetKernelInfo(_id, i, s, res, rs);
     error::throw_on(cr, __FILE__, __LINE__);
+}
+
+std::string
+ocl::cl::kernel::
+name()
+    const
+{
+    size_t cnt=0;
+    info(CL_KERNEL_FUNCTION_NAME, 0, nullptr, &cnt);
+    std::vector<char> vc(cnt, 0);
+    info(CL_KERNEL_FUNCTION_NAME, cnt, &vc[0], nullptr);
+    std::string r(&vc[0], cnt-1);
+    return r;
 }
 
 void
@@ -92,6 +115,16 @@ work_group_info(const device& d,
     error::throw_on(cr, __FILE__, __LINE__);
 }
 
+void
+ocl::cl::kernel::
+set_arg(size_t index, size_t size, const void* value)
+{
+    cl_int cr=clSetKernelArg(_id,
+                             static_cast<cl_uint>(index),
+                             size,
+                             value);
+    error::throw_on(cr, __FILE__, __LINE__);
+}
 
 #if 0
 //---------------------------------------------------------------------------//

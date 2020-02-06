@@ -1,6 +1,6 @@
 #include "ocl/be/types.h"
 
-ocl::cl::device::device() : _id(0) 
+ocl::cl::device::device() : _id(0)
 {
 }
 
@@ -116,7 +116,7 @@ device::is_subdevice()
 {
 #if CL_TARGET_OPENCL_VERSION >= 120
     cl_device_id parent_id;
-    auto cr=clGetDeviceInfo(_id, CL_DEVICE_PARENT_DEVICE, 
+    auto cr=clGetDeviceInfo(_id, CL_DEVICE_PARENT_DEVICE,
                             sizeof(cl_device_id), &parent_id, nullptr);
     if (cr == CL_SUCCESS)
         return parent_id != 0;
@@ -130,7 +130,7 @@ name() const
 {
     return get_info_string(CL_DEVICE_NAME);
 }
-    
+
 std::string
 ocl::cl::device::
 vendor() const
@@ -193,16 +193,15 @@ compute_units() const
 uint32_t ocl::cl::device::
 max_work_group_size() const
 {
-    return get_info<uint32_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+    return get_info<size_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE);
 }
-    
+
 uint32_t
 ocl::cl::device::
 max_work_iterm_dimensions() const
 {
     return get_info<uint32_t>(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
 }
-
 
 #if 0
 

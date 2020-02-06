@@ -16,6 +16,16 @@ buffer(const context& context, size_t size, cl_mem_flags flags,
     }
 }
 
+ocl::size_t
+ocl::cl::buffer::
+size()
+    const
+{
+    size_t s;
+    info(CL_MEM_SIZE, sizeof(s), &s, nullptr);
+    return s;
+}
+
 #if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>

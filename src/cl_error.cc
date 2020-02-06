@@ -97,7 +97,7 @@ ocl::cl::error::to_string(cl_int code)
     case CL_INVALID_COMPILER_OPTIONS: return "Invalid Compiler Options";
     case CL_INVALID_LINKER_OPTIONS: return "Invalid Linker Options";
     case CL_INVALID_DEVICE_PARTITION_COUNT: return "Invalid Device Partition Count";
-#endif 
+#endif
 #if CL_TARGET_OPENCL_VERSION>=200
     case CL_INVALID_PIPE_SIZE: return "Invalid Pipe Size";
     case CL_INVALID_DEVICE_QUEUE: return "Invalid Device Queue";
@@ -116,7 +116,7 @@ ocl::cl::error::to_string(cl_int code, const char* file, unsigned line)
     s << to_string(code) << ' ' << file << ':' << line;
     return s.str();
 }
-    
+
 ocl::cl::error::error(cl_int code)
     : base_type(to_string(code)), _code(code)
 {
@@ -162,7 +162,7 @@ ocl::cl::error::~error()
 
 void
 ocl::cl::error::
-throw_on(cl_int code)
+_throw_on(cl_int code)
 {
     if (code != CL_SUCCESS)
         throw error(code);
@@ -170,7 +170,7 @@ throw_on(cl_int code)
 
 void
 ocl::cl::error::
-throw_on(cl_int code, const char* file, unsigned line)
+_throw_on(cl_int code, const char* file, unsigned line)
 {
     if (code != CL_SUCCESS)
         throw error(code, file, line);
