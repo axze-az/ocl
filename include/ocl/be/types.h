@@ -99,19 +99,19 @@ namespace ocl {
             is_subdevice() const;
 
             void
-            get_info(cl_device_info id, size_t res_size,
-                     void* res, size_t* ret_res)
+            info(cl_device_info id, size_t res_size,
+                 void* res, size_t* ret_res)
                 const;
 
             std::string
-            get_info_string(cl_device_info id)
+            info(cl_device_info id)
                 const;
 
             template <typename _T>
             _T get_info(cl_device_info id)
                 const {
                 _T res;
-                get_info(id, sizeof(res), &res, nullptr);
+                info(id, sizeof(res), &res, nullptr);
                 return res;
             }
 

@@ -87,8 +87,7 @@ device::~device()
 
 void
 ocl::cl::device::
-get_info(cl_device_info id, size_t res_size,
-         void* res, size_t* ret_res)
+info(cl_device_info id, size_t res_size, void* res, size_t* ret_res)
     const
 {
     auto cr=clGetDeviceInfo(_id, id, res_size, res, ret_res);
@@ -97,16 +96,14 @@ get_info(cl_device_info id, size_t res_size,
 
 std::string
 ocl::cl::device::
-get_info_string(cl_device_info id)
+info(cl_device_info id)
     const
 {
     size_t ret_res;
-    auto cr=clGetDeviceInfo(_id, id, 0, nullptr, &ret_res);
-    error::throw_on(cr, __FILE__, __LINE__);
+    info(id, 0, nullptr, &ret_res);
     std::vector<char> s(ret_res);
-    cr=clGetDeviceInfo(_id, id, ret_res, &s[0], 0);
-    error::throw_on(cr, __FILE__, __LINE__);
-    return std::string(&s[0], ret_res);
+    info(id, ret_res, &s[0], nullptr);
+    return std::string(&s[0], ret_res-1);
 }
 
 bool
@@ -128,27 +125,27 @@ std::string
 ocl::cl::device::
 name() const
 {
-    return get_info_string(CL_DEVICE_NAME);
+    return info(CL_DEVICE_NAME);
 }
 
 std::string
 ocl::cl::device::
 vendor() const
 {
-    return get_info_string(CL_DEVICE_VENDOR);
+    return info(CL_DEVICE_VENDOR);
 }
 
 std::string ocl::cl::device::
 driver_version() const
 {
-    return get_info_string(CL_DRIVER_VERSION);
+    return info(CL_DRIVER_VERSION);
 }
 
 std::vector<std::string>
 ocl::cl::device::
 extensions() const
 {
-    std::string s=get_info_string(CL_DEVICE_EXTENSIONS);
+    std::string s=info(CL_DEVICE_EXTENSIONS);
     std::vector<std::string> r;
     size_t l=s.length();
     for (size_t i=0; i<l; ) {

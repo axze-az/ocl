@@ -56,6 +56,8 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
       << '\n';
     t=d.local_memory_size();
     s << "local memory size: " << t <<'\n';
+    size_t gs=d.global_memory_size();
+    s << "global memory size: " << gs <<'\n';
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
     s << "max freq: " << t << " MHz\n";
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
