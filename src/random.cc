@@ -117,9 +117,19 @@ next()
 ocl::rand48::
 rand48(size_t s, be::data_ptr p)
     : _state(
-        (((cvt<dvec<std::uint64_t> >(fill_with_global_id(s, p)) << 16)
+        (((cvt<dvec<uint64_t> >(fill_with_global_id(s, p)) << 16)
           | 0x330E)) & MM)
 {
+}
+
+void
+ocl::rand48::rand48::seed_times_global_id(uint32_t seed_val)
+{
+    size_t s=_state.size();
+    auto p= _state.backend_data();
+    _state=
+        ((((cvt<dvec<uint64_t> >(fill_with_global_id(s, p))*seed_val) << 16)
+          | 0x330E)) & MM;
 }
 
 ocl::dvec<std::int32_t>
@@ -169,6 +179,14 @@ nextf()
 ocl::dvec<float>
 ocl::
 uniform_float_random_vector(rand& rnd, float min_val, float max_val)
+{
+    const float range=max_val - min_val;
+    return ((rnd.nextf() * range) + min_val);
+}
+
+ocl::dvec<float>
+ocl::
+uniform_float_random_vector(rand48& rnd, float min_val, float max_val)
 {
     const float range=max_val - min_val;
     return ((rnd.nextf() * range) + min_val);

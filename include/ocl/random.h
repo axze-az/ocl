@@ -43,7 +43,7 @@ namespace ocl {
         dvec<std::uint32_t>
         fill_with_global_id(std::size_t s, be::data_ptr p);
     };
-    
+
     class rand : private random_base {
         dvec<std::uint32_t> _next;
     public:
@@ -82,6 +82,8 @@ namespace ocl {
         next();
     public:
         rand48(size_t s, be::data_ptr p= be::data::instance());
+        void
+        seed_times_global_id(uint32_t n);
         // returns non negative numbers between 0 and 2^31
         dvec<std::int32_t>
         lrand48();
@@ -96,10 +98,15 @@ namespace ocl {
         dvec<float>
         nextf();
     };
-    
+
     dvec<float>
     uniform_float_random_vector(rand& rnd,
                                 float min_val, float max_val);
+
+    dvec<float>
+    uniform_float_random_vector(rand48& rnd,
+                                float min_val, float max_val);
+
 }
 
 
