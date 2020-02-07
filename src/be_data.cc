@@ -75,7 +75,7 @@ ocl::be::data_ptr
 ocl::be::data::instance()
 {
     if (_init == false) {
-        std::unique_lock<mutex> _l(_instance_mutex);
+        scoped_lock _l(_instance_mutex);
         if (_init==false) {
             _default = std::make_shared<data>();
             _init= true;
@@ -106,7 +106,7 @@ ocl::be::data::create(const device& dev, const context& ctx,
 void
 ocl::be::data::debug_print(const std::string& m)
 {
-    std::unique_lock _lck(_debug_mutex);
+    std::scoped_lock _lck(_debug_mutex);
     std::cout << m;
 }
 

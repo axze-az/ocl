@@ -5,6 +5,7 @@
 #include <ocl/expr.h>
 #include <ocl/expr_custom.h>
 #include <ocl/dvec_base.h>
+#include <experimental/memory>
 #include <thread>
 #include <chrono>
 
@@ -18,7 +19,7 @@ namespace ocl {
 
         be::kernel_handle
         compile(const std::string& s, const std::string& k_name,
-                be::data_ptr& b);
+                const be::data_ptr& b);
 
         // throws an exception because of missing
         // backend data
@@ -57,7 +58,7 @@ namespace ocl {
         template <class _RES, class _EXPR>
         void
         execute(_RES& res, const _EXPR& r,
-                be::data_ptr b, size_t s,
+                const be::data_ptr& b, size_t s,
                 const void* addr);
 
         void
@@ -69,7 +70,7 @@ namespace ocl {
         template <class _RES, class _EXPR>
         be::kernel_handle
         get_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr b, size_t lmem_size=0);
+                   const be::data_ptr& b, size_t lmem_size=0);
 
         // result of gen_kernel_src
         class ksrc_info {
@@ -105,20 +106,20 @@ namespace ocl {
         template <class _RES, class _EXPR>
         be::kernel_handle
         gen_kernel(_RES& res, const _EXPR& r, const void* addr,
-                   be::data_ptr b, size_t lmem_size=0);
+                   const be::data_ptr& b, size_t lmem_size=0);
     }
 
     // generate and execute an opencl kernel for an
     // expression
     template <class _RES, class _EXPR>
     void
-    execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s);
+    execute(_RES& res, const _EXPR& r, const be::data_ptr& b, size_t s);
 
     // generate and execute a custom kernel for r
     template <typename _OP, typename _R>
     void
     execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
-                   size_t s, be::data_ptr b);
+                   size_t s, const be::data_ptr& b);
 
     // generate and execute a custom kernel for r
     template <class _RES, typename _OP, typename _R>
@@ -178,7 +179,7 @@ template <class _RES, class _SRC>
 void
 ocl::impl::
 execute(_RES& res, const _SRC& r,
-        be::data_ptr b, size_t s,
+        const be::data_ptr& b, size_t s,
         const void* cookie)
 {
     be::event ev;
@@ -200,7 +201,7 @@ execute(_RES& res, const _SRC& r,
     be::kernel_handle pk=get_kernel(res, r, cookie, b, lmem_size);
     be::kexec_1d_info ki(d, pk.k(), s);
     {
-        std::unique_lock<be::kernel_handle> _lk(pk);
+        be::scoped_lock _lk(pk.mtx());
         unsigned buf_num=0;
         bind_buffer_args(res, buf_num, pk.k(), ki._local_size);
         bind_buffer_args(r, buf_num, pk.k(), ki._local_size);
@@ -209,7 +210,7 @@ execute(_RES& res, const _SRC& r,
             print_arg_buffer_info(pk.k(), ab_size);
         }
         {
-            std::unique_lock<be::mutex> _lq(dcq_mtx);
+            be::scoped_lock _lq(dcq_mtx);
             ev=b->enqueue_1d_kernel(pk.k(), ki);
         }
     }
@@ -221,12 +222,12 @@ template <class _RES, class _SRC>
 ocl::be::kernel_handle
 ocl::impl::
 get_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr b, size_t lmem_size)
+           const be::data_ptr& b, size_t lmem_size)
 {
     auto& kc=b->kcache();
     std::string kl=gen_key(r);
     be::kernel_key kk(cookie, kl);
-    std::unique_lock<be::mutex> _l(kc.mtx());
+    be::scoped_lock _l(kc.mtx());
     be::kernel_cache::iterator f(kc.find(kk));
     if (f == kc.end()) {
         be::kernel_handle pkl(gen_kernel(res, r, cookie, b, lmem_size));
@@ -310,7 +311,7 @@ template <class _RES, class _SRC>
 ocl::be::kernel_handle
 ocl::impl::
 gen_kernel(_RES& res, const _SRC& r, const void* cookie,
-           be::data_ptr b, size_t lmem_size)
+           const be::data_ptr& b, size_t lmem_size)
 {
     ksrc_info ksi=gen_kernel_src(res, r, cookie);
     std::string k_name = ksi.name();
@@ -385,10 +386,10 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
 template <class _RES, class _EXPR>
 void
 ocl::
-execute(_RES& res, const _EXPR& r, be::data_ptr b, size_t s)
+execute(_RES& res, const _EXPR& r, const be::data_ptr& b, size_t s)
 {
     // auto pf=execute<_RES, _EXPR>;
-    void (*pf)(_RES&, const _EXPR&, be::data_ptr, size_t) =
+    void (*pf)(_RES&, const _EXPR&, const be::data_ptr&, size_t) =
         execute<_RES, _EXPR>;
     const void* pv=reinterpret_cast<const void*>(pf);
     impl::execute(res, r, b, s, pv);
@@ -398,7 +399,7 @@ template <typename _OP, typename _R>
 void
 ocl::
 execute_custom(const expr<dop::custom_k<_OP>, impl::ck_body, _R>& r,
-               size_t s, be::data_ptr b)
+               size_t s, const be::data_ptr& b)
 {
     struct tag {};
     impl::ignored_arg<tag> v;

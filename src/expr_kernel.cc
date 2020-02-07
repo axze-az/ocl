@@ -163,7 +163,7 @@ ocl::impl::insert_headers(std::ostream& s, size_t lmem_size)
 ocl::be::kernel_handle
 ocl::impl::
 compile(const std::string& s, const std::string& k_name,
-        be::data_ptr& b)
+        const be::data_ptr& b)
 {
     using namespace impl;
     if (b->debug() != 0) {

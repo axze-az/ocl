@@ -14,6 +14,13 @@ namespace ocl {
 
         using mutex = std::mutex;
 
+        class scoped_lock {
+            mutex& _mtx;
+        public:
+            scoped_lock(mutex& m);
+            ~scoped_lock();
+        };
+
         struct kernel_with_lock {
             program _p;
             kernel _k;
@@ -29,8 +36,7 @@ namespace ocl {
                 : _h(std::make_shared<kernel_with_lock>(p, k)) {
             }
             kernel& k() { return _h->_k; }
-            void lock() { _h->_m.lock(); }
-            void unlock() { _h->_m.unlock(); }
+            mutex& mtx() { return _h->_m; }
         };
 
         class kernel_cache {

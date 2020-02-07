@@ -27,13 +27,15 @@ ocl::dvec_base::dvec_base(std::size_t s, const void* p)
     // copy_from_host(p);
 }
 
-ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s)
+ocl::dvec_base::
+dvec_base(const be::data_ptr& pbe, std::size_t s)
     : base_type(), _bed{pbe},
       _b{_bed->dcq().c(), s}
 {
 }
 
-ocl::dvec_base::dvec_base(be::data_ptr pbe, std::size_t s, const void* p)
+ocl::dvec_base::
+dvec_base(const be::data_ptr& pbe, std::size_t s, const void* p)
     : base_type(), _bed{pbe},
       _b{_bed->dcq().c(), s,
          be::buffer::read_write|be::buffer::copy_host_ptr,
@@ -87,7 +89,6 @@ ocl::dvec_base::swap(dvec_base& r)
     std::swap(_b, r._b);
     return *this;
 }
-
 
 void
 ocl::dvec_base::copy_on_device(const dvec_base& r)
@@ -147,7 +148,7 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
         auto& q= dcq.q();
         auto& wl=dcq.wl();
         {
-            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::scoped_lock _ql(dcq.mtx());
             be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
             q.flush();
             wl.clear();
@@ -167,7 +168,7 @@ ocl::dvec_base::copy_from_host(const void* p)
         auto& wl=dcq.wl();
         be::event ev;
         {
-            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::scoped_lock _ql(dcq.mtx());
             ev=q.enqueue_write_buffer_async(_b, 0, s, p, wl);
             q.flush();
             wl.clear();
@@ -185,7 +186,7 @@ ocl::dvec_base::copy_from_host(const void* p, size_t buf_offs, size_t s)
         auto& wl=dcq.wl();
         be::event ev;
         {
-            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::scoped_lock _ql(dcq.mtx());
             ev=q.enqueue_write_buffer_async(_b, buf_offs, s, p, wl);
             q.flush();
             wl.clear();
@@ -205,7 +206,7 @@ ocl::dvec_base::copy_to_host(void* p)
         auto& wl=dcq.wl();
         be::event ev;
         {
-            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::scoped_lock _ql(dcq.mtx());
             ev= q.enqueue_read_buffer_async(_b, 0, s, p, wl);
             q.flush();
             wl.clear();
@@ -224,7 +225,7 @@ ocl::dvec_base::copy_to_host(void* p, size_t buf_offs, size_t s)
         auto& wl=dcq.wl();
         be::event ev;
         {
-            std::unique_lock<be::mutex> _ql(dcq.mtx());
+            be::scoped_lock _ql(dcq.mtx());
             ev= q.enqueue_read_buffer_async(_b, buf_offs, s, p, wl);
             q.flush();
             wl.clear();

@@ -1,5 +1,16 @@
 #include "ocl/be/kernel_cache.h"
 
+ocl::be::scoped_lock::scoped_lock(mutex& m)
+    : _mtx(m)
+{
+    _mtx.lock();
+}
+
+ocl::be::scoped_lock::~scoped_lock()
+{
+    _mtx.unlock();
+}
+
 ocl::be::kernel_cache::kernel_cache()
     : _kmap(), _mtx()
 {
