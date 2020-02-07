@@ -6,6 +6,7 @@
 #include <cftal/vec.h>
 #include <string_view>
 #include <typeinfo>
+#include <ocl/be/types.h>
 
 namespace ocl {
 
@@ -23,6 +24,60 @@ namespace ocl {
             }
         };
 
+#define TYPE_2_NAME(type, name) \
+    template <>      \
+    struct type_2_name<type> { \
+        static constexpr const char* v() { return #name ; } \
+    }
+
+        TYPE_2_NAME(cl_ulong, ulong);
+        TYPE_2_NAME(cl_ulong2, ulong2);
+        TYPE_2_NAME(cl_ulong4, ulong4);
+        TYPE_2_NAME(cl_ulong8, ulong8);
+        TYPE_2_NAME(cl_ulong16, ulong16);
+
+        TYPE_2_NAME(cl_long, ulong);
+        TYPE_2_NAME(cl_long2, long2);
+        TYPE_2_NAME(cl_long4, long4);
+        TYPE_2_NAME(cl_long8, long8);
+        TYPE_2_NAME(cl_long16, long16);
+
+        TYPE_2_NAME(cl_uint, uint);
+        TYPE_2_NAME(cl_uint2, uint2);
+        TYPE_2_NAME(cl_uint4, uint4);
+        TYPE_2_NAME(cl_uint8, uint8);
+        TYPE_2_NAME(cl_uint16, uint16);
+
+        TYPE_2_NAME(cl_int, int);
+        TYPE_2_NAME(cl_int2, int2);
+        TYPE_2_NAME(cl_int4, int4);
+        TYPE_2_NAME(cl_int8, int8);
+        TYPE_2_NAME(cl_int16, int16);
+
+        TYPE_2_NAME(cl_ushort, ushort);
+        TYPE_2_NAME(cl_ushort2, ushort2);
+        TYPE_2_NAME(cl_ushort4, ushort4);
+        TYPE_2_NAME(cl_ushort8, ushort8);
+        TYPE_2_NAME(cl_ushort16, ushort16);
+
+        TYPE_2_NAME(cl_short, short);
+        TYPE_2_NAME(cl_short2, short2);
+        TYPE_2_NAME(cl_short4, short4);
+        TYPE_2_NAME(cl_short8, short8);
+        TYPE_2_NAME(cl_short16, short16);
+
+        TYPE_2_NAME(cl_char, char);
+        TYPE_2_NAME(cl_char2, char2);
+        TYPE_2_NAME(cl_char4, char4);
+        TYPE_2_NAME(cl_char8, char8);
+        TYPE_2_NAME(cl_char16, char16);
+
+        TYPE_2_NAME(cl_uchar, uchar);
+        TYPE_2_NAME(cl_uchar2, uchar2);
+        TYPE_2_NAME(cl_uchar4, uchar4);
+        TYPE_2_NAME(cl_uchar8, uchar8);
+        TYPE_2_NAME(cl_uchar16, uchar16);
+
         template <>
         struct type_2_name<char> {
             static
@@ -31,85 +86,17 @@ namespace ocl {
             }
         };
 
-        template <>
-        struct type_2_name<signed char> {
-            static
-            constexpr const char* v() {
-                return "char";
-            }
-        };
+        TYPE_2_NAME(cl_float, float);
+        TYPE_2_NAME(cl_float2, float2);
+        TYPE_2_NAME(cl_float4, float4);
+        TYPE_2_NAME(cl_float8, float8);
+        TYPE_2_NAME(cl_float16, float16);
 
-        template <>
-        struct type_2_name<unsigned char> {
-            static
-            constexpr const char* v() {
-                return "uchar";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::int16_t> {
-            static
-            constexpr const char* v() {
-                return "short";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::uint16_t> {
-            static
-            constexpr const char* v() {
-                return "ushort";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::int32_t> {
-            static
-            constexpr const char* v() {
-                return "int";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::uint32_t> {
-            static
-            constexpr const char* v() {
-                return "uint";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::int64_t> {
-            static
-            constexpr const char* v() {
-                return "long";
-            }
-        };
-
-        template <>
-        struct type_2_name<std::uint64_t> {
-            static
-            constexpr const char* v() {
-                return "ulong";
-            }
-        };
-
-        template <>
-        struct type_2_name<float> {
-            static
-            constexpr const char* v() {
-                return "float";
-            }
-        };
-
-        template <>
-        struct type_2_name<double> {
-            static
-            constexpr const char* v() {
-                return "double";
-            }
-        };
+        TYPE_2_NAME(cl_double, double);
+        TYPE_2_NAME(cl_double2, double2);
+        TYPE_2_NAME(cl_double4, double4);
+        TYPE_2_NAME(cl_double8, double8);
+        TYPE_2_NAME(cl_double16, double16);
 
         std::string
         type_2_name_vec_t(const char* tname, size_t n);

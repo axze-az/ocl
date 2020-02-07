@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::kernel::
-kernel() : _id(0)
-{
-}
-
-ocl::cl::kernel::
 kernel(const kernel &r)
     : _id(r._id)
 {

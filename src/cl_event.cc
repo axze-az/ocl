@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::event::
-event() : _id(0)
-{
-}
-
-ocl::cl::event::
 event(const event &r)
     : _id(r._id)
 {
@@ -74,7 +69,7 @@ event(cl_event c, bool retain)
 
 void
 ocl::cl::event::
-wait() 
+wait()
 {
     cl_int ret = clWaitForEvents(1, &_id);
     error::throw_on(ret, __FILE__, __LINE__);

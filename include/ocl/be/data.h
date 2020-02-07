@@ -81,6 +81,8 @@ namespace ocl {
         };
         // backend pointer definition
         using data_ptr = std::shared_ptr<data>;
+
+
     }
 
 }

@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::program::
-program() : _id(0)
-{
-}
-
-ocl::cl::program::
 program(const program &r)
     : _id(r._id)
 {

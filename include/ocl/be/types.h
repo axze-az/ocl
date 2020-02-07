@@ -86,7 +86,7 @@ namespace ocl {
                 gpu = CL_DEVICE_TYPE_GPU,
                 accelerator = CL_DEVICE_TYPE_ACCELERATOR
             };
-            device();
+            device() : _id(0) {}
             device(cl_device_id, bool retain=true);
             device(const device& r);
             device(device&& r);
@@ -131,7 +131,7 @@ namespace ocl {
         class context {
             cl_context _id;
         public:
-            context();
+            context() : _id(0) {}
             context(const context& r);
             context(context&& r);
             context& operator=(const context& r);
@@ -173,7 +173,7 @@ namespace ocl {
                 constant_memory
             };
         protected:
-            mem_object();
+            mem_object() : _id(0) {}
             mem_object(const mem_object& r);
             mem_object(mem_object&& r);
             mem_object& operator=(const mem_object& r);
@@ -252,7 +252,7 @@ namespace ocl {
                 profiling_command_end = CL_PROFILING_COMMAND_END
             };
 
-            event();
+            event() : _id(0) {}
             event(const event& r);
             event(event&& r);
             event& operator=(const event& r);
@@ -297,7 +297,7 @@ namespace ocl {
         class kernel {
             cl_kernel _id;
         public:
-            kernel();
+            kernel() : _id(0) {}
             kernel(const kernel &r);
             kernel& operator=(const kernel &r);
             kernel(kernel&& r);
@@ -342,7 +342,7 @@ namespace ocl {
         class program {
             cl_program _id;
         public:
-            program();
+            program() : _id(0) {}
             program(const program &r);
             program& operator=(const program &r);
             program(program&& r);
@@ -379,7 +379,7 @@ namespace ocl {
         class queue {
             cl_command_queue _id;
         public:
-            queue();
+            queue() : _id(0) {}
             queue(const queue &r);
             queue& operator=(const queue &r);
             queue(queue&& r);

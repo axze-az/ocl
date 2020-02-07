@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::queue::
-queue() : _id(0)
-{
-}
-
-ocl::cl::queue::
 queue(const queue &r)
     : _id(r._id)
 {

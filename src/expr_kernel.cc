@@ -1,6 +1,52 @@
 #include "ocl/expr_kernel.h"
 #include <iterator>
 
+ocl::impl::ksrc_info::
+ksrc_info(const std::string& kname, const std::string& s,
+          bool custom_k)
+    : _kname(kname), _s(s), _custom(custom_k)
+{
+
+}
+
+ocl::impl::ksrc_info::
+ksrc_info(const ksrc_info& r)
+    : _kname(r._kname), _s(r._s), _custom(r._custom)
+{
+}
+
+ocl::impl::ksrc_info::
+ksrc_info(ksrc_info&& r)
+    : _kname(std::move(r._kname)),
+      _s(std::move(r._s)),
+      _custom(std::move(r._custom))
+{
+}
+
+ocl::impl::ksrc_info&
+ocl::impl::ksrc_info::operator=(const ksrc_info& r)
+{
+    if (&r != this) {
+        _kname=r._kname;
+        _s=r._s;
+        _custom=r._custom;
+    }
+    return *this;
+}
+
+ocl::impl::ksrc_info&
+ocl::impl::ksrc_info::operator=(ksrc_info&& r)
+{
+    _kname=std::move(r._kname);
+    _s=std::move(r._s);
+    _custom=std::move(r._custom);
+    return *this;
+}
+
+ocl::impl::ksrc_info::~ksrc_info()
+{
+}
+
 #if 0
 namespace ocl {
     namespace impl {

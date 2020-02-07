@@ -78,8 +78,12 @@ namespace ocl {
             bool _custom;
         public:
             ksrc_info(const std::string& kname, const std::string& s,
-                      bool custom_k)
-                : _kname(kname), _s(s), _custom(custom_k) {}
+                      bool custom_k);
+            ksrc_info(const ksrc_info& r);
+            ksrc_info(ksrc_info&& r);
+            ksrc_info& operator=(const ksrc_info& r);
+            ksrc_info& operator=(ksrc_info&& r);
+            ~ksrc_info();
             const std::string& name() const { return _kname; }
             const std::string& source() const { return _s; }
             const bool& custom() const { return _custom; }

@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::context::
-context() : _id(0)
-{
-}
-
-ocl::cl::context::
 context(const context &r)
     : _id(r._id)
 {

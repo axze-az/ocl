@@ -1,9 +1,5 @@
 #include "ocl/be/types.h"
 
-ocl::cl::device::device() : _id(0)
-{
-}
-
 ocl::cl::
 device::device(cl_device_id id, bool retain)
     : _id(id)

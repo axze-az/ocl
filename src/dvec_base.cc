@@ -1,6 +1,6 @@
 #include "ocl/dvec_base.h"
 #include <iomanip>
-
+#include "ocl/dvec.h"
 
 ocl::dvec_base::~dvec_base()
 {
@@ -88,40 +88,42 @@ ocl::dvec_base::swap(dvec_base& r)
     return *this;
 }
 
-std::size_t
-ocl::dvec_base::buffer_size()
-    const
-{
-    size_t s=0;
-    if (_b.get() != nullptr)
-        s= _b.size();
-    return s;
-}
-
-const ocl::be::buffer&
-ocl::dvec_base::buf()
-    const
-{
-    return _b;
-}
-
-ocl::be::data_ptr
-ocl::dvec_base::backend_data()
-{
-    return _bed;
-}
-
-const ocl::be::data_ptr
-ocl::dvec_base::backend_data()
-    const
-{
-    return _bed;
-}
 
 void
 ocl::dvec_base::copy_on_device(const dvec_base& r)
 {
     size_t s =r.buffer_size();
+#if 1
+    if (s==0)
+        return;
+    if (s & 1) {
+        dvec<char>& dst=static_cast<dvec<char>&>(*this);
+        const dvec<char>& src=static_cast<const dvec<char>&>(r);
+        execute(dst, src, this->backend_data(), s);
+        return;
+    }
+    if (s & 2) {
+        dvec<uint16_t>& dst=static_cast<dvec<uint16_t>&>(*this);
+        const dvec<uint16_t>& src=static_cast<const dvec<uint16_t>&>(r);
+        execute(dst, src, this->backend_data(), s>>1);
+        return;
+    }
+    if (s & 4) {
+        dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
+        const dvec<uint32_t>& src=static_cast<const dvec<uint32_t>&>(r);
+        execute(dst, src, this->backend_data(), s>>2);
+        return;
+    }
+    if (s & 8) {
+        dvec<cl_uint2>& dst=static_cast<dvec<cl_uint2>&>(*this);
+        const dvec<cl_uint2>& src=static_cast<const dvec<cl_uint2>&>(r);
+        execute(dst, src, this->backend_data(), s>>3);
+        return;
+    }
+    dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
+    const dvec<cl_uint4>& src=static_cast<const dvec<cl_uint4>&>(r);
+    execute(dst, src, this->backend_data(), s>>4);
+#else
     if (__likely(s)) {
         auto& dcq=_bed->dcq();
         auto& q= dcq.q();
@@ -134,6 +136,7 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
             wl.insert(ev);
         }
     }
+#endif
 }
 
 void

@@ -1,11 +1,6 @@
 #include "ocl/be/types.h"
 
 ocl::cl::mem_object::
-mem_object() : _id(0)
-{
-}
-
-ocl::cl::mem_object::
 mem_object(const mem_object &r)
     : _id(r._id)
 {

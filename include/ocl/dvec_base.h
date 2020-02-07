@@ -170,12 +170,46 @@ namespace ocl {
         // return the underlying opencl buffer
         const be::buffer& buf() const;
         // return the opencl backend information
-        be::data_ptr
+        be::data_ptr&
         backend_data();
         // return the opencl backend information
-        const be::data_ptr
+        const be::data_ptr&
         backend_data() const;
     };
+}
+
+inline
+const ocl::be::buffer&
+ocl::dvec_base::buf()
+    const
+{
+    return _b;
+}
+
+inline
+std::size_t
+ocl::dvec_base::buffer_size()
+    const
+{
+    size_t s=0;
+    if (_b.get() != nullptr)
+        s= _b.size();
+    return s;
+}
+
+inline
+ocl::be::data_ptr&
+ocl::dvec_base::backend_data()
+{
+    return _bed;
+}
+
+inline
+const ocl::be::data_ptr&
+ocl::dvec_base::backend_data()
+    const
+{
+    return _bed;
 }
 
 // Local variables:
