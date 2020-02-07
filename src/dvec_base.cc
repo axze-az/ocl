@@ -108,6 +108,11 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
         execute(dst, src, this->backend_data(), s>>1);
         return;
     }
+#if 1
+    dvec<float>& dst=static_cast<dvec<float>&>(*this);
+    const dvec<float>& src=static_cast<const dvec<float>&>(r);
+    execute(dst, src, this->backend_data(), s>>2);
+#else
     if (s & 4) {
         dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
         const dvec<uint32_t>& src=static_cast<const dvec<uint32_t>&>(r);
@@ -120,9 +125,22 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
         execute(dst, src, this->backend_data(), s>>3);
         return;
     }
-    dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
-    const dvec<cl_uint4>& src=static_cast<const dvec<cl_uint4>&>(r);
-    execute(dst, src, this->backend_data(), s>>4);
+    if (s & 16) {
+        dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
+        const dvec<cl_uint4>& src=static_cast<const dvec<cl_uint4>&>(r);
+        execute(dst, src, this->backend_data(), s>>4);
+        return;
+    }
+    if (s & 32) {
+        dvec<cl_uint8>& dst=static_cast<dvec<cl_uint8>&>(*this);
+        const dvec<cl_uint8>& src=static_cast<const dvec<cl_uint8>&>(r);
+        execute(dst, src, this->backend_data(), s>>5);
+        return;
+    }
+    dvec<cl_uint16>& dst=static_cast<dvec<cl_uint16>&>(*this);
+    const dvec<cl_uint16>& src=static_cast<const dvec<cl_uint16>&>(r);
+    execute(dst, src, this->backend_data(), s>>6);
+#endif
 #else
     if (__likely(s)) {
         auto& dcq=_bed->dcq();

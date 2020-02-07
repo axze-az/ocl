@@ -58,6 +58,21 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
     s << "local memory size: " << t <<'\n';
     size_t gs=d.global_memory_size();
     s << "global memory size: " << gs <<'\n';
+    size_t cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE);
+    s << "global memory cache size: " << cs << '\n';
+    cl_device_mem_cache_type ct=
+        d.get_info<cl_device_mem_cache_type>(CL_DEVICE_GLOBAL_MEM_CACHE_TYPE);
+    s << "global memory cache type: ";
+    if (ct == CL_READ_ONLY_CACHE) {
+        s << "read only";
+    } else if (ct == CL_READ_WRITE_CACHE) {
+        s << "read write";
+    } else {
+        s << "none";
+    }
+    s << '\n';
+    cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
+    s << "global memory cache line size: " << cs << '\n';
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
     s << "max freq: " << t << " MHz\n";
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
