@@ -78,6 +78,61 @@ context(const device& d, const cl_context_properties* p)
     }
 }
 
+ocl::cl::context::
+context(const std::vector<device>& vd, const cl_context_properties* p)
+{
+    cl_int err = 0;
+    _id = clCreateContext(p, vd.size(), 
+                          reinterpret_cast<const cl_device_id*>(&vd[0]), 
+                          0, 0, &err);
+    if (_id == 0) {
+        error::throw_on(err, __FILE__, __LINE__);
+    }
+}
+
+void
+ocl::cl::context::
+info(cl_context_info id, size_t res_size, void* res, size_t* ret_res)
+    const
+{
+    auto err=clGetContextInfo(_id, id, res_size, res, ret_res);
+    error::throw_on(err, __FILE__, __LINE__);
+}
+
+ocl::cl::device
+ocl::cl::context::
+get_device() 
+    const
+{
+    uint32_t n;
+    info(CL_CONTEXT_NUM_DEVICES, sizeof(n), &n, nullptr);
+    if (n==0)
+        return device();
+    cl_device_id* vi=
+        static_cast<cl_device_id*>(alloca(n*sizeof(cl_device_id)));
+    info(CL_CONTEXT_DEVICES, n*sizeof(cl_device_id), vi, nullptr);
+    return device(vi[0]);
+}
+
+std::vector<ocl::cl::device>
+ocl::cl::context::
+get_devices() 
+    const
+{
+    uint32_t n;
+    info(CL_CONTEXT_NUM_DEVICES, sizeof(n), &n, nullptr);
+    std::vector<device> vd;
+    if (n) {
+        cl_device_id* vi=
+            static_cast<cl_device_id*>(alloca(n*sizeof(cl_device_id)));
+        info(CL_CONTEXT_DEVICES, n*sizeof(cl_device_id), vi, nullptr);
+        for (size_t i=0; i<n; ++i) {
+            vd.push_back(device(vi[i]));
+        }
+    }
+    return vd;
+}
+
 #if 0
 //---------------------------------------------------------------------------//
 // Copyright (c) 2013 Kyle Lutz <kyle.r.lutz@gmail.com>

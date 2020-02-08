@@ -145,6 +145,31 @@ namespace ocl {
             explicit
             context(const device& d,
                     const cl_context_properties* p=nullptr);
+        
+            context(const std::vector<device>& vd,
+                    const cl_context_properties* p=nullptr);
+            
+            void
+            info(cl_context_info id, size_t res_size,
+                 void* res, size_t* ret_res)
+                const;
+
+            template <typename _T>
+            _T get_info(cl_context_info id)
+                const {
+                _T res;
+                info(id, sizeof(res), &res, nullptr);
+                return res;
+            }
+                
+            device
+            get_device()
+                const;
+            
+            std::vector<device>
+            get_devices()
+                const;
+            
         };
 
         class mem_object {
