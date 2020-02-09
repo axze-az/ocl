@@ -5,7 +5,7 @@ device::device(cl_device_id id, bool retain)
     : _id(id)
 {
 #if CL_TARGET_OPENCL_VERSION>=120
-    if (_id && is_subdevice()) {
+    if (_id && retain && is_subdevice()) {
         auto cr=clRetainDevice(_id);
         error::throw_on(cr, __FILE__, __LINE__);
     }

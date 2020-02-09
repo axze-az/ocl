@@ -43,11 +43,12 @@ devices(cl_device_type type)
     std::vector<device> vd;
     size_t count=device_count(type);
     if(count != 0) {
-        std::vector<cl_device_id> vids(count);
+        cl_device_id* vids=
+            static_cast<cl_device_id*>(alloca(count*sizeof(cl_device_id)));
         cl_int err = clGetDeviceIDs(_id, type, count, &vids[0], 0);
         error::throw_on(err);
-        for (const auto& i : vids) {
-            vd.push_back(device(i));
+        for (size_t i=0; i<count; ++i) {
+            vd.push_back(device(vids[i]));
         }
     }
     return vd;

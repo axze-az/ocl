@@ -9,11 +9,12 @@ platforms()
     error::throw_on(err, __FILE__, __LINE__);
     std::vector<platform> platforms;
     if(count > 0) {
-        std::vector<cl_platform_id> platform_ids(count);
+        cl_platform_id* platform_ids=
+            static_cast<cl_platform_id*>(alloca(count*sizeof(cl_platform_id)));
         err=clGetPlatformIDs(count, &platform_ids[0], 0);
         error::throw_on(err, __FILE__, __LINE__);
-        for(const auto& i : platform_ids){
-            platforms.push_back(platform(i));
+        for(cl_uint i=0; i<count; ++i){
+            platforms.push_back(platform(platform_ids[i]));
         }
     }
     return platforms;
