@@ -99,7 +99,7 @@ name()
     std::string r(&vc[0], cnt-1);
     return r;
 }
-
+ 
 void
 ocl::cl::kernel::
 work_group_info(const device& d,
