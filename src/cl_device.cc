@@ -97,7 +97,8 @@ info(cl_device_info id)
 {
     size_t ret_res;
     info(id, 0, nullptr, &ret_res);
-    std::vector<char> s(ret_res);
+    // std::vector<char> s(ret_res);
+    char* s=static_cast<char*>(alloca(ret_res));
     info(id, ret_res, &s[0], nullptr);
     return std::string(&s[0], ret_res-1);
 }

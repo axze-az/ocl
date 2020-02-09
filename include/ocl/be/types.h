@@ -80,6 +80,9 @@ namespace ocl {
 
         class device {
             cl_device_id _id;
+            std::string
+            info(cl_device_info id)
+                const;
         public:
             enum type {
                 cpu = CL_DEVICE_TYPE_CPU,
@@ -101,10 +104,6 @@ namespace ocl {
             void
             info(cl_device_info id, size_t res_size,
                  void* res, size_t* ret_res)
-                const;
-
-            std::string
-            info(cl_device_info id)
                 const;
 
             template <typename _T>
@@ -509,6 +508,7 @@ namespace ocl {
             platform (cl_platform_id id) : _id(id) {}
             cl_platform_id& operator()() { return _id; }
             const cl_platform_id& operator()() const { return _id;}
+            
             void
             info(cl_platform_info i, size_t s, void* p, size_t* rps)
                 const;

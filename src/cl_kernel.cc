@@ -93,7 +93,8 @@ name()
 {
     size_t cnt=0;
     info(CL_KERNEL_FUNCTION_NAME, 0, nullptr, &cnt);
-    std::vector<char> vc(cnt, 0);
+    // std::vector<char> vc(cnt, 0);
+    char* vc=static_cast<char*>(alloca(cnt));
     info(CL_KERNEL_FUNCTION_NAME, cnt, &vc[0], nullptr);
     std::string r(&vc[0], cnt-1);
     return r;

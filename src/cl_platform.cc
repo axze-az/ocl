@@ -7,7 +7,7 @@ info(cl_platform_info i)
 {
     size_t s=0;
     info(i, 0, nullptr, &s);
-    std::vector<char> v(s, 0);
+    char* v=static_cast<char*>(alloca(s));
     info(i, s, &v[0], nullptr);
     std::string r(&v[0], s-1);
     return r;
