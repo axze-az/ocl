@@ -123,8 +123,8 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
                 execute(dst, src, this->backend_data(), s>>1);
                 return;
             }
-            dvec<float>& dst=static_cast<dvec<float>&>(*this);
-            const dvec<float>& src=static_cast<const dvec<float>&>(r);
+            dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
+            const dvec<uint32_t>& src=static_cast<const dvec<uint32_t>&>(r);
             execute(dst, src, this->backend_data(), s>>2);
         }
     }
