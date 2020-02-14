@@ -96,68 +96,38 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
     size_t s =r.buffer_size();
     // TODO: check for Mesa devices and use copy via
     // kernel, otherwise use enqueue_copy_buffer
-#if 0
-    if (s==0)
-        return;
-    if (s & 1) {
-        dvec<char>& dst=static_cast<dvec<char>&>(*this);
-        const dvec<char>& src=static_cast<const dvec<char>&>(r);
-        execute(dst, src, this->backend_data(), s);
-        return;
-    }
-    if (s & 2) {
-        dvec<uint16_t>& dst=static_cast<dvec<uint16_t>&>(*this);
-        const dvec<uint16_t>& src=static_cast<const dvec<uint16_t>&>(r);
-        execute(dst, src, this->backend_data(), s>>1);
-        return;
-    }
-#if 1
-    dvec<float>& dst=static_cast<dvec<float>&>(*this);
-    const dvec<float>& src=static_cast<const dvec<float>&>(r);
-    execute(dst, src, this->backend_data(), s>>2);
-#else
-    if (s & 4) {
-        dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
-        const dvec<uint32_t>& src=static_cast<const dvec<uint32_t>&>(r);
-        execute(dst, src, this->backend_data(), s>>2);
-        return;
-    }
-    if (s & 8) {
-        dvec<cl_uint2>& dst=static_cast<dvec<cl_uint2>&>(*this);
-        const dvec<cl_uint2>& src=static_cast<const dvec<cl_uint2>&>(r);
-        execute(dst, src, this->backend_data(), s>>3);
-        return;
-    }
-    if (s & 16) {
-        dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
-        const dvec<cl_uint4>& src=static_cast<const dvec<cl_uint4>&>(r);
-        execute(dst, src, this->backend_data(), s>>4);
-        return;
-    }
-    if (s & 32) {
-        dvec<cl_uint8>& dst=static_cast<dvec<cl_uint8>&>(*this);
-        const dvec<cl_uint8>& src=static_cast<const dvec<cl_uint8>&>(r);
-        execute(dst, src, this->backend_data(), s>>5);
-        return;
-    }
-    dvec<cl_uint16>& dst=static_cast<dvec<cl_uint16>&>(*this);
-    const dvec<cl_uint16>& src=static_cast<const dvec<cl_uint16>&>(r);
-    execute(dst, src, this->backend_data(), s>>6);
-#endif
-#else
-    if (__likely(s)) {
+    if (__likely(s!=0)) {
         auto& dcq=_bed->dcq();
         auto& q= dcq.q();
-        auto& wl=dcq.wl();
-        {
-            be::scoped_lock _ql(dcq.mtx());
-            be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
-            q.flush();
-            wl.clear();
-            wl.insert(ev);
+        be::platform p(dcq.d().platform());
+        if (p.name() != "Clover") {
+            auto& wl=dcq.wl();
+            {
+                be::scoped_lock _ql(dcq.mtx());
+                be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
+                q.flush();
+                wl.clear();
+                wl.insert(ev);
+            }
+        } else {
+            if (s & 1) {
+                dvec<char>& dst=static_cast<dvec<char>&>(*this);
+                const dvec<char>& src=static_cast<const dvec<char>&>(r);
+                execute(dst, src, this->backend_data(), s);
+                return;
+            }
+            if (s & 2) {
+                dvec<uint16_t>& dst=static_cast<dvec<uint16_t>&>(*this);
+                const dvec<uint16_t>& src=
+                    static_cast<const dvec<uint16_t>&>(r);
+                execute(dst, src, this->backend_data(), s>>1);
+                return;
+            }
+            dvec<float>& dst=static_cast<dvec<float>&>(*this);
+            const dvec<float>& src=static_cast<const dvec<float>&>(r);
+            execute(dst, src, this->backend_data(), s>>2);
         }
     }
-#endif
 }
 
 void

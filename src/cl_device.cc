@@ -197,6 +197,13 @@ max_work_iterm_dimensions() const
     return get_info<uint32_t>(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
 }
 
+ocl::cl::platform
+ocl::cl::device::platform() const
+{
+    cl_platform_id id=get_info<cl_platform_id>(CL_DEVICE_PLATFORM);
+    return ocl::cl::platform(id);
+}
+
 #if 0
 
 class device

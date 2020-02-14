@@ -33,6 +33,7 @@ namespace ocl {
         class queue;
         class program;
         class kernel;
+        class platform;
 
         class error : public std::runtime_error {
             cl_int _code;
@@ -125,6 +126,7 @@ namespace ocl {
             uint32_t compute_units() const;
             uint32_t max_work_group_size() const;
             uint32_t max_work_iterm_dimensions() const;
+            ocl::cl::platform platform() const;
         };
 
         class context {
@@ -144,10 +146,10 @@ namespace ocl {
             explicit
             context(const device& d,
                     const cl_context_properties* p=nullptr);
-        
+
             context(const std::vector<device>& vd,
                     const cl_context_properties* p=nullptr);
-            
+
             void
             info(cl_context_info id, size_t res_size,
                  void* res, size_t* ret_res)
@@ -160,15 +162,15 @@ namespace ocl {
                 info(id, sizeof(res), &res, nullptr);
                 return res;
             }
-                
+
             device
             get_device()
                 const;
-            
+
             std::vector<device>
             get_devices()
                 const;
-            
+
         };
 
         class mem_object {
@@ -207,6 +209,7 @@ namespace ocl {
             cl_mem& operator()() { return _id; }
             const cl_mem& operator()() const { return _id;}
             const cl_mem& get() const { return _id; }
+            explicit
             mem_object(cl_mem c, bool retain=true);
             void
             info(cl_mem_info i, size_t s, void* res, size_t* rs)
@@ -284,6 +287,7 @@ namespace ocl {
             ~event();
             cl_event& operator()() { return _id; }
             const cl_event& operator()() const { return _id;}
+            explicit
             event(cl_event c, bool retain=true);
             void wait();
         };
@@ -294,6 +298,7 @@ namespace ocl {
             using iterator=std::vector<event>::iterator;
             using const_iterator=std::vector<event>::const_iterator;
             wait_list();
+            explicit
             wait_list(const event &event);
             wait_list(const wait_list &other);
             wait_list(std::initializer_list<event> events);
@@ -327,6 +332,7 @@ namespace ocl {
             kernel(kernel&& r);
             kernel& operator=(kernel&& r);
             ~kernel();
+            explicit
             kernel(cl_kernel k, bool retain=true);
             cl_kernel& operator()() { return _id; }
             const cl_kernel& operator()() const { return _id;}
@@ -375,6 +381,7 @@ namespace ocl {
             program(program&& r);
             program& operator=(program&& r);
             ~program();
+            explicit
             program(cl_program p, bool retain=true);
             cl_program& operator()() { return _id; }
             const cl_program& operator()() const { return _id;}
@@ -412,6 +419,7 @@ namespace ocl {
             queue(queue&& r);
             queue& operator=(queue&& r);
             ~queue();
+            explicit
             queue(cl_command_queue p, bool retain=true);
             cl_command_queue& operator()() { return _id; }
             const cl_command_queue& operator()() const { return _id;}
@@ -508,10 +516,11 @@ namespace ocl {
             info(cl_platform_info i)
                 const;
         public:
+            explicit
             platform (cl_platform_id id) : _id(id) {}
             cl_platform_id& operator()() { return _id; }
             const cl_platform_id& operator()() const { return _id;}
-            
+
             void
             info(cl_platform_info i, size_t s, void* p, size_t* rps)
                 const;
@@ -561,6 +570,7 @@ namespace ocl {
         using queue = bc::queue;
 #endif
         using program = bc::program;
+        using platform = bc::platform;
         using context = bc::context;
         using device = bc::device;
         using buffer = bc::buffer;
