@@ -64,9 +64,9 @@ ocl::test::ops<_T>::ops(size_t n)
       _h_res(n), _h_a0(n), _h_a1(n)
 {
 #if 1
-    const _T min_val=-2.0;
-    const _T max_val=2.0;
-    rand rnd(n);
+    const _T min_val=-256.0;
+    const _T max_val=256.0;
+    rand48 rnd(n);
     rnd.seed_times_global_id(n);
     _a0 = uniform_float_random_vector(rnd, min_val, max_val);
     _a1 = uniform_float_random_vector(rnd, min_val, max_val);
@@ -180,24 +180,7 @@ ocl::test::ops<_T>::perform()
     _h_res = _h_a0 * _h_a1;
     rc &= check_res("multiplication v v");
     // division
-#if 0
-    static const char* fname="__divide";
-    static const char* fbody=
-        "float __divide(float a, float b)\n"
-        "{\n"
-        // "    float q0 = a/b;\n"
-        // "    float q1 = fma(-q0, b, a)/b;\n"
-        // "    return q0 + q1;\n"
-        "    float xn=1.0f/b;\n"
-        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
-        "    float yn= a*xn;\n"
-        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
-        "    return yn;\n"
-        "}\n";
-    _res=custom_func<float>(fname, fbody, _a0, _a1);
-#else
     _res = _a0 / _a1;
-#endif
     _h_res = _h_a0 / _h_a1;
     rc &= check_res("division v v");
     // neg
@@ -209,62 +192,7 @@ ocl::test::ops<_T>::perform()
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
     // sqrt
-#if 0
-    // x_{n+1} = 1/2(x_n + a/x_n)
-    //         = 0.5 x_n + 0.5*a/x_n
-    //         = 1.0 x_n - 0.5 x_n + 0.5*a/x_n
-    //         = 1.0 x_n + (0.5*a/x_n - 0.5 x_n)
-    //         = 1.0 x_n + 0.5 * (a/x_n - x_n)
-    //         = a*r_n + 0.5 * (a/(a*r_n) - a*r_rn)
-    //         = a*r_n + 0.5 * (1/(r_n) - a*r_rn)
-    static const char* fname="__sqrt";
-    static const char* fbody=
-        "float __rcp(float b)\n"
-        "{\n"
-        "    float xn=1.0f/b;\n"
-        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
-        "    // xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
-        "    return xn;\n"
-        "}\n"
-        "\n"
-        "float __divide(float a, float b)\n"
-        "{\n"
-        // "    float q0 = a/b;\n"
-        // "    float q1 = fma(-q0, b, a)/b;\n"
-        // "    return q0 + q1;\n"
-        "    float xn=1.0f/b;\n"
-        "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
-        "    float yn= a*xn;\n"
-        "    yn= fma(xn, fma(yn, -b, a), yn);\n"
-        "    return yn;\n"
-        "}\n"
-        "\n"
-        "float __sqrt(float a)\n"
-        "{\n"
-#if 1
-        "    float r=rsqrt(a);\n"
-        "    float rah, ral;\n"
-        "    rah=a*r;\n"
-        "    ral=fma(-a, r, rah);\n"
-        "    float th= fma(r, rah, -1.0f);\n"
-        "    th=fma(r, ral, th);\n"
-        "    r= fma(-0.5f*r*a, th, r*a);\n"
-        "    return r;\n"
-#else
-        "    float r=rsqrt(a);\n"
-        "    float rah, ral;\n"
-        "    rah=a*r;\n"
-        "    ral=fma(-a, r, rah);\n"
-        "    float th= fma(r, rah, -1.0f);\n"
-        "    th=fma(r, ral, th);\n"
-        "    r= fma(-0.5f*r, th, r);\n"
-        "    return a*r;\n"
-#endif
-        "}\n";
-    _res=custom_func<float>(fname, fbody, _a0);
-#else
     _res = sqrt(_a0);
-#endif
     _h_res = sqrt(_h_a0);
     rc &= check_res("sqrt");
     // _res = rsqrt(_a0);
@@ -273,38 +201,6 @@ ocl::test::ops<_T>::perform()
     return rc;
 }
 
-// using namespace ocl;
-template <class _T>
-_T
-test_func(const _T& a, const _T& b)
-{
-    // return _T( (2.0 + a + b) / (a * b)  + (a + a * b ) - a);
-    return 42.0f + (a+b)/(a-b) - 6.0f + (a+b)*(a-b) + 2.0f;
-    // return _T((2.0f + a + b) / (a * b)  + (a + a * b ) - a) *
-    //    ((6.0f + a + b) / (a * b)  + (a + a * b ) - a);
-}
-
-template <class _T>
-_T
-test_func(const _T& a, const _T& b, const _T& c)
-{
-    return _T((a+b *c) *c + 2.0f);
-}
-
-namespace {
-
-    template <class _T>
-    _T rel_error(const _T& a, const _T& b)
-    {
-        _T e((a -b ));
-        e = e < _T(0) ? -e : e;
-        _T m((a+b)*_T(0.5));
-        if (m != _T(0)) {
-            e /= m;
-        }
-        return e;
-    }
-}
 
 int main()
 {
@@ -329,78 +225,7 @@ int main()
                 std::exit(3);
             }
         }
-#if 0
-        using ftype = float;
-        // const unsigned BEIGNET_MAX_BUFFER_SIZE=16384*4096;
-        // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
-        rtype a(rtype(2.0)), b(rtype(3.0));
-        rtype c= test_func(a, b);
-        for (std::size_t i=4; i<5; ++i) {
-            if ((i & 0x7f) == 0x7f || i==1) {
-                std::cout << "using buffers of "
-                          <<  i*sizeof(rtype)
-                          << " bytes\r" << std::flush;
-            }
-            dvec<ftype> va(i, a);
-            dvec<ftype> vb(i, b);
-            dvec<ftype> vc=test_func(va, vb);
-            std::vector<ftype> vhc(vc);
-            for (std::size_t j=0; j<i; ++j) {
-                if (vhc[j] != c) {
-                    std::cout << "error for elem "
-                              << j << " of dvec<> of size" << i
-                              << std::endl;
-                    std::exit(3);
-                }
-            }
-        }
-#endif
         std::cout << "\ntest passed\n";
-#if 0
-        std::vector<ftype> vhb(SIZE, ftype(3.0));
-        dvec<ftype> vb(vhb);
-        dvec<ftype> vc= test_func(va, test_func(va, vb));
-        dvec<ftype> vd(test_func(va, vb, vc));
-        dvec<ftype> vd2= test_func(va, vb, vc);
-
-        dvec<int32_t> tgt= vc < vd;
-
-        ftype c= test_func(a, test_func(a, b));
-        ftype d= test_func(a, b, c);
-
-        std::vector<ftype> res(vd);
-
-        dvec<v8fXX> vva(SIZE/8, a);
-        dvec<v8fXX> vvb(SIZE/8, b);
-        dvec<v8fXX> vvc(SIZE/8, c);
-        dvec<v8fXX> vres(test_func(vva, vvb, vvc));
-
-        if (SIZE <= 4096) {
-            for (std::size_t i=0; i< res.size(); ++i) {
-                std::cout << i << ' ' << res[i] << std::endl;
-            }
-        } else {
-            for (std::size_t i=0; i< res.size(); ++i) {
-                ftype e=rel_error(res[i], d);
-                if (e > 1e-7) {
-                    std::ostringstream m;
-                    m << "res[" << i << " ]="
-                      << std::setprecision(12)
-                      << res[i] << " != " << d
-                      << " e= " << e;
-                    throw std::runtime_error(m.str());
-                }
-            }
-        }
-        std::cout << "scalar " << d << std::endl;
-
-        dvec<ftype> cvt_dst = -vd2;
-        dvec<ftype> abs_dst = abs(cvt_dst);
-        dvec<itype> iv= ~(cvt_to<dvec<itype> >(cvt_dst)*2);
-        dvec<ftype> ivf= as<dvec<ftype> >(iv);
-
-        impl::be_data::instance()->clear();
-#endif
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()

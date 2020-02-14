@@ -92,6 +92,7 @@ namespace ocl {
             public unary_func<names::f_sqrt_fix<cftal::vec<float, _N> >,
                                false> {
         };
+        
         namespace names {
             struct f_exp {
                 constexpr

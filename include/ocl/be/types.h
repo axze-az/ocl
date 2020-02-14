@@ -334,6 +334,7 @@ namespace ocl {
             kernel(const program& pgm, const std::string& kname);
 
             std::string name() const;
+
             void
             info(cl_kernel_info i, size_t s, void* res, size_t* rs)
                 const;
@@ -352,11 +353,13 @@ namespace ocl {
             }
             void
             set_arg(size_t index, size_t size, const void* value);
+
             template <class _T>
             void
             set_arg(size_t index, const _T& value) {
                 set_arg(index, sizeof(_T), &value);
             }
+
             void
             set_arg(size_t index, const mem_object& mem) {
                 set_arg(index, sizeof(cl_mem), &mem());
