@@ -124,8 +124,29 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
                 return;
             }
             dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
-            const dvec<uint32_t>& src=static_cast<const dvec<uint32_t>&>(r);
+            const dvec<uint32_t>& src=
+                static_cast<const dvec<uint32_t>&>(r);
             execute(dst, src, this->backend_data(), s>>2);
+#if 0
+            if (s & 4) {
+                dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
+                const dvec<uint32_t>& src=
+                    static_cast<const dvec<uint32_t>&>(r);
+                execute(dst, src, this->backend_data(), s>>2);
+                return;
+            }
+            if (s & 8) {
+                dvec<cl_uint2>& dst=static_cast<dvec<cl_uint2>&>(*this);
+                const dvec<cl_uint2>& src=
+                    static_cast<const dvec<cl_uint2>&>(r);
+                execute(dst, src, this->backend_data(), s>>3);
+                return;
+            }
+            dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
+            const dvec<cl_uint4>& src=
+                static_cast<const dvec<cl_uint4>&>(r);
+            execute(dst, src, this->backend_data(), s>>4);
+#endif
         }
     }
 }
