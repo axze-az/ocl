@@ -32,6 +32,7 @@ set (CSRCS
   expr_custom.cc
   dvec_op.cc
   dvec_func.cc
+  dvec_math.cc
   expr_kernel.cc
   random.cc
 )

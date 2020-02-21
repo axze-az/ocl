@@ -3,6 +3,7 @@ project(ocl-tests)
 
 set (TEST_SRCS
     program.cc
+    ops_base.cc
 )
 
 include_directories(../..)

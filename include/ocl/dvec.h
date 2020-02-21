@@ -2,7 +2,7 @@
 #define __OCL_DVEC_H__ 1
 
 #include <ocl/config.h>
-#include <ocl/dvec_func.h>
+#include <ocl/dvec_math.h>
 
 // Local variables:
 // mode: c++
