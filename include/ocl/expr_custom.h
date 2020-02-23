@@ -28,8 +28,14 @@ namespace ocl {
             std::string _body;
         public:
             __cf_body(const std::string& n,
-                      const std::string& b)
-                : _name(n), _body(b) {}
+                      const std::string& b);
+            __cf_body(const __cf_body& r);
+            __cf_body(__cf_body&& r);
+            __cf_body&
+            operator=(const __cf_body& r);
+            __cf_body&
+            operator=(__cf_body&& r);
+            ~__cf_body();
             const std::string& name() const { return _name; }
             const std::string& body() const { return _body; }
         };
@@ -45,11 +51,16 @@ namespace ocl {
         public:
             __ck_body(const std::string& n,
                       const std::string& b,
-                      std::size_t s)
-                : base_type(n, b), _s(s) {}
+                      std::size_t s);
             __ck_body(const std::string& n,
-                      const std::string& b)
-                : base_type(n, b), _s() {}
+                      const std::string& b);
+            __ck_body(const __ck_body& r);
+            __ck_body(__ck_body&& r);
+            __ck_body&
+            operator=(const __ck_body& r);
+            __ck_body&
+            operator=(__ck_body&& r);
+            ~__ck_body();
             using base_type::name;
             using base_type::body;
             const std::optional<std::size_t>& size() const {

@@ -1,5 +1,84 @@
 #include "ocl/expr_custom.h"
 
+ocl::impl::__cf_body::__cf_body(const std::string& n, const std::string& b)
+    : _name(n), _body(b)
+{
+}
+
+ocl::impl::__cf_body::__cf_body(const __cf_body& r)
+    : _name(r._name), _body(r._body)
+{
+}
+
+ocl::impl::__cf_body::__cf_body(__cf_body&& r)
+    : _name(std::move(r._name)), _body(std::move(r._body))
+{
+}
+
+ocl::impl::__cf_body&
+ocl::impl::__cf_body::operator=(const __cf_body& r)
+{
+    if (this != &r) {
+        _name = r._name;
+        _body = r._body;
+    }
+    return *this;
+}
+
+ocl::impl::__cf_body&
+ocl::impl::__cf_body::operator=(__cf_body&& r)
+{
+    _name = std::move(r._name);
+    _body = std::move(r._body);
+    return *this;
+}
+
+ocl::impl::__cf_body::~__cf_body()
+{
+}
+
+ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b,
+                                size_t s)
+    : __cf_body(n, b), _s(s)
+{
+}
+
+ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b)
+    : __cf_body(n, b), _s()
+{
+}
+
+ocl::impl::__ck_body::__ck_body(const __ck_body& r)
+    : __cf_body(r), _s(r._s)
+{
+}
+
+ocl::impl::__ck_body::__ck_body(__ck_body&& r)
+    : __cf_body(std::move(r)), _s(std::move(r._s))
+{
+}
+
+ocl::impl::__ck_body&
+ocl::impl::__ck_body::operator=(const __ck_body& r)
+{
+    if (this != &r) {
+        __cf_body::operator=(r);
+        _s = r._s;
+    }
+    return *this;
+}
+
+ocl::impl::__ck_body&
+ocl::impl::__ck_body::operator=(__ck_body&& r)
+{
+    __cf_body::operator=(std::move(r));
+    _s = std::move(r._s);
+    return *this;
+}
+
+ocl::impl::__ck_body::~__ck_body()
+{
+}
 
 std::string
 ocl::impl::
