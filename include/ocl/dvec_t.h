@@ -153,6 +153,7 @@ namespace ocl {
     custom_kernel(const std::string& name,
                   const std::string& body,
                   _AX&&... ax);
+
 #if 0
     extern template class dvec<double>;
     extern template class dvec<float>;
@@ -166,6 +167,7 @@ namespace ocl {
     extern template class dvec<unsigned char>;
     extern template class dvec<signed char>;
 #endif
+
     namespace debug {
         template <typename _T>
         void

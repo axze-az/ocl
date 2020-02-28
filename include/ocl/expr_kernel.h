@@ -338,11 +338,11 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << decl_buffer_args(res, buf_args, false);
     s << decl_buffer_args(r, buf_args, const_buffer_args);
     if (lmem_size == 0) {
-        s << spaces(4) << "__global const struct "
+        s << "    __global const struct "
           << k_arg_name << "* pa\n)\n";
         s << "{\n";
     } else {
-        s << spaces(4) << "__global const struct "
+        s << "    __global const struct "
         << k_arg_name << "* pg\n)\n";
         const size_t uints_to_cpy=((lmem_size + 3) >>2);
         s << "{\n"

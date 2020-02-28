@@ -27,10 +27,6 @@ namespace ocl {
             bool perform();
         };
 
-        template <typename _T>
-        bool test_ops(dvec<_T>& res,
-                      const dvec<_T>& s0, const dvec<_T>& s1);
-
     }
 }
 
@@ -71,9 +67,12 @@ ocl::test::ops<_T>::perform()
     _res = sqrt(_a0);
     _h_res = sqrt(_h_a0);
     rc &= check_res("sqrt");
-    // _res = rsqrt(_a0);
-    // _res = rsqrt(_h_a0);
-    // rc &= check_res("rsqrt");
+#if 0
+    // link against cftal.so is missing yet
+    _res = rsqrt(_a0);
+    _h_res = rsqrt(_h_a0);
+    rc &= check_res("rsqrt");
+#endif
     return rc;
 }
 
@@ -86,8 +85,6 @@ int main()
         using namespace ocl::test;
 
         using rtype = float;
-        // using itype = int64_t;
-        // using v8fXX = cftal::vec<ftype, 8>;
         for (std::size_t i=4; i<16* 16384; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers with "

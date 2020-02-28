@@ -73,34 +73,59 @@ ocl::cl::error::to_string(cl_int code)
         return "Invalid Argument Index";
     case CL_INVALID_ARG_VALUE:
         return "Invalid Argument Value";
-    case CL_INVALID_ARG_SIZE: return "Invalid Argument Size";
-    case CL_INVALID_KERNEL_ARGS: return "Invalid Kernel Arguments";
-    case CL_INVALID_WORK_DIMENSION: return "Invalid Work Dimension";
-    case CL_INVALID_WORK_GROUP_SIZE: return "Invalid Work Group Size";
-    case CL_INVALID_WORK_ITEM_SIZE: return "Invalid Work Item Size";
-    case CL_INVALID_GLOBAL_OFFSET: return "Invalid Global Offset";
-    case CL_INVALID_EVENT_WAIT_LIST: return "Invalid Event Wait List";
-    case CL_INVALID_EVENT: return "Invalid Event";
-    case CL_INVALID_OPERATION: return "Invalid Operation";
-    case CL_INVALID_GL_OBJECT: return "Invalid GL Object";
-    case CL_INVALID_BUFFER_SIZE: return "Invalid Buffer Size";
-    case CL_INVALID_MIP_LEVEL: return "Invalid MIP Level";
-    case CL_INVALID_GLOBAL_WORK_SIZE: return "Invalid Global Work Size";
+    case CL_INVALID_ARG_SIZE:
+        return "Invalid Argument Size";
+    case CL_INVALID_KERNEL_ARGS:
+        return "Invalid Kernel Arguments";
+    case CL_INVALID_WORK_DIMENSION:
+        return "Invalid Work Dimension";
+    case CL_INVALID_WORK_GROUP_SIZE:
+        return "Invalid Work Group Size";
+    case CL_INVALID_WORK_ITEM_SIZE:
+        return "Invalid Work Item Size";
+    case CL_INVALID_GLOBAL_OFFSET:
+        return "Invalid Global Offset";
+    case CL_INVALID_EVENT_WAIT_LIST:
+        return "Invalid Event Wait List";
+    case CL_INVALID_EVENT:
+        return "Invalid Event";
+    case CL_INVALID_OPERATION:
+        return "Invalid Operation";
+    case CL_INVALID_GL_OBJECT:
+        return "Invalid GL Object";
+    case CL_INVALID_BUFFER_SIZE:
+        return "Invalid Buffer Size";
+    case CL_INVALID_MIP_LEVEL:
+        return "Invalid MIP Level";
+    case CL_INVALID_GLOBAL_WORK_SIZE:
+        return "Invalid Global Work Size";
 #if CL_TARGET_OPENCL_VERSION>=120
-    case CL_COMPILE_PROGRAM_FAILURE: return "Compile Program Failure";
-    case CL_LINKER_NOT_AVAILABLE: return "Linker Not Available";
-    case CL_LINK_PROGRAM_FAILURE: return "Link Program Failure";
-    case CL_DEVICE_PARTITION_FAILED: return "Device Partition Failed";
-    case CL_KERNEL_ARG_INFO_NOT_AVAILABLE: return "Kernel Argument Info Not Available";
-    case CL_INVALID_PROPERTY: return "Invalid Property";
-    case CL_INVALID_IMAGE_DESCRIPTOR: return "Invalid Image Descriptor";
-    case CL_INVALID_COMPILER_OPTIONS: return "Invalid Compiler Options";
-    case CL_INVALID_LINKER_OPTIONS: return "Invalid Linker Options";
-    case CL_INVALID_DEVICE_PARTITION_COUNT: return "Invalid Device Partition Count";
+    case CL_COMPILE_PROGRAM_FAILURE:
+        return "Compile Program Failure";
+    case CL_LINKER_NOT_AVAILABLE:
+        return "Linker Not Available";
+    case CL_LINK_PROGRAM_FAILURE:
+        return "Link Program Failure";
+    case CL_DEVICE_PARTITION_FAILED:
+        return "Device Partition Failed";
+    case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+        return "Kernel Argument Info Not Available";
+    case CL_INVALID_PROPERTY:
+        return "Invalid Property";
+    case CL_INVALID_IMAGE_DESCRIPTOR:
+        return "Invalid Image Descriptor";
+    case CL_INVALID_COMPILER_OPTIONS:
+        return "Invalid Compiler Options";
+    case CL_INVALID_LINKER_OPTIONS:
+        return "Invalid Linker Options";
+    case CL_INVALID_DEVICE_PARTITION_COUNT:
+        return "Invalid Device Partition Count";
 #endif
 #if CL_TARGET_OPENCL_VERSION>=200
-    case CL_INVALID_PIPE_SIZE: return "Invalid Pipe Size";
-    case CL_INVALID_DEVICE_QUEUE: return "Invalid Device Queue";
+    case CL_INVALID_PIPE_SIZE:
+        return "Invalid Pipe Size";
+    case CL_INVALID_DEVICE_QUEUE:
+        return "Invalid Device Queue";
 #endif
     default: {
         std::ostringstream s;

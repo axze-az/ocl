@@ -92,7 +92,17 @@ namespace ocl {
             public unary_func<names::f_sqrt_fix<cftal::vec<float, _N> >,
                                false> {
         };
+
+        namespace names {
+            struct f_rsqrt {
+                constexpr
+                const char* operator()() const { return "exp"; }
+            };
+        }
         
+        template <class _T>
+        struct rsqrt_f : public unary_func<names::f_rsqrt, false>{};
+
         namespace names {
             struct f_exp {
                 constexpr
@@ -336,6 +346,7 @@ namespace ocl {
 
     DEF_UNARY_FUNC(abs, abs_f)
     DEF_UNARY_FUNC(sqrt, sqrt_f)
+    DEF_UNARY_FUNC(rsqrt, rsqrt_f)
 
     DEF_UNARY_FUNC(exp, exp_f)
     DEF_UNARY_FUNC(expm1, expm1_f)

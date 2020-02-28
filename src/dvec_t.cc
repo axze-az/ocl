@@ -1,7 +1,8 @@
 #include "ocl/dvec_op.h"
 
 namespace ocl {
-#if 0
+
+#if 0  
     template class dvec<double>;
     template class dvec<float>;
     template class dvec<int64_t>;
@@ -14,4 +15,5 @@ namespace ocl {
     template class dvec<unsigned char>;
     template class dvec<signed char>;
 #endif
+
 }
