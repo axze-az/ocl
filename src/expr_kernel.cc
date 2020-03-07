@@ -140,7 +140,10 @@ insert_swap_if(std::ostream& s, bool dev_is_little_endian)
 #endif
 
 void
-ocl::impl::insert_headers(std::ostream& s, size_t lmem_size)
+ocl::impl::
+insert_headers(std::ostream& s,
+               const be::data_ptr& b,
+               size_t lmem_size)
 {
     // fp64 extension
     s << "#if defined (cl_khr_fp64)\n"
@@ -152,7 +155,15 @@ ocl::impl::insert_headers(std::ostream& s, size_t lmem_size)
     s << "#if defined (cl_khr_fp16)\n"
          "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
          "#endif\n\n";
-    // gen_byte_swaps(s);
+    const auto& d=b->dcq().d();
+    auto f32_prop=
+        d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
+    const int f32_div_sqrt_correctly_round=
+        (f32_prop & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT) != 0 ? 1 : 0;
+    s << "#define F32_CORRECTLY_ROUNDED_DIVIDE_SQRT " 
+      << f32_div_sqrt_correctly_round 
+      << "\n\n";
+     // gen_byte_swaps(s);
     if (lmem_size==0) {
         s << "#define __arg_local __global\n\n";
     } else {

@@ -27,6 +27,9 @@ ocl::dop::names::f_sqrt_base::body(const std::string& tname)
         tname + " __sqrt_" + tname + "(" +
         tname + " a)\n"
         "{\n"
+        "#if F32_CORRECTLY_ROUNDED_DIVIDE_SQRT>0\n"
+        "    return sqrt(a);\n"
+        "#else\n"
         "    " + tname + " r=rsqrt(a);\n"
         "    " + tname + " rah, ral;\n"
         "    rah=a*r;\n"
@@ -37,6 +40,7 @@ ocl::dop::names::f_sqrt_base::body(const std::string& tname)
         "    r= isnan(r) ? a*r : r;\n"
         "    r= a==0 ? a : r;\n"
         "    return r;\n"
+        "#endif\n"
         "}\n";
     return fbody;
 }

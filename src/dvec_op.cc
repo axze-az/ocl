@@ -289,12 +289,16 @@ ocl::dop::names::div_base::body(const std::string& tname)
         tname + " __div_" + tname + "(" +
         tname + " a, " + tname + " b)\n"
         "{\n"
+        "#if F32_CORRECTLY_ROUNDED_DIVIDE_SQRT > 0\n"
+        "    return a/b;\n"
+        "#else\n"
         "    " + tname + " xn=1.0f/b;\n"
         "    xn = fma(xn, fma(xn, -b, 1.0f), xn);\n"
         "    " + tname + " yn= a*xn;\n"
         "    yn= fma(xn, fma(yn, -b, a), yn);\n"
         "    yn= isnan(yn) ? a/b : yn;\n"
         "    return yn;\n"
+        "#endif\n"
         "}\n";
 #endif
     return fbody;

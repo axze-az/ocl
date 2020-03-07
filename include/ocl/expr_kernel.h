@@ -15,7 +15,9 @@ namespace ocl {
 
         // inserts defines/pragmas into the source code
         void
-        insert_headers(std::ostream& s, size_t lmem_size=0);
+        insert_headers(std::ostream& s,
+                       const be::data_ptr& b,
+                       size_t lmem_size=0);
 
         be::kernel_handle
         compile(const std::string& s, const std::string& k_name,
@@ -319,7 +321,7 @@ gen_kernel(_RES& res, const _SRC& r, const void* cookie,
     s << cookie;
     const std::string s_cookie=s.str();
     s.str("");
-    impl::insert_headers(s, lmem_size);
+    impl::insert_headers(s, b, lmem_size);
     s << ksi.source();
     std::string k_arg_name("arg_" + s_cookie);
     std::string k_func_name(k_name);
