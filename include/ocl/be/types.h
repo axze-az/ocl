@@ -292,6 +292,14 @@ namespace ocl {
             void wait();
         };
 
+        class user_event : public event {
+            static
+            cl_event create(const context& ctx);
+        public:
+            explicit user_event(const context& ctx);
+            void set_status(cl_int exec_status);
+        };
+        
         class wait_list {
             std::vector<event> _ve;
         public:
