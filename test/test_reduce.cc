@@ -1,4 +1,5 @@
 #include <ocl/ocl.h>
+#include <ocl/test/tools.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -14,28 +15,8 @@ namespace ocl {
     class custom_kernel {
     };
 
-    bool any_of(const dvec<int32_t>& v);
-    bool all_of(const dvec<int32_t>& v);
-    bool none_of(const dvec<int32_t>& v);
 }
 
-bool
-ocl::any_of(const dvec<int32_t>& v)
-{
-    return false;
-}
-
-bool
-ocl::all_of(const dvec<int32_t>& v)
-{
-    return false;
-}
-
-bool
-ocl::none_of(const dvec<int32_t>& v)
-{
-    return false;
-}
 
 int main()
 {
@@ -45,7 +26,7 @@ int main()
 
         using cftal::v8f32;
 
-        const unsigned SIZE=4096;
+        const unsigned SIZE=512;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(float))/(1024*1024)
                   << "MiB\n";
@@ -53,7 +34,7 @@ int main()
 
         dvec<float> va(SIZE, a);
         dvec<float> vb(SIZE, b);
-        dvec<int32_t> tgt= va == vb;
+        dvec<int32_t> tgt= va == vb;        
 
         bool ao = all_of(tgt);
         bool no = none_of(tgt);
