@@ -96,58 +96,58 @@ ocl::dvec_base::copy_on_device(const dvec_base& r)
     size_t s =r.buffer_size();
     // TODO: check for Mesa devices and use copy via
     // kernel, otherwise use enqueue_copy_buffer
-    if (__likely(s!=0)) {
-        auto& dcq=_bed->dcq();
-        auto& q= dcq.q();
-        be::platform p(dcq.d().platform());
-        if (p.name() != "Clover") {
-            auto& wl=dcq.wl();
-            {
-                be::scoped_lock _ql(dcq.mtx());
-                be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
-                q.flush();
-                wl.clear();
-                wl.insert(ev);
-            }
-        } else {
-            if (s & 1) {
-                dvec<char>& dst=static_cast<dvec<char>&>(*this);
-                const dvec<char>& src=static_cast<const dvec<char>&>(r);
-                execute(dst, src, this->backend_data(), s);
-                return;
-            }
-            if (s & 2) {
-                dvec<uint16_t>& dst=static_cast<dvec<uint16_t>&>(*this);
-                const dvec<uint16_t>& src=
-                    static_cast<const dvec<uint16_t>&>(r);
-                execute(dst, src, this->backend_data(), s>>1);
-                return;
-            }
+    if (__unlikely(s==0))
+        return;
+    auto& dcq=_bed->dcq();
+    auto& q= dcq.q();
+    be::platform p(dcq.d().platform());
+    if (p.name() != "Clover") {
+        auto& wl=dcq.wl();
+        {
+            be::scoped_lock _ql(dcq.mtx());
+            be::event ev= q.enqueue_copy_buffer(r._b, _b, 0, 0, s, wl);
+            q.flush();
+            wl.clear();
+            wl.insert(ev);
+        }
+    } else {
+        if (s & 1) {
+            dvec<char>& dst=static_cast<dvec<char>&>(*this);
+            const dvec<char>& src=static_cast<const dvec<char>&>(r);
+            execute(dst, src, this->backend_data(), s);
+            return;
+        }
+        if (s & 2) {
+            dvec<uint16_t>& dst=static_cast<dvec<uint16_t>&>(*this);
+            const dvec<uint16_t>& src=
+                static_cast<const dvec<uint16_t>&>(r);
+            execute(dst, src, this->backend_data(), s>>1);
+            return;
+        }
+        dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
+        const dvec<uint32_t>& src=
+            static_cast<const dvec<uint32_t>&>(r);
+        execute(dst, src, this->backend_data(), s>>2);
+#if 0
+        if (s & 4) {
             dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
             const dvec<uint32_t>& src=
                 static_cast<const dvec<uint32_t>&>(r);
             execute(dst, src, this->backend_data(), s>>2);
-#if 0
-            if (s & 4) {
-                dvec<uint32_t>& dst=static_cast<dvec<uint32_t>&>(*this);
-                const dvec<uint32_t>& src=
-                    static_cast<const dvec<uint32_t>&>(r);
-                execute(dst, src, this->backend_data(), s>>2);
-                return;
-            }
-            if (s & 8) {
-                dvec<cl_uint2>& dst=static_cast<dvec<cl_uint2>&>(*this);
-                const dvec<cl_uint2>& src=
-                    static_cast<const dvec<cl_uint2>&>(r);
-                execute(dst, src, this->backend_data(), s>>3);
-                return;
-            }
-            dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
-            const dvec<cl_uint4>& src=
-                static_cast<const dvec<cl_uint4>&>(r);
-            execute(dst, src, this->backend_data(), s>>4);
-#endif
+            return;
         }
+        if (s & 8) {
+            dvec<cl_uint2>& dst=static_cast<dvec<cl_uint2>&>(*this);
+            const dvec<cl_uint2>& src=
+                static_cast<const dvec<cl_uint2>&>(r);
+            execute(dst, src, this->backend_data(), s>>3);
+            return;
+        }
+        dvec<cl_uint4>& dst=static_cast<dvec<cl_uint4>&>(*this);
+        const dvec<cl_uint4>& src=
+            static_cast<const dvec<cl_uint4>&>(r);
+        execute(dst, src, this->backend_data(), s>>4);
+#endif
     }
 }
 
