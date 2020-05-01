@@ -156,7 +156,8 @@ int main()
         using rtype = float;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
-        for (std::size_t i=4; i<16384; ++i) {
+        constexpr const std::size_t N=16*16*1024;
+        for (std::size_t i=4; i<N; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers with "
                           <<  i

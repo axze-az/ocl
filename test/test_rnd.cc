@@ -225,7 +225,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 8*1024*1024;
+        const unsigned _N = 16*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
