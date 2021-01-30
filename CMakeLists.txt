@@ -95,7 +95,7 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
 endif()
 
 # C++20 ?
-option(OCLL_USE_CXX2A "use C++2A" ON)
+option(OCL_USE_CXX2A "use C++2A" ON)
 # C++17 ?
 option(OCL_USE_CXX17 "use C++17" ON)
 if (OCL_USE_CXX2A)
@@ -108,11 +108,24 @@ else()
     endif()
 endif()
 
-# create static cftal library
-option(OCL_STATIC_LIB "create static libcftal.a" OFF)
+option(OCL_USE_LTO "use link time optimizations" OFF)
+if (OCL_USE_LTO)
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set (CMAKE_CXX_FLAGS_RELEASE
+      "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE
+      "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto -fwhole-program")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE
+      "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flto")
+    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE
+      "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flto")
+  endif()
+endif()
+
+# create static ocl library
+option(OCL_STATIC_LIB "create static libocl.a" OFF)
 # Full test ?
 option(OCL_FULL_TEST "perform a full test with long compile times" OFF)
-
 
 include_directories(include)
 include_directories(test/include)
