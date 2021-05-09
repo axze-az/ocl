@@ -66,6 +66,7 @@ endif()
 
 #message(${CMAKE_CXX_COMPILER_ID})
 #message(${CMAKE_LIBRARY_ARCHITECTURE})
+set(OCL_GCC_ARCH "native" CACHE STRING "argument for gcc -march=")
 if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set (CMAKE_CXX_FLAGS_RELEASE
@@ -86,11 +87,11 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
         set (CMAKE_CXX_FLAGS_RELEASE
-            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
+            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=${OCL_GCC_ARCH}")
         set (CMAKE_CXX_FLAGS_DEBUG
-            "${CMAKE_CXX_FLAGS_DEBUG} -Og -march=native")
+            "${CMAKE_CXX_FLAGS_DEBUG} -Og -march=${OCL_GCC_ARCH}")
         set (CMAKE_CXX_FLAGS_PROFILE
-            "${CMAKE_CXX_FLAGS_PROFILE} -O3 -march=native")
+            "${CMAKE_CXX_FLAGS_PROFILE} -O3 -march=${OCL_GCC_ARCH}")
     endif()
 endif()
 
