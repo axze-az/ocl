@@ -20,8 +20,9 @@ namespace ocl {
         template <typename _T>
         void
         dump(const dvec<_T>& v, const std::string& pfx="") {
-            std::cout << &v << ' ' << pfx << '\n';
             std::vector<_T> vh(v);
+            std::cout << &v << ' ' << pfx << " (" << vh.size()
+                      << " elements)\n";
             for (std::size_t i=0; i<vh.size(); ++i) {
                 std::cout << vh[i];
                 if ((i&7)==7) {
@@ -38,7 +39,8 @@ namespace ocl {
         template <typename _T>
         void
         dump(const cftal::lvec<_T>& vh, const std::string& pfx="") {
-            std::cout << &vh << ' ' << pfx << '\n';
+            std::cout << &vh << ' ' << pfx << " (" << vh.size()
+                      << " elements)\n";
             for (std::size_t i=0; i<vh.size(); ++i) {
                 std::cout << vh[i];
                 if ((i&7)==7) {
