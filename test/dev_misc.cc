@@ -5,7 +5,7 @@
 #include <cftal/d_real.h>
 
 namespace cftal {
-    
+
     template <>
     struct d_real_traits<ocl::dvec<double> > {
         using cmp_result_type = typename ocl::dvec<double>::mask_type;
@@ -25,7 +25,7 @@ namespace cftal {
         bool none_of_v(const cmp_result_type& b) {
             return none_of(b);
         }
-        
+
         static
         ocl::dvec<double>
         sel (const cmp_result_type& s,
@@ -53,7 +53,7 @@ namespace cftal {
         scale_div_threshold() {
             // -1022 + 53
             return 0x1.p-969;
-        }        
+        }
     };
 
     namespace math {
@@ -100,7 +100,7 @@ namespace cftal {
             static
             vmi2_type
             vmf_to_vmi2(const vmf_type& mf) {
-                return 
+                return
                     cvt_mask<typename vmi2_type::value_type, 2 * _N,
                              typename vmf_type::value_type, _N>::v(mf);
             };
@@ -112,7 +112,7 @@ namespace cftal {
                     cvt_mask<typename vmf_type::value_type, _N,
                              typename vmi2_type::value_type, 2*_N>::v(mf);
             };
-#endif            
+#endif
 
             static
             bool any_of_v(const vmf_type& b) {
@@ -143,7 +143,7 @@ namespace cftal {
             bool none_of_v(const vmi_type& b) {
                 return none_of(b);
             }
-            
+
 
             static
             vi_type sel(const vmi_type& msk,
@@ -195,7 +195,7 @@ namespace cftal {
                 return r;
             }
 
-#if 0            
+#if 0
             static
             vi2_type vi_to_vi2(const vi_type& r) {
                 vi2_type t=ocl::combine_even_odd(r, r);
@@ -310,7 +310,7 @@ namespace cftal {
                 return ocl::cvt<vi_type>(f);
             }
 
-#if 0            
+#if 0
             static
             vi2_type cvt_f_to_i2(const vf_type& f) {
 #if 0
@@ -346,38 +346,52 @@ namespace ocl {
         __ck_body
         even_elements(const std::string_view& tname);
     }
-    
+
     // returns only the even elements of s
     template <typename _T>
     dvec<_T>
     even_elements(const dvec<_T>& s);
-    
+
     namespace impl {
         __ck_body
         odd_elements(const std::string_view& tname);
     }
-    
+
     // returns only the odd elements of s
     template <typename _T>
     dvec<_T>
     odd_elements(const dvec<_T>& s);
-        
+
+    namespace impl {
+        __ck_body
+        combine_even_odd(const std::string_view& tname);
+    }
+
     // return the interleaved elemnent of e and o
     template <typename _T>
     dvec<_T>
     combine_even_odd(const dvec<_T>& e, const dvec<_T>& o);
-    
-    
+
+    namespace impl {
+        __ck_body
+        copy_even_to_odd(const std::string_view& tname);
+    }
+
     // copy the even elements of s to the odd elements
     template <typename _T>
     dvec<_T>
     copy_even_to_odd(const dvec<_T>& s);
+
+    namespace impl {
+        __ck_body
+        copy_odd_to_even(const std::string_view& tname);
+    }
     
     // copy the odd elements of s to the even elements
     template <typename _T>
     dvec<_T>
-    copy_odd_to_even(const dvec<_T>& s);      
-    
+    copy_odd_to_even(const dvec<_T>& s);
+
     namespace test {
         void
         elements();
@@ -392,9 +406,9 @@ ocl::impl::even_elements(const std::string_view& tname)
     const std::string kname = s.str();
     s.str("");
     s << "void " << kname << "(\n"
-         "ulong n,\n"
-         "__global " << tname << "* res,\n"
-         "__global const " << tname << "* src\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
         ")\n"
         "{\n"
         "    ulong gid=get_global_id(0);\n"
@@ -404,7 +418,7 @@ ocl::impl::even_elements(const std::string_view& tname)
         "    }\n"
         "}\n";
     const std::string ksrc=s.str();
-    return __ck_body(kname, ksrc);    
+    return __ck_body(kname, ksrc);
 }
 
 template <typename _T>
@@ -426,9 +440,9 @@ ocl::impl::odd_elements(const std::string_view& tname)
     const std::string kname = s.str();
     s.str("");
     s << "void " << kname << "(\n"
-         "ulong n,\n"
-         "__global " << tname << "* res,\n"
-         "__global const " << tname << "* src\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
         ")\n"
         "{\n"
         "    ulong gid=get_global_id(0);\n"
@@ -438,7 +452,7 @@ ocl::impl::odd_elements(const std::string_view& tname)
         "    }\n"
         "}\n";
     const std::string ksrc=s.str();
-    return __ck_body(kname, ksrc);    
+    return __ck_body(kname, ksrc);
 }
 
 template <typename _T>
@@ -452,11 +466,116 @@ ocl::odd_elements(const dvec<_T>& s)
     return r;
 }
 
+ocl::impl::__ck_body
+ocl::impl::combine_even_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "odd_elements_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* e,\n"
+        "__global const " << tname << "* o\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid=gid>>1;\n"
+        "        if ((gid & 1) == 0) {\n"
+        "           res[gid] = e[sgid];\n"
+        "        } else {\n"
+        "           res[gid] = o[sgid];\n"
+        "        }\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::combine_even_odd(const dvec<_T>& e, const dvec<_T>& o)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::combine_even_odd(tname);
+    size_t n=e.size() + o.size();
+    dvec<_T> r=custom_kernel_with_size<_T>(ckb.name(), ckb.body(), n, e, o);
+    return r;
+}
+
+ocl::impl::__ck_body
+ocl::impl::copy_even_to_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "copy_even_to_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid= gid & ~1ul;\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::copy_even_to_odd(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::copy_even_to_odd(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), s);
+    return r;
+}
+
+ocl::impl::__ck_body
+ocl::impl::copy_odd_to_even(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "copy_even_to_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid= min(gid|1ul, n-1ul);\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::copy_odd_to_even(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::copy_odd_to_even(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), s);
+    return r;
+}
+
 void
 ocl::test::elements()
 {
     static const int tbl[]={
-        0, 1, 0, 1, 0, 1, 0, 1, 0
+        0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0
     };
     dvec<int> v_all(std::size(tbl), tbl);
     dump(v_all, "v_all");
@@ -464,6 +583,14 @@ ocl::test::elements()
     dump(v_even, "v_even");
     dvec<int> v_odd=odd_elements(v_all);
     dump(v_odd, "v_odd");
+    dvec<int> v_comb=combine_even_odd(v_even, v_odd);
+    dump(v_comb, "v_comb");
+    
+    dvec<int> v_cp_even=copy_even_to_odd(v_all);
+    dump(v_cp_even, "v_cp_even");
+    dvec<int> v_cp_odd=copy_odd_to_even(v_all);
+    dump(v_cp_odd, "v_cp_odd");
+    
 }
 
 
