@@ -391,7 +391,29 @@ namespace ocl {
     template <typename _T>
     dvec<_T>
     copy_odd_to_even(const dvec<_T>& s);
-
+        
+    
+    namespace impl {
+        __ck_body
+        permute(const std::string_view& tname, 
+                const std::string_view& iname);
+    }
+    
+    // permute the vector using idx
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s);
+    
+    namespace impl {
+        __ck_body
+        permute2(const std::string_view& tname, 
+                 const std::string_view& iname);
+    }
+   
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
+    
     namespace test {
         void
         elements();
@@ -571,6 +593,43 @@ ocl::copy_odd_to_even(const dvec<_T>& s)
     return r;
 }
 
+ocl::impl::__ck_body
+ocl::impl::permute(const std::string_view& tname,
+                   const std::string_view& iname)
+{
+    std::ostringstream s;
+    s << "permute_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << iname << "* idx,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        " << iname << " sidx= idx[gid];\n"
+        "        int zero= sidx < 0;\n"
+        "        res[gid] = zero ? 0 : src[sidx];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T, typename _I>
+ocl::dvec<_T>
+ocl::permute(const dvec<_I>& idx, const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    const auto iname=be::type_2_name<_I>::v();
+    impl::__ck_body ckb=impl::permute(tname, iname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), idx, s);
+    return r;
+}
+
 void
 ocl::test::elements()
 {
@@ -591,6 +650,15 @@ ocl::test::elements()
     dvec<int> v_cp_odd=copy_odd_to_even(v_all);
     dump(v_cp_odd, "v_cp_odd");
     
+    static const float values[]= {
+        0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 
+        8.0f, 9.0f, 10.0f, 11.0f, 12.0f
+    };
+    std::cout << std::fixed << std::setprecision(4);
+    dvec<float> v_perm(std::size(values), values);
+    dump(v_perm, "v_perm1");
+    dvec<float> v_perm1=permute(v_all, v_perm);
+    dump(v_perm1, "v_perm1");
 }
 
 
