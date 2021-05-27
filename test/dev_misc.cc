@@ -343,6 +343,7 @@ namespace cftal {
 namespace ocl {
 
     namespace impl {
+        // worker function for evem_elements(v)
         __ck_body
         even_elements(const std::string_view& tname);
     }
@@ -353,6 +354,7 @@ namespace ocl {
     even_elements(const dvec<_T>& s);
 
     namespace impl {
+        // worker function for odd_elements(v)
         __ck_body
         odd_elements(const std::string_view& tname);
     }
@@ -363,6 +365,7 @@ namespace ocl {
     odd_elements(const dvec<_T>& s);
 
     namespace impl {
+        // worker function for combine_even_odd(e, o)
         __ck_body
         combine_even_odd(const std::string_view& tname);
     }
@@ -373,6 +376,7 @@ namespace ocl {
     combine_even_odd(const dvec<_T>& e, const dvec<_T>& o);
 
     namespace impl {
+        // worker function for copy_even_to_odd(v)
         __ck_body
         copy_even_to_odd(const std::string_view& tname);
     }
@@ -383,6 +387,7 @@ namespace ocl {
     copy_even_to_odd(const dvec<_T>& s);
 
     namespace impl {
+        // worker function for copy_odd_to_even(v)
         __ck_body
         copy_odd_to_even(const std::string_view& tname);
     }
@@ -394,6 +399,7 @@ namespace ocl {
         
     
     namespace impl {
+        // worker function for permute(i, v)
         __ck_body
         permute(const std::string_view& tname, 
                 const std::string_view& iname);
@@ -405,6 +411,7 @@ namespace ocl {
     permute(const dvec<_I>& i, const dvec<_T>& s);
     
     namespace impl {
+        // worker function for permute(i, v, v)
         __ck_body
         permute2(const std::string_view& tname, 
                  const std::string_view& iname);
@@ -598,7 +605,7 @@ ocl::impl::permute(const std::string_view& tname,
                    const std::string_view& iname)
 {
     std::ostringstream s;
-    s << "permute_"  << tname;
+    s << "permute_"  << iname << '_' << tname;
     const std::string kname = s.str();
     s.str("");
     s << "void " << kname << "(\n"
@@ -630,10 +637,53 @@ ocl::permute(const dvec<_I>& idx, const dvec<_T>& s)
     return r;
 }
 
+ocl::impl::__ck_body
+ocl::impl::permute2(const std::string_view& tname,
+                    const std::string_view& iname)
+{
+    std::ostringstream s;
+    s << "permute2_"  << iname << '_' << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << iname << "* idx,\n"
+        "__global const " << tname << "* src0,\n"
+        "__global const " << tname << "* src1\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        " << iname << " sidx= idx[gid];\n"
+        "        " << iname << " in= (" << iname << ")n;\n"
+        "        int zero= sidx < 0;\n"
+        "        __global const " << tname << "* src= sidx < in ? src0 : src1;\n" 
+        "        sidx = sidx < in ? sidx : sidx - in;\n" 
+        "        res[gid] = zero ? 0 : src[sidx];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T, typename _I>
+ocl::dvec<_T>
+ocl::permute(const dvec<_I>& idx, const dvec<_T>& s0, const dvec<_T>& s1)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    const auto iname=be::type_2_name<_I>::v();
+    impl::__ck_body ckb=impl::permute2(tname, iname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), idx, s0, s1);
+    return r;
+}
+
+
 void
 ocl::test::elements()
 {
-    static const int tbl[]={
+    const size_t N=13;
+    static const int tbl[N]={
         0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0
     };
     dvec<int> v_all(std::size(tbl), tbl);
@@ -650,15 +700,25 @@ ocl::test::elements()
     dvec<int> v_cp_odd=copy_odd_to_even(v_all);
     dump(v_cp_odd, "v_cp_odd");
     
-    static const float values[]= {
+    static const float values[N]= {
         0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 
         8.0f, 9.0f, 10.0f, 11.0f, 12.0f
     };
     std::cout << std::fixed << std::setprecision(4);
-    dvec<float> v_perm(std::size(values), values);
-    dump(v_perm, "v_perm1");
-    dvec<float> v_perm1=permute(v_all, v_perm);
-    dump(v_perm1, "v_perm1");
+    dvec<float> v_perm0(std::size(values), values);
+    dump(v_perm0, "v_perm1");
+    dvec<float> v_perm1_r=permute(v_all, v_perm0);
+    dump(v_perm1_r, "v_perm1_r");
+    dvec<float> v_perm1=2.0*v_perm0;
+    
+    static const int idx2[N]={
+        0, 1+N, 2, 3+N, 4, 5+N, 6, 7+N, 8+N, 9, 10+N, -11, 12+N
+    };
+    dvec<int> v_idx2(std::size(idx2), idx2);
+    dump(v_idx2, "v_idx2");
+    dvec<float> v_perm2_r=permute(v_idx2, v_perm0, v_perm1);
+    dump(v_perm2_r, "v_perm2_r");
+    
 }
 
 
