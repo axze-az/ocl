@@ -4,6 +4,99 @@
 #include <cftal/math/func_traits_f64_s32.h>
 #include <cftal/d_real.h>
 
+namespace ocl {
+
+    namespace impl {
+        // worker function for evem_elements(v)
+        __ck_body
+        even_elements(const std::string_view& tname);
+    }
+
+    // returns only the even elements of s
+    template <typename _T>
+    dvec<_T>
+    even_elements(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for odd_elements(v)
+        __ck_body
+        odd_elements(const std::string_view& tname);
+    }
+
+    // returns only the odd elements of s
+    template <typename _T>
+    dvec<_T>
+    odd_elements(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for combine_even_odd(e, o)
+        __ck_body
+        combine_even_odd(const std::string_view& tname);
+    }
+
+    // return the interleaved elemnent of e and o
+    template <typename _T>
+    dvec<_T>
+    combine_even_odd(const dvec<_T>& e, const dvec<_T>& o);
+
+    namespace impl {
+        // worker function for select_even_odd
+        __ck_body
+        select_even_odd(const std::string_view& tname);
+    }
+    
+    template <typename _T>
+    dvec<_T>
+    select_even_odd(const dvec<_T>& e, const dvec<_T>& o);
+    
+    
+    namespace impl {
+        // worker function for copy_even_to_odd(v)
+        __ck_body
+        copy_even_to_odd(const std::string_view& tname);
+    }
+
+    // copy the even elements of s to the odd elements
+    template <typename _T>
+    dvec<_T>
+    copy_even_to_odd(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for copy_odd_to_even(v)
+        __ck_body
+        copy_odd_to_even(const std::string_view& tname);
+    }
+    
+    // copy the odd elements of s to the even elements
+    template <typename _T>
+    dvec<_T>
+    copy_odd_to_even(const dvec<_T>& s);
+        
+    
+    namespace impl {
+        // worker function for permute(i, v)
+        __ck_body
+        permute(const std::string_view& tname, 
+                const std::string_view& iname);
+    }
+    
+    // permute the vector using idx
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s);
+    
+    namespace impl {
+        // worker function for permute(i, v, v)
+        __ck_body
+        permute2(const std::string_view& tname, 
+                 const std::string_view& iname);
+    }
+   
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
+}
+
 namespace cftal {
 
     template <>
@@ -84,6 +177,7 @@ namespace cftal {
                 return 0;
             }
 
+
             static
             vmf_type
             vmi_to_vmf(const vmi_type& mi) {
@@ -96,23 +190,17 @@ namespace cftal {
                 return ocl::cvt<vmi_type>(mf);
             }
 
-#if 0
             static
             vmi2_type
             vmf_to_vmi2(const vmf_type& mf) {
-                return
-                    cvt_mask<typename vmi2_type::value_type, 2 * _N,
-                             typename vmf_type::value_type, _N>::v(mf);
+                return ocl::as<vmi2_type>(mf);
             };
 
             static
             vmf_type
             vmi2_to_vmf(const vmi2_type& mf) {
-                return
-                    cvt_mask<typename vmf_type::value_type, _N,
-                             typename vmi2_type::value_type, 2*_N>::v(mf);
+                return ocl::as<vmf_type>(mf);
             };
-#endif
 
             static
             bool any_of_v(const vmf_type& b) {
@@ -143,8 +231,23 @@ namespace cftal {
             bool none_of_v(const vmi_type& b) {
                 return none_of(b);
             }
+            
+#if 0            
+            static
+            bool any_of_v(const vmi2_type& b) {
+                return any_of(b);
+            }
 
+            static
+            bool all_of_v(const vmi2_type& b) {
+                return all_of(b);
+            }
 
+            static
+            bool none_of_v(const vmi2_type& b) {
+                return none_of(b);
+            }
+#endif
             static
             vi_type sel(const vmi_type& msk,
                         const vi_type& t, const vi_type& f) {
@@ -172,15 +275,34 @@ namespace cftal {
             static
             vf_type sel_val_or_zero(const vmf_type& msk,
                                     const vf_type& t) {
-                return select(msk, t, 0);
+                return select(msk, t, 0.0);
             }
 
             static
             vf_type sel_zero_or_val(const vmf_type& msk,
                                     const vf_type& f) {
-                return select(msk, 0, f);
+                return select(msk, 0.0, f);
             }
 
+#if 0            
+            static
+            vi2_type sel(const vmi2_type& msk,
+                         const vi2_type& t, const vi2_type& f) {
+                return select(msk, t, f);
+            }
+
+            static
+            vi2_type sel_val_or_zero(const vmi2_type& msk,
+                                     const vi2_type& t) {
+                return select_val_or_zero(msk, t);
+            }
+            static
+            vi2_type sel_zero_or_val(const vmi2_type& msk,
+                                     const vi2_type& f) {
+                return select_zero_or_val(msk, f);
+            }
+
+#endif
             static
             vli_type sel(const vmli_type& msk,
                          const vli_type& t, const vli_type& f) {
@@ -188,17 +310,16 @@ namespace cftal {
             }
 
             static
-            vf_type insert_exp(const vi2_type& e) {
+            vf_type insert_exp_vi2(const vi2_type& e) {
                 vi2_type ep(e << 20);
                 vf_type r= ocl::as<vf_type>(ep);
                 r &= vf_type(exp_f64_msk::v.f64());
                 return r;
             }
 
-#if 0
             static
             vi2_type vi_to_vi2(const vi_type& r) {
-                vi2_type t=ocl::combine_even_odd(r, r);
+                vi2_type t=combine_even_odd(r, r);
                 return t;
             }
 
@@ -217,8 +338,9 @@ namespace cftal {
             static
             vf_type insert_exp(const vi_type& e) {
                 vi_type ep(e << 20);
-                vec<int32_t, _N*2> ir(combine_zeroeven_odd(ep));
-                vf_type r= as<vf_type>(ir);
+                vi_type zero(e.size(), 0);
+                vi2_type ir(combine_even_odd(zero, ep));
+                vf_type r= ocl::as<vf_type>(ir);
                 // r &= vf_type(exp_f64_msk::v.f64());
                 return r;
             }
@@ -227,7 +349,7 @@ namespace cftal {
             vi_type extract_exp(const vf_type& d) {
                 const vf_type msk(exp_f64_msk::v.f64());
                 vf_type m(d & msk);
-                vec<int32_t, _N*2> di= as<vec<int32_t, _N*2> >(m);
+                vi2_type di= ocl::as<vi2_type>(m);
                 vi_type r= odd_elements(di);
                 r >>= 20;
                 return r;
@@ -235,13 +357,13 @@ namespace cftal {
 
             static
             vi_type extract_high_word(const vf_type& d) {
-                vec<int32_t, _N*2> di=as<vec<int32_t, _N*2> >(d);
+                vi2_type di=ocl::as<vi2_type>(d);
                 return odd_elements(di);
             }
 
             static
             vi_type extract_low_word(const vf_type& d) {
-                vec<int32_t, _N*2> di=as<vec<int32_t, _N*2> >(d);
+                vi2_type di=ocl::as<vi2_type>(d);
                 return even_elements(di);
             }
 
@@ -249,37 +371,36 @@ namespace cftal {
             void
             extract_words(vi_type& low_word, vi_type& high_word,
                           const vf_type& d) {
-                vec<int32_t, _N*2> di=as<vec<int32_t, _N*2> >(d);
+                vi2_type di=ocl::as<vi2_type>(d);
                 low_word=even_elements(di);
                 high_word=odd_elements(di);
             }
-#endif
+
             static
             void
-            extract_words(vi2_type& low_word, vi2_type& high_word,
-                          const vf_type& x) {
+            extract_words_vi2(vi2_type& low_word, vi2_type& high_word,
+                              const vf_type& x) {
                 vi2_type di=ocl::as<vi2_type>(x);
                 low_word = di;
                 high_word = di;
             }
 
-#if 0
             static
             vf_type
             combine_words(const vi_type& l, const vi_type& h) {
-                ocl::dvec<int32_t> vi= combine_even_odd(l, h);
+                vi2_type vi= combine_even_odd(l, h);
                 vf_type r= ocl::as<vf_type>(vi);
                 return r;
             }
 
             static
             vf_type
-            combine_words(const vi2_type& l, const vi2_type& h) {
+            combine_words_vi2(const vi2_type& l, const vi2_type& h) {
                 vi2_type t= select_even_odd(l, h);
                 vf_type r=ocl::as<vf_type>(t);
                 return r;
             }
-#endif
+
             static
             vf_type clear_low_word(const vf_type& d) {
                 const uint64_t mu=0xffffffff00000000ULL;
@@ -310,21 +431,20 @@ namespace cftal {
                 return ocl::cvt<vi_type>(f);
             }
 
-#if 0
             static
             vi2_type cvt_f_to_i2(const vf_type& f) {
-#if 0
+#if 1
                 vi_type t=ocl::cvt<vi_type>(f);
                 vi2_type r=combine_even_odd(t, t);
 #else
                 // the number is 2^52+2^51
                 vf_type fr=f + 0x1.8p52;
-                vi2_type r=ocl::as<vi2_type>(fr);
+                vi2_type r=as<vi2_type>(fr);
                 r=copy_even_to_odd(r);
 #endif
                 return r;
             }
-#endif
+
             // including rounding towards zero
             static
             vi_type cvt_rz_f_to_i(const vf_type& f) {
@@ -341,85 +461,6 @@ namespace cftal {
 }
 
 namespace ocl {
-
-    namespace impl {
-        // worker function for evem_elements(v)
-        __ck_body
-        even_elements(const std::string_view& tname);
-    }
-
-    // returns only the even elements of s
-    template <typename _T>
-    dvec<_T>
-    even_elements(const dvec<_T>& s);
-
-    namespace impl {
-        // worker function for odd_elements(v)
-        __ck_body
-        odd_elements(const std::string_view& tname);
-    }
-
-    // returns only the odd elements of s
-    template <typename _T>
-    dvec<_T>
-    odd_elements(const dvec<_T>& s);
-
-    namespace impl {
-        // worker function for combine_even_odd(e, o)
-        __ck_body
-        combine_even_odd(const std::string_view& tname);
-    }
-
-    // return the interleaved elemnent of e and o
-    template <typename _T>
-    dvec<_T>
-    combine_even_odd(const dvec<_T>& e, const dvec<_T>& o);
-
-    namespace impl {
-        // worker function for copy_even_to_odd(v)
-        __ck_body
-        copy_even_to_odd(const std::string_view& tname);
-    }
-
-    // copy the even elements of s to the odd elements
-    template <typename _T>
-    dvec<_T>
-    copy_even_to_odd(const dvec<_T>& s);
-
-    namespace impl {
-        // worker function for copy_odd_to_even(v)
-        __ck_body
-        copy_odd_to_even(const std::string_view& tname);
-    }
-    
-    // copy the odd elements of s to the even elements
-    template <typename _T>
-    dvec<_T>
-    copy_odd_to_even(const dvec<_T>& s);
-        
-    
-    namespace impl {
-        // worker function for permute(i, v)
-        __ck_body
-        permute(const std::string_view& tname, 
-                const std::string_view& iname);
-    }
-    
-    // permute the vector using idx
-    template <typename _T, typename _I>
-    dvec<_T>
-    permute(const dvec<_I>& i, const dvec<_T>& s);
-    
-    namespace impl {
-        // worker function for permute(i, v, v)
-        __ck_body
-        permute2(const std::string_view& tname, 
-                 const std::string_view& iname);
-    }
-   
-    template <typename _T, typename _I>
-    dvec<_T>
-    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
     
     namespace test {
         void
@@ -499,7 +540,7 @@ ocl::impl::__ck_body
 ocl::impl::combine_even_odd(const std::string_view& tname)
 {
     std::ostringstream s;
-    s << "odd_elements_"  << tname;
+    s << "combine_even_odd_"  << tname;
     const std::string kname = s.str();
     s.str("");
     s << "void " << kname << "(\n"
@@ -531,6 +572,43 @@ ocl::combine_even_odd(const dvec<_T>& e, const dvec<_T>& o)
     impl::__ck_body ckb=impl::combine_even_odd(tname);
     size_t n=e.size() + o.size();
     dvec<_T> r=custom_kernel_with_size<_T>(ckb.name(), ckb.body(), n, e, o);
+    return r;
+}
+
+ocl::impl::__ck_body
+ocl::impl::select_even_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "select_even_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* e,\n"
+        "__global const " << tname << "* o\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        if ((gid & 1) == 0) {\n"
+        "           res[gid] = e[gid];\n"
+        "        } else {\n"
+        "           res[gid] = o[gid];\n"
+        "        }\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::select_even_odd(const dvec<_T>& e, const dvec<_T>& o)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::select_even_odd(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), e, o);
     return r;
 }
 
@@ -718,7 +796,10 @@ ocl::test::elements()
     dump(v_idx2, "v_idx2");
     dvec<float> v_perm2_r=permute(v_idx2, v_perm0, v_perm1);
     dump(v_perm2_r, "v_perm2_r");
-    
+ 
+    dvec<int> v_all2=v_all + v_all;
+    dvec<int> v_sel_even_odd=select_even_odd(v_all, v_all2);
+    dump(v_sel_even_odd, "v_sel_even_odd");    
 }
 
 
