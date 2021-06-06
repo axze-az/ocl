@@ -52,9 +52,7 @@ namespace ocl {
             error& operator=(const error& r);
             error& operator=(error&& r);
             virtual ~error();
-            std::string error_string() const {
-                return what();
-            }
+            std::string error_string() const;
             // check code and throw if required
             static
             void

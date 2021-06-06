@@ -185,6 +185,13 @@ ocl::cl::error::~error()
 {
 }
 
+std::string
+ocl::cl::error::error_string() 
+    const 
+{
+        return what();
+}
+            
 void
 ocl::cl::error::
 _throw_on(cl_int code)
