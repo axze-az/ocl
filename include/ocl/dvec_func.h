@@ -17,9 +17,17 @@ namespace ocl {
                 constexpr
                 const char* operator()() const { return "abs"; }
             };
-            struct f_sqrt {
+            struct f_rint {
                 constexpr
-                const char* operator()() const { return "sqrt"; }
+                const char* operator()() const { return "rint"; }
+            };
+            struct f_isinf {
+                constexpr
+                const char* operator()() const { return "isinf"; }
+            };
+            struct f_isnan {
+                constexpr
+                const char* operator()() const { return "isnan"; }
             };
         };
 
@@ -43,11 +51,78 @@ namespace ocl {
         struct abs_f< dvec<cftal::vec<double, _N> > >
             : public unary_func<names::f_fabs, false> {
         };
+        
 
         template <class _T>
-        struct sqrt_f : public unary_func<names::f_sqrt, false> {};
+        struct rint_f  {};
+        
+        template <>
+        struct rint_f< dvec<float> >
+            : public unary_func<names::f_rint, false> {
+        };
+        template <std::size_t _N>
+        struct rint_f< dvec<cftal::vec<float, _N> > >
+            : public unary_func<names::f_rint, false> {
+        };
 
+        template <>
+        struct rint_f< dvec<double> >
+            : public unary_func<names::f_rint, false> {
+        };
+        template <std::size_t _N>
+        struct rint_f< dvec<cftal::vec<double, _N> > >
+            : public unary_func<names::f_rint, false> {
+        };
+        
+        template <class _T>
+        struct isinf_f  {};
+        
+        template <>
+        struct isinf_f< dvec<float> >
+            : public unary_func<names::f_isinf, false> {
+        };
+        template <std::size_t _N>
+        struct isinf_f< dvec<cftal::vec<float, _N> > >
+            : public unary_func<names::f_isinf, false> {
+        };
+
+        template <>
+        struct isinf_f< dvec<double> >
+            : public unary_func<names::f_isinf, false> {
+        };
+        template <std::size_t _N>
+        struct isinf_f< dvec<cftal::vec<double, _N> > >
+            : public unary_func<names::f_isinf, false> {
+        };
+
+
+        template <class _T>
+        struct isnan_f  {};
+        
+        template <>
+        struct isnan_f< dvec<float> >
+            : public unary_func<names::f_isnan, false> {
+        };
+        template <std::size_t _N>
+        struct isnan_f< dvec<cftal::vec<float, _N> > >
+            : public unary_func<names::f_isnan, false> {
+        };
+
+        template <>
+        struct isnan_f< dvec<double> >
+            : public unary_func<names::f_isnan, false> {
+        };
+        template <std::size_t _N>
+        struct isnan_f< dvec<cftal::vec<double, _N> > >
+            : public unary_func<names::f_isnan, false> {
+        };
+        
         namespace names {
+
+            struct f_sqrt {
+                constexpr
+                const char* operator()() const { return "sqrt"; }
+            };
 
             struct f_sqrt_base {
                 // function name
@@ -81,6 +156,9 @@ namespace ocl {
                 }
             };
         }
+
+        template <class _T>
+        struct sqrt_f : public unary_func<names::f_sqrt, false> {};
 
         template <>
         struct sqrt_f<dvec<float> >
@@ -344,6 +422,10 @@ namespace ocl {
         return expr<dop::as<_D>, _S, void>(s);
     }
 
+    DEF_UNARY_FUNC(rint, rint_f)
+    DEF_UNARY_FUNC(isinf, isinf_f)
+    DEF_UNARY_FUNC(isnan, isnan_f)
+    
     DEF_UNARY_FUNC(abs, abs_f)
     DEF_UNARY_FUNC(sqrt, sqrt_f)
     DEF_UNARY_FUNC(rsqrt, rsqrt_f)

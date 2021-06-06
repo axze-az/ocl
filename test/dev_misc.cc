@@ -104,6 +104,8 @@ namespace cftal {
         using cmp_result_type = typename ocl::dvec<double>::mask_type;
         using int_type = ocl::dvec<int32_t>;
 
+        static constexpr bool fma = false;        
+        
         static
         bool any_of_v(const cmp_result_type& b) {
             return any_of(b);
@@ -129,7 +131,7 @@ namespace cftal {
 
         static
         void
-        split(const ocl::dvec<double> & a,
+        split(const ocl::dvec<double>& a,
               ocl::dvec<double>& h,
               ocl::dvec<double>& l) {
             const double msk=
@@ -272,6 +274,19 @@ namespace cftal {
                 return select(msk, t, f);
             }
 
+            static
+            vf_type sel(const vmf_type& msk,
+                        const double& t, const vf_type& f) {
+                return select(msk, t, f);
+            }
+
+            static
+            vf_type sel(const vmf_type& msk,
+                        const vf_type& t, const double& f) {
+                return select(msk, t, f);
+            }
+
+            
             static
             vf_type sel_val_or_zero(const vmf_type& msk,
                                     const vf_type& t) {
@@ -465,8 +480,16 @@ namespace ocl {
     namespace test {
         void
         elements();
+        
+        dvec<double>
+        device_exp(const dvec<double>& x);
+        
+        void
+        functions();
     }
 }
+
+/// Implementation section
 
 ocl::impl::__ck_body
 ocl::impl::even_elements(const std::string_view& tname)
@@ -800,6 +823,18 @@ ocl::test::elements()
     dvec<int> v_all2=v_all + v_all;
     dvec<int> v_sel_even_odd=select_even_odd(v_all, v_all2);
     dump(v_sel_even_odd, "v_sel_even_odd");    
+}
+
+ocl::dvec<double>
+ocl::test::device_exp(const dvec<double>& x)
+{
+#if 0
+    using traits_t=cftal::math::func_traits<ocl::dvec<double>, 
+                                            ocl::dvec<int32_t> >;   
+    using func_t=cftal::math::elem_func<double, traits_t>;
+    return func_t::cbrt(x);    
+#endif
+    return x;
 }
 
 

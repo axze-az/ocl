@@ -7,12 +7,12 @@ wait_list()
 }
 
 ocl::cl::wait_list::
-wait_list(const event &event)
+wait_list(const event& event)
     : _ve(1, event)
 {
 }
 ocl::cl::wait_list::
-wait_list(const wait_list &r)
+wait_list(const wait_list& r)
     : _ve(r._ve)
 {
 }
@@ -24,7 +24,7 @@ wait_list(std::initializer_list<event> events)
 }
 
 ocl::cl::wait_list&
-ocl::cl::wait_list::operator=(const wait_list &r)
+ocl::cl::wait_list::operator=(const wait_list& r)
 {
     if (&r != this)
         _ve= r._ve;
@@ -89,7 +89,7 @@ reserve(size_t new_capacity)
 
 void
 ocl::cl::wait_list::
-insert(const event &event)
+insert(const event& event)
 {
     _ve.push_back(event);
 }
