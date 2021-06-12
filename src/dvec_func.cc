@@ -186,3 +186,207 @@ gen_any_of(const std::string_view& tname)
         "}\n";
     return __ck_body(kname, s.str());
 }
+
+ocl::impl::__ck_body
+ocl::impl::even_elements(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "even_elements_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid=2*gid;\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::odd_elements(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "odd_elements_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid=2*gid+1;\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::combine_even_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "combine_even_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* e,\n"
+        "__global const " << tname << "* o\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid=gid>>1;\n"
+        "        if ((gid & 1) == 0) {\n"
+        "           res[gid] = e[sgid];\n"
+        "        } else {\n"
+        "           res[gid] = o[sgid];\n"
+        "        }\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::select_even_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "select_even_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* e,\n"
+        "__global const " << tname << "* o\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        if ((gid & 1) == 0) {\n"
+        "           res[gid] = e[gid];\n"
+        "        } else {\n"
+        "           res[gid] = o[gid];\n"
+        "        }\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::copy_even_to_odd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "copy_even_to_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid= gid & ~1ul;\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::copy_odd_to_even(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "copy_even_to_odd_"  << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        ulong sgid= min(gid|1ul, n-1ul);\n"
+        "        res[gid] = src[sgid];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+
+ocl::impl::__ck_body
+ocl::impl::permute(const std::string_view& tname,
+                   const std::string_view& iname)
+{
+    std::ostringstream s;
+    s << "permute_"  << iname << '_' << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << iname << "* idx,\n"
+        "__global const " << tname << "* src\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        " << iname << " sidx= idx[gid];\n"
+        "        int zero= sidx < 0;\n"
+        "        res[gid] = zero ? 0 : src[sidx];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}
+
+ocl::impl::__ck_body
+ocl::impl::permute2(const std::string_view& tname,
+                    const std::string_view& iname)
+{
+    std::ostringstream s;
+    s << "permute2_"  << iname << '_' << tname;
+    const std::string kname = s.str();
+    s.str("");
+    s << "void " << kname << "(\n"
+        "ulong n,\n"
+        "__global " << tname << "* res,\n"
+        "__global const " << iname << "* idx,\n"
+        "__global const " << tname << "* src0,\n"
+        "__global const " << tname << "* src1\n"
+        ")\n"
+        "{\n"
+        "    ulong gid=get_global_id(0);\n"
+        "    if (gid < n) {\n"
+        "        " << iname << " sidx= idx[gid];\n"
+        "        " << iname << " in= (" << iname << ")n;\n"
+        "        int zero= sidx < 0;\n"
+        "        __global const " << tname << "* src= sidx < in ? src0 : src1;\n" 
+        "        sidx = sidx < in ? sidx : sidx - in;\n" 
+        "        res[gid] = zero ? 0 : src[sidx];\n"
+        "    }\n"
+        "}\n";
+    const std::string ksrc=s.str();
+    return __ck_body(kname, ksrc);
+}

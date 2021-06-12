@@ -643,6 +643,97 @@ namespace ocl {
     template <typename _T>
     bool
     any_of(const dvec<_T>& v);
+    
+    namespace impl {
+        // worker function for evem_elements(v)
+        __ck_body
+        even_elements(const std::string_view& tname);
+    }
+
+    // returns only the even elements of s
+    template <typename _T>
+    dvec<_T>
+    even_elements(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for odd_elements(v)
+        __ck_body
+        odd_elements(const std::string_view& tname);
+    }
+
+    // returns only the odd elements of s
+    template <typename _T>
+    dvec<_T>
+    odd_elements(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for combine_even_odd(e, o)
+        __ck_body
+        combine_even_odd(const std::string_view& tname);
+    }
+
+    // return the interleaved elemnent of e and o
+    template <typename _T>
+    dvec<_T>
+    combine_even_odd(const dvec<_T>& e, const dvec<_T>& o);
+
+    namespace impl {
+        // worker function for select_even_odd
+        __ck_body
+        select_even_odd(const std::string_view& tname);
+    }
+    
+    template <typename _T>
+    dvec<_T>
+    select_even_odd(const dvec<_T>& e, const dvec<_T>& o);
+    
+    
+    namespace impl {
+        // worker function for copy_even_to_odd(v)
+        __ck_body
+        copy_even_to_odd(const std::string_view& tname);
+    }
+
+    // copy the even elements of s to the odd elements
+    template <typename _T>
+    dvec<_T>
+    copy_even_to_odd(const dvec<_T>& s);
+
+    namespace impl {
+        // worker function for copy_odd_to_even(v)
+        __ck_body
+        copy_odd_to_even(const std::string_view& tname);
+    }
+    
+    // copy the odd elements of s to the even elements
+    template <typename _T>
+    dvec<_T>
+    copy_odd_to_even(const dvec<_T>& s);
+        
+    
+    namespace impl {
+        // worker function for permute(i, v)
+        __ck_body
+        permute(const std::string_view& tname, 
+                const std::string_view& iname);
+    }
+    
+    // permute the vector using idx
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s);
+    
+    namespace impl {
+        // worker function for permute(i, v, v)
+        __ck_body
+        permute2(const std::string_view& tname, 
+                 const std::string_view& iname);
+    }
+   
+    template <typename _T, typename _I>
+    dvec<_T>
+    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
+    
 }
 
 // overload for float vectors with incorrectly rounded sqrt
@@ -734,6 +825,92 @@ ocl::any_of(const dvec<_T>& v)
     auto nb=impl::gen_any_of(tname);
     auto r=impl::xxx_of(nb, v);
     return r!=0;
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::even_elements(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::even_elements(tname);
+    size_t n=(s.size() +1) >> 1;
+    dvec<_T> r=custom_kernel_with_size<_T>(ckb.name(), ckb.body(), n, s);
+    return r;
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::odd_elements(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::odd_elements(tname);
+    size_t n=s.size() >> 1;
+    dvec<_T> r=custom_kernel_with_size<_T>(ckb.name(), ckb.body(), n, s);
+    return r;
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::combine_even_odd(const dvec<_T>& e, const dvec<_T>& o)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::combine_even_odd(tname);
+    size_t n=e.size() + o.size();
+    dvec<_T> r=custom_kernel_with_size<_T>(ckb.name(), ckb.body(), n, e, o);
+    return r;
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::select_even_odd(const dvec<_T>& e, const dvec<_T>& o)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::select_even_odd(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), e, o);
+    return r;
+}
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::copy_even_to_odd(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::copy_even_to_odd(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), s);
+    return r;
+}
+
+
+template <typename _T>
+ocl::dvec<_T>
+ocl::copy_odd_to_even(const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    impl::__ck_body ckb=impl::copy_odd_to_even(tname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), s);
+    return r;
+}
+
+template <typename _T, typename _I>
+ocl::dvec<_T>
+ocl::permute(const dvec<_I>& idx, const dvec<_T>& s)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    const auto iname=be::type_2_name<_I>::v();
+    impl::__ck_body ckb=impl::permute(tname, iname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), idx, s);
+    return r;
+}
+
+template <typename _T, typename _I>
+ocl::dvec<_T>
+ocl::permute(const dvec<_I>& idx, const dvec<_T>& s0, const dvec<_T>& s1)
+{
+    const auto tname=be::type_2_name<_T>::v();
+    const auto iname=be::type_2_name<_I>::v();
+    impl::__ck_body ckb=impl::permute2(tname, iname);
+    dvec<_T> r=custom_kernel<_T>(ckb.name(), ckb.body(), idx, s0, s1);
+    return r;
 }
 
 // local variables:
