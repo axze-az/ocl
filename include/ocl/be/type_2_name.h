@@ -116,7 +116,7 @@ namespace ocl {
             static_assert(_N <= 16, "invalid vector size for OpenCL");
             static
             std::string v() {
-                return type_2_name(type_2_name<_T>::v(), _N);
+                return type_2_name_vec_t(type_2_name<_T>::v(), _N);
             }
         };
 

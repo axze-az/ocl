@@ -491,8 +491,6 @@ namespace ocl {
 
 /// Implementation section
 
-
-
 void
 ocl::test::elements()
 {

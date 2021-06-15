@@ -1,6 +1,6 @@
 #include "ocl/dvec.h"
 #include <cftal/math/func_constants.h>
-#include <cftal/cast.h>
+#include <cftal/as.h>
 #include <vector>
 
 namespace ocl { namespace test {
