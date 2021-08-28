@@ -137,7 +137,7 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 configure_file("include/ocl/config.h.in"
                "${PROJECT_BINARY_DIR}/include/ocl/config.h")
 
-include_directories(../cftal/gcc10/include)
+include_directories(../cftal/gcc11/include)
 include_directories(../cftal/include)
 include_directories(../cftal/test/include)
 include_directories(../dev-cftal/include)
