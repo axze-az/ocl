@@ -7,6 +7,7 @@
 #include <ocl/be/kernel_functions.h>
 #include <ocl/be/type_2_name.h>
 #include <ocl/be/devices.h>
+#include <optional>
 
 namespace ocl {
 
