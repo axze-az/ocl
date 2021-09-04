@@ -17,13 +17,11 @@ namespace ocl {
 
 }
 
-
 int main()
 {
     try {
 
         using namespace ocl;
-
         using cftal::v8f32;
 
         const unsigned SIZE=512;
@@ -36,11 +34,14 @@ int main()
         dvec<float> vb(SIZE, b);
         dvec<int32_t> tgt= va == vb;        
 
+        // va != vb
+        // all_of == false
         bool ao = all_of(tgt);
+        // none_of == true
         bool no = none_of(tgt);
+        // any_of == false
         bool so = any_of(tgt);
-
-        if (ao != true || no != false || so != true) {
+        if (ao != false || no != true || so != false) {
             throw std::runtime_error("xxx_of failed.");
         }
     }
