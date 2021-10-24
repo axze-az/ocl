@@ -2,6 +2,7 @@
 #include "ocl/test/tools.h"
 #include <cftal/math/func_traits_f32_s32.h>
 #include <cftal/math/func_traits_f64_s32.h>
+#include <cftal/math/elem_func_core_f64.h>
 #include <cftal/d_real.h>
 
 namespace ocl {
@@ -261,6 +262,12 @@ namespace cftal {
                                     const vi_type& t) {
                 return select(msk, t, 0);
             }
+            
+            static
+            vi_type sel_val_or_zero(const vmi_type& msk,
+                                    const int32_t& t) {
+                return select(msk, t, 0);
+            }
 
             static
             vi_type sel_zero_or_val(const vmi_type& msk,
@@ -482,7 +489,7 @@ namespace ocl {
         elements();
         
         dvec<double>
-        device_exp(const dvec<double>& x);
+        device_func(const dvec<double>& x);
         
         void
         functions();
@@ -537,14 +544,12 @@ ocl::test::elements()
 }
 
 ocl::dvec<double>
-ocl::test::device_exp(const dvec<double>& x)
+ocl::test::device_func(const dvec<double>& x)
 {
-#if 0
     using traits_t=cftal::math::func_traits<ocl::dvec<double>, 
                                             ocl::dvec<int32_t> >;   
     using func_t=cftal::math::elem_func<double, traits_t>;
     return func_t::cbrt(x);    
-#endif
     return x;
 }
 
