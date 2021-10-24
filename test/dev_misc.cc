@@ -546,11 +546,14 @@ ocl::test::elements()
 ocl::dvec<double>
 ocl::test::device_func(const dvec<double>& x)
 {
+#if 0
     using traits_t=cftal::math::func_traits<ocl::dvec<double>, 
                                             ocl::dvec<int32_t> >;   
     using func_t=cftal::math::elem_func<double, traits_t>;
-    return func_t::cbrt(x);    
+    return func_t::cbrt(x);
+#else
     return x;
+#endif
 }
 
 
