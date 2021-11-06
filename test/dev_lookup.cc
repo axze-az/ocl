@@ -4,7 +4,7 @@
 namespace ocl {
 
     namespace impl {
-        struct variable_lookup_table {
+        struct variable_vec_lookup_table {
             static
             __ck_body
             from(const std::string_view& tname,
@@ -13,20 +13,20 @@ namespace ocl {
     }
     
     template <typename _T, typename _I>
-    class variable_lookup_table : private impl::variable_lookup_table {
-        using base_type = impl::variable_lookup_table;
+    class variable_vec_lookup_table : private impl::variable_vec_lookup_table {
+        using base_type = impl::variable_vec_lookup_table;
         const dvec<_I>* _idx;
     public:
-        variable_lookup_table(const dvec<_I>& idx) : _idx(&idx) {}
+        variable_vec_lookup_table(const dvec<_I>& idx) : _idx(&idx) {}
         template <std::size_t _N>
         auto
         from(const _T(&tbl)[_N]) const;
     };
 
     template <typename _T, typename _I>
-    variable_lookup_table<_T, _I>
+    variable_vec_lookup_table<_T, _I>
     make_variable_lookup_table(const dvec<_I>& idx) {
-        return variable_lookup_table<_T, _I>(idx);
+        return variable_vec_lookup_table<_T, _I>(idx);
     };
     
     namespace test {
@@ -36,7 +36,7 @@ namespace ocl {
 }
 
 ocl::impl::__ck_body
-ocl::impl::variable_lookup_table::
+ocl::impl::variable_vec_lookup_table::
 from(const std::string_view& tname, const std::string_view& iname)
 {
     std::ostringstream s;
@@ -62,7 +62,7 @@ from(const std::string_view& tname, const std::string_view& iname)
 template <typename _T, typename _I>
 template <std::size_t _N>
 auto
-ocl::variable_lookup_table<_T, _I>::from(const _T(&tbl)[_N])
+ocl::variable_vec_lookup_table<_T, _I>::from(const _T(&tbl)[_N])
     const
 {
     const auto tname=be::type_2_name<_T>::v();
