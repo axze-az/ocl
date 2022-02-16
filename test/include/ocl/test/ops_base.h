@@ -14,7 +14,7 @@ namespace ocl {
     namespace test {
 
         using cftal::lvec;
-        
+
         template <typename _T>
         class ops_base {
         protected:
@@ -57,9 +57,11 @@ ops_base(size_t n, const _T& min_val, const _T& max_val)
     : _res(n), _a0(n), _a1(n),
       _h_res_d(n),
       _cmp_res(n),
-      _h_cmp_res(n),
-      _h_d_res(n),
-      _h_res(n), _h_a0(n), _h_a1(n)
+      _h_cmp_res(_T(0), n),
+      _h_d_res(_T(0), n),
+      _h_res(_T(0), n),
+      _h_a0(_T(0), n),
+      _h_a1(_T(0), n)
 {
 #if 1
     rand48 rnd(n);

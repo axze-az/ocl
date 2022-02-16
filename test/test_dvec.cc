@@ -85,7 +85,8 @@ int main()
         using namespace ocl::test;
 
         using rtype = float;
-        for (std::size_t i=4; i<16* 16384; ++i) {
+        constexpr const std::size_t NMAX=16*16384;
+        for (std::size_t i=4; i<NMAX; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers with "
                           <<  i
