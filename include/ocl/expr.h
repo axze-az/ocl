@@ -17,7 +17,7 @@ namespace ocl {
     // types
     template <class _T>
     struct expr_traits {
-        typedef const _T type;
+        using type = const _T;
     };
 
     // the expression template

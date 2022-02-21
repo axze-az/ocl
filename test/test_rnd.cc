@@ -76,7 +76,7 @@ namespace ocl {
             : _min(min_val), _max(max_val),
               _rec_interval(float(1)/(_max - _min)),
               _n(n),
-              _val(p, _n+2, 0),
+              _val(p, n+2),
               _val_hi(_val) {}
         void
         insert(const dvec<float>& v);
@@ -247,7 +247,7 @@ int main()
         // ocl::rnd_distribution<float, 40> dst(0, 1.0);
         ocl::rnd_histogram hdst(0, 1.0f, 25);
         dvec<float> f;
-        cftal::lvec<float > fh(_N);
+        cftal::lvec<float > fh(0.0f, _N);
         for (int l=0; l<4; ++l) {
             for (int k=0; k<72; ++k) {
                 for (int i=0; i<16; ++i) {

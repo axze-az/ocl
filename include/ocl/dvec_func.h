@@ -51,11 +51,11 @@ namespace ocl {
         struct abs_f< dvec<cftal::vec<double, _N> > >
             : public unary_func<names::f_fabs, false> {
         };
-        
+
 
         template <class _T>
         struct rint_f  {};
-        
+
         template <>
         struct rint_f< dvec<float> >
             : public unary_func<names::f_rint, false> {
@@ -73,10 +73,10 @@ namespace ocl {
         struct rint_f< dvec<cftal::vec<double, _N> > >
             : public unary_func<names::f_rint, false> {
         };
-        
+
         template <class _T>
         struct isinf_f  {};
-        
+
         template <>
         struct isinf_f< dvec<float> >
             : public unary_func<names::f_isinf, false> {
@@ -98,7 +98,7 @@ namespace ocl {
 
         template <class _T>
         struct isnan_f  {};
-        
+
         template <>
         struct isnan_f< dvec<float> >
             : public unary_func<names::f_isnan, false> {
@@ -116,7 +116,7 @@ namespace ocl {
         struct isnan_f< dvec<cftal::vec<double, _N> > >
             : public unary_func<names::f_isnan, false> {
         };
-        
+
         namespace names {
 
             struct f_sqrt {
@@ -177,7 +177,7 @@ namespace ocl {
                 const char* operator()() const { return "exp"; }
             };
         }
-        
+
         template <class _T>
         struct rsqrt_f : public unary_func<names::f_rsqrt, false>{};
 
@@ -425,7 +425,7 @@ namespace ocl {
     DEF_UNARY_FUNC(rint, rint_f)
     DEF_UNARY_FUNC(isinf, isinf_f)
     DEF_UNARY_FUNC(isnan, isnan_f)
-    
+
     DEF_UNARY_FUNC(abs, abs_f)
     DEF_UNARY_FUNC(sqrt, sqrt_f)
     DEF_UNARY_FUNC(rsqrt, rsqrt_f)
@@ -643,7 +643,7 @@ namespace ocl {
     template <typename _T>
     bool
     any_of(const dvec<_T>& v);
-    
+
     namespace impl {
         // worker function for evem_elements(v)
         __ck_body
@@ -682,12 +682,12 @@ namespace ocl {
         __ck_body
         select_even_odd(const std::string_view& tname);
     }
-    
+
     template <typename _T>
     dvec<_T>
     select_even_odd(const dvec<_T>& e, const dvec<_T>& o);
-    
-    
+
+
     namespace impl {
         // worker function for copy_even_to_odd(v)
         __ck_body
@@ -704,36 +704,36 @@ namespace ocl {
         __ck_body
         copy_odd_to_even(const std::string_view& tname);
     }
-    
+
     // copy the odd elements of s to the even elements
     template <typename _T>
     dvec<_T>
     copy_odd_to_even(const dvec<_T>& s);
-        
-    
+
+
     namespace impl {
         // worker function for permute(i, v)
         __ck_body
-        permute(const std::string_view& tname, 
+        permute(const std::string_view& tname,
                 const std::string_view& iname);
     }
-    
+
     // permute the vector using idx
     template <typename _T, typename _I>
     dvec<_T>
     permute(const dvec<_I>& i, const dvec<_T>& s);
-    
+
     namespace impl {
         // worker function for permute(i, v, v)
         __ck_body
-        permute2(const std::string_view& tname, 
+        permute2(const std::string_view& tname,
                  const std::string_view& iname);
     }
-   
+
     template <typename _T, typename _I>
     dvec<_T>
-    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
-    
+    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);
+
 }
 
 // overload for float vectors with incorrectly rounded sqrt

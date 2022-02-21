@@ -101,8 +101,8 @@ int main()
                           <<  i*sizeof(rtype)
                           << " bytes\r" << std::flush;
             }
-            dvec<ftype> va(i, a);
-            dvec<ftype> vb(i, b);
+            dvec<ftype> va(a, i);
+            dvec<ftype> vb(b, i);
             dvec<ftype> vc=test_func(va, vb);
             std::vector<ftype> vhc(vc);
             for (std::size_t j=0; j<i; ++j) {

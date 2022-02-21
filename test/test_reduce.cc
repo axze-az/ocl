@@ -30,9 +30,9 @@ int main()
                   << "MiB\n";
         float a(2.0f), b(3.0f);
 
-        dvec<float> va(SIZE, a);
-        dvec<float> vb(SIZE, b);
-        dvec<int32_t> tgt= va == vb;        
+        dvec<float> va(a, SIZE);
+        dvec<float> vb(b, SIZE);
+        dvec<int32_t> tgt= va == vb;
 
         // va != vb
         // all_of == false

@@ -45,12 +45,12 @@ namespace ocl {
         __ck_body
         select_even_odd(const std::string_view& tname);
     }
-    
+
     template <typename _T>
     dvec<_T>
     select_even_odd(const dvec<_T>& e, const dvec<_T>& o);
-    
-    
+
+
     namespace impl {
         // worker function for copy_even_to_odd(v)
         __ck_body
@@ -67,35 +67,35 @@ namespace ocl {
         __ck_body
         copy_odd_to_even(const std::string_view& tname);
     }
-    
+
     // copy the odd elements of s to the even elements
     template <typename _T>
     dvec<_T>
     copy_odd_to_even(const dvec<_T>& s);
-        
-    
+
+
     namespace impl {
         // worker function for permute(i, v)
         __ck_body
-        permute(const std::string_view& tname, 
+        permute(const std::string_view& tname,
                 const std::string_view& iname);
     }
-    
+
     // permute the vector using idx
     template <typename _T, typename _I>
     dvec<_T>
     permute(const dvec<_I>& i, const dvec<_T>& s);
-    
+
     namespace impl {
         // worker function for permute(i, v, v)
         __ck_body
-        permute2(const std::string_view& tname, 
+        permute2(const std::string_view& tname,
                  const std::string_view& iname);
     }
-   
+
     template <typename _T, typename _I>
     dvec<_T>
-    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);    
+    permute(const dvec<_I>& i, const dvec<_T>& s1, const dvec<_T>& s2);
 }
 
 namespace cftal {
@@ -105,8 +105,8 @@ namespace cftal {
         using cmp_result_type = typename ocl::dvec<double>::mask_type;
         using int_type = ocl::dvec<int32_t>;
 
-        static constexpr bool fma = false;        
-        
+        static constexpr bool fma = false;
+
         static
         bool any_of_v(const cmp_result_type& b) {
             return any_of(b);
@@ -234,8 +234,8 @@ namespace cftal {
             bool none_of_v(const vmi_type& b) {
                 return none_of(b);
             }
-            
-#if 0            
+
+#if 0
             static
             bool any_of_v(const vmi2_type& b) {
                 return any_of(b);
@@ -262,7 +262,7 @@ namespace cftal {
                                     const vi_type& t) {
                 return select(msk, t, 0);
             }
-            
+
             static
             vi_type sel_val_or_zero(const vmi_type& msk,
                                     const int32_t& t) {
@@ -293,7 +293,7 @@ namespace cftal {
                 return select(msk, t, f);
             }
 
-            
+
             static
             vf_type sel_val_or_zero(const vmf_type& msk,
                                     const vf_type& t) {
@@ -306,7 +306,7 @@ namespace cftal {
                 return select(msk, 0.0, f);
             }
 
-#if 0            
+#if 0
             static
             vi2_type sel(const vmi2_type& msk,
                          const vi2_type& t, const vi2_type& f) {
@@ -335,7 +335,7 @@ namespace cftal {
             vf_type insert_exp_vi2(const vi2_type& e) {
                 vi2_type ep(e << 20);
                 vf_type r= ocl::as<vf_type>(ep);
-                r &= vf_type(exp_f64_msk::v.f64());
+                r &= exp_f64_msk::v.f64();
                 return r;
             }
 
@@ -369,8 +369,7 @@ namespace cftal {
 
             static
             vi_type extract_exp(const vf_type& d) {
-                const vf_type msk(exp_f64_msk::v.f64());
-                vf_type m(d & msk);
+                vf_type m(d & exp_f64_msk::v.f64());
                 vi2_type di= ocl::as<vi2_type>(m);
                 vi_type r= odd_elements(di);
                 r >>= 20;
@@ -427,8 +426,7 @@ namespace cftal {
             vf_type clear_low_word(const vf_type& d) {
                 const uint64_t mu=0xffffffff00000000ULL;
                 const bytes8 mf(mu);
-                const vf_type m(mf.f64());
-                return d & m;
+                return d & mf.f64();
             }
 
             static
@@ -483,14 +481,14 @@ namespace cftal {
 }
 
 namespace ocl {
-    
+
     namespace test {
         void
         elements();
-        
+
         dvec<double>
         device_func(const dvec<double>& x);
-        
+
         void
         functions();
     }
@@ -505,7 +503,7 @@ ocl::test::elements()
     static const int tbl[N]={
         0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0
     };
-    dvec<int> v_all(std::size(tbl), tbl);
+    dvec<int> v_all(tbl, std::size(tbl));
     dump(v_all, "v_all");
     dvec<int> v_even=even_elements(v_all);
     dump(v_even, "v_even");
@@ -513,42 +511,42 @@ ocl::test::elements()
     dump(v_odd, "v_odd");
     dvec<int> v_comb=combine_even_odd(v_even, v_odd);
     dump(v_comb, "v_comb");
-    
+
     dvec<int> v_cp_even=copy_even_to_odd(v_all);
     dump(v_cp_even, "v_cp_even");
     dvec<int> v_cp_odd=copy_odd_to_even(v_all);
     dump(v_cp_odd, "v_cp_odd");
-    
+
     static const float values[N]= {
-        0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 
+        0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f,
         8.0f, 9.0f, 10.0f, 11.0f, 12.0f
     };
     std::cout << std::fixed << std::setprecision(4);
-    dvec<float> v_perm0(std::size(values), values);
+    dvec<float> v_perm0(values, std::size(values));
     dump(v_perm0, "v_perm1");
     dvec<float> v_perm1_r=permute(v_all, v_perm0);
     dump(v_perm1_r, "v_perm1_r");
     dvec<float> v_perm1=2.0*v_perm0;
-    
+
     static const int idx2[N]={
         0, 1+N, 2, 3+N, 4, 5+N, 6, 7+N, 8+N, 9, 10+N, -11, 12+N
     };
-    dvec<int> v_idx2(std::size(idx2), idx2);
+    dvec<int> v_idx2(idx2, std::size(idx2));
     dump(v_idx2, "v_idx2");
     dvec<float> v_perm2_r=permute(v_idx2, v_perm0, v_perm1);
     dump(v_perm2_r, "v_perm2_r");
- 
+
     dvec<int> v_all2=v_all + v_all;
     dvec<int> v_sel_even_odd=select_even_odd(v_all, v_all2);
-    dump(v_sel_even_odd, "v_sel_even_odd");    
+    dump(v_sel_even_odd, "v_sel_even_odd");
 }
 
 ocl::dvec<double>
 ocl::test::device_func(const dvec<double>& x)
 {
 #if 0
-    using traits_t=cftal::math::func_traits<ocl::dvec<double>, 
-                                            ocl::dvec<int32_t> >;   
+    using traits_t=cftal::math::func_traits<ocl::dvec<double>,
+                                            ocl::dvec<int32_t> >;
     using func_t=cftal::math::elem_func<double, traits_t>;
     return func_t::cbrt(x);
 #else
