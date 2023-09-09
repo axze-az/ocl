@@ -297,7 +297,7 @@ namespace ocl {
             explicit user_event(const context& ctx);
             void set_status(cl_int exec_status);
         };
-        
+
         class wait_list {
             std::vector<event> _ve;
         public:
