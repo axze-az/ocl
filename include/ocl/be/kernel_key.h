@@ -4,6 +4,7 @@
 #include <ocl/config.h>
 #include <string>
 #include <iosfwd>
+#include <cstdint>
 
 namespace ocl {
 
@@ -35,11 +36,11 @@ namespace ocl {
             const kernel_key& _k;
             print_kernel_key(const kernel_key& k) : _k(k) {}
         };
-        
+
         std::ostream&
         operator<<(std::ostream& s, const print_kernel_key& kk);
     }
-    
+
 }
 
 // Local variables:
