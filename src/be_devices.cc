@@ -144,8 +144,8 @@ std::size_t
 ocl::be::request_local_mem(const dev_info& di, size_t lmem_req)
 {
     size_t lmem_size=di._max_local_memory;
-    // allow maximum of a 1/4 of the local device memory:
-    return ((lmem_req << 2) < lmem_size) ? lmem_req : 0;
+    // allow maximum of a 1/8 of the local device memory:
+    return ((lmem_req << 3) < lmem_size) ? lmem_req : 0;
 }
 
 std::size_t
