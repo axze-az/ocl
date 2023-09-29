@@ -76,7 +76,7 @@ namespace ocl {
             : _min(min_val), _max(max_val),
               _rec_interval(float(1)/(_max - _min)),
               _n(n),
-              _val(p, n+2),
+              _val(p, n+2, 0),
               _val_hi(_val) {}
         void
         insert(const dvec<float>& v);
@@ -111,16 +111,11 @@ ocl::rnd_histogram::insert(const dvec<float>& v)
         "        float v=s[gid];\n"
         "        float offset = (v - min_val) * rec_interval * entries;\n"
         "        uint o= offset;\n"
-        "        if (v > max_val) {\n"
-        "            o=entries + 1;\n"
-        "        }\n"
-        "        if (v < min_val) {\n"
-        "            o=entries;\n"
-        "        }\n"
-        "        uint old=atomic_add(h+o, 1);\n"
-        "        if (old == 0xffffffff) {\n"
-        "            atomic_add(h_hi+o, 1);\n"
-        "        }\n"
+        "        o = (v > max_val) ? entries + 1 : o;\n"
+        "        o = (v < min_val) ? entries : o;\n"
+        "        uint old=atomic_add((h+o), 1);\n"
+        "        uint inc_hi= old == ~0 ? 1 : 0;\n"
+        "        atomic_add((h_hi+o), inc_hi);\n"
         "    }\n"
         "}\n";
     auto ck=custom_kernel<int>(kname, ksrc,
@@ -222,10 +217,11 @@ std::ostream& ocl::operator<<(std::ostream& s,
 
 int main()
 {
+#define __USE_HOST 0
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 16*1024*1024;
+        const unsigned _N = 1*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -244,16 +240,21 @@ int main()
 #else
         ocl::rand t(_N);
 #endif
-        // ocl::rnd_distribution<float, 40> dst(0, 1.0);
-        ocl::rnd_histogram hdst(0, 1.0f, 25);
+        constexpr const int _M=2;
+#if __USE_HOST>0
+        ocl::rnd_distribution<float, _M> dst(0, 1.0);
+#else
+        ocl::rnd_histogram hdst(0.0f, 1.0f, _M);
+#endif
         dvec<float> f;
         cftal::lvec<float > fh(0.0f, _N);
         for (int l=0; l<4; ++l) {
             for (int k=0; k<72; ++k) {
                 for (int i=0; i<16; ++i) {
                     f=t.nextf();
+#if __USE_HOST==0
                     hdst.insert(f);
-#if 0
+#else
                     f.copy_to_host(&fh[0]);
                     for (std::size_t j=0; j<fh.size(); ++j) {
                         try {
@@ -277,8 +278,11 @@ int main()
         }
 #endif
 
-        // std::cout << std::endl << dst << std::endl;
+#if __USE_HOST>0
+        std::cout << dst << std::endl;
+#else
         std::cout << hdst << std::endl;
+#endif
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught ocl::be::error: " << e.what()

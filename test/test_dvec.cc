@@ -86,6 +86,8 @@ int main()
 
         using rtype = float;
         constexpr const std::size_t NMAX=16*16384;
+        std::cout << "testing buffers with up to "
+                  << NMAX-1 << " elements\n.";
         for (std::size_t i=4; i<NMAX; ++i) {
             if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers with "
