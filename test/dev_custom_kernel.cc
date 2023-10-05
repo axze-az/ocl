@@ -31,7 +31,7 @@ namespace ocl {
 
     }
 
-    
+
     namespace test {
         void
         test_custom_kernel();
@@ -46,6 +46,7 @@ namespace ocl {
 void
 ocl::test::test_custom_kernel()
 {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     for (std::size_t i=0; i<3; ++i) {
         const
             dvec<float> v0({2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f, 2.4f});
@@ -178,4 +179,5 @@ ocl::test::test_local_mem()
 int main()
 {
     ocl::test::test_local_mem();
+    ocl::test::test_custom_kernel();
 }
