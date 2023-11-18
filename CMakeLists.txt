@@ -95,17 +95,17 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
     endif()
 endif()
 
+# C++23 ?
+option(OCL_USE_CXX23 "use C++23" ON)
 # C++20 ?
-option(OCL_USE_CXX2A "use C++2A" ON)
-# C++17 ?
-option(OCL_USE_CXX17 "use C++17" ON)
-if (OCL_USE_CXX2A)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2a")
+option(OCL_USE_CXX20 "use C++20" ON)
+if (OCL_USE_CXX23)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2b")
 else()
-    if(OCL_USE_CXX17)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
+    if(OCL_USE_CXX20)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++20")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
     endif()
 endif()
 
