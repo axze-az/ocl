@@ -1,1 +1,4 @@
-RUSTICL_ENABLE=radeonsi RUSTICL_FEATURES=fp64 ./test/test_subnormal
+OCL_ICD_VENDORS=rusticl.icd \
+RUSTICL_ENABLE=radeonsi \
+RUSTICL_FEATURES=fp64 \
+./test/test_subnormal
