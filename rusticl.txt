@@ -1,0 +1,1 @@
+RUSTICL_ENABLE=radeonsi RUSTICL_FEATURES=fp64 ./test/test_subnormal
