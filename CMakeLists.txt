@@ -145,7 +145,7 @@ include_directories(../dev-cftal/test/include)
 #include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG)
 if(${Boost_FOUND})
     #message ("${Boost_FOUND}")
     #message ("${Boost_INCLUDE_DIRS}")
