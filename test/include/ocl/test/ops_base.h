@@ -4,7 +4,7 @@
 #include <ocl/config.h>
 #include <ocl/dvec.h>
 #include <ocl/random.h>
-#include <cftal/lvec.h>
+#include <cftal/vsvec.h>
 #include <random>
 
 #define USE_DEVICE_COMPARE 1
@@ -13,7 +13,7 @@ namespace ocl {
 
     namespace test {
 
-        using cftal::lvec;
+        using cftal::vsvec;
 
         template <typename _T>
         class ops_base {
@@ -29,15 +29,15 @@ namespace ocl {
             // comparison between _h_res_d and _h_res on device
             typename dvec<_T>::mask_type _cmp_res;
             // comparison between _h_res_d and _h_res on host
-            lvec<typename dvec<_T>::mask_type::value_type> _h_cmp_res;
+            vsvec<typename dvec<_T>::mask_type::value_type> _h_cmp_res;
             // device results on the host
-            lvec<_T> _h_d_res;
+            vsvec<_T> _h_d_res;
             // result host buffer
-            lvec<_T> _h_res;
+            vsvec<_T> _h_res;
             // arg0 host buffer
-            lvec<_T> _h_a0;
+            vsvec<_T> _h_a0;
             // arg1 host buffer
-            lvec<_T> _h_a1;
+            vsvec<_T> _h_a1;
             ops_base(size_t n, const _T& min_val, const _T& max_val);
             bool check_res(const std::string& msg);
             bool check_res(const std::string& msg,
@@ -88,7 +88,7 @@ ocl::test::ops_base<_T>::check_res(const std::string& msg)
     // copy host results to device
     _h_res_d.copy_from_host(&_h_res[0]);
     // compare on device and make the result buffer compatible with
-    // the results of lvec/vec comparisons
+    // the results of vsvec/vec comparisons
     _cmp_res = select(((_res == _h_res_d) |
                        ((_res != _res) & (_h_res_d != _h_res_d))),
                       -1, 0);
@@ -126,7 +126,7 @@ ocl::test::ops_base<_T>::check_res(const std::string& msg)
 #else
     _res.copy_to_host(&_h_d_res[0]);
     // check for equality or both nan
-    typename lvec<_T>::mask_type cv = (_h_d_res == _h_res)
+    typename vsvec<_T>::mask_type cv = (_h_d_res == _h_res)
         | ((_h_d_res != _h_d_res) & (_h_res != _h_res));
     bool res=all_of(cv);
     if (res==false) {
@@ -166,7 +166,7 @@ check_res(const std::string& msg, const _T& max_rel_tol)
     // copy host results to device
     _h_res_d.copy_from_host(&_h_res[0]);
     // compare on device and make the result buffer compatible with
-    // the results of lvec/vec comparisons
+    // the results of vsvec/vec comparisons
     dvec<_T> t=abs((_res - _h_res_d)/(_T(0.5)*(_res + _h_res_d)));
     _cmp_res = select((((_res != _res) & (_h_res_d != _h_res_d)) |
                        (_res == _h_res_d)|
@@ -174,7 +174,7 @@ check_res(const std::string& msg, const _T& max_rel_tol)
                       -1, 0);
 #if 0
     // compare on device and make the result buffer compatible with
-    // the results of lvec/vec comparisons
+    // the results of vsvec/vec comparisons
     _cmp_res = select(((_res == _h_res_d) |
                        ((_res != _res) & (_h_res_d != _h_res_d))),
                       -1, 0);

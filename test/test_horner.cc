@@ -327,8 +327,8 @@ ocl::test::horner_f32::perform()
 
     dvec<float> x2=_a0*_a0;
     dvec<float> x4=x2*x2;
-    lvec<float> h_x2=_h_a0 * _h_a0;
-    lvec<float> h_x4=h_x2 * h_x2;
+    vsvec<float> h_x2=_h_a0 * _h_a0;
+    vsvec<float> h_x4=h_x2 * h_x2;
 
     constexpr const auto max_rel_tol=0x1p-24f*2.0f; 
     // std::numeric_limits<float>::epsilon();

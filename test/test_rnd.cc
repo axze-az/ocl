@@ -1,7 +1,7 @@
 #include <ocl/ocl.h>
 #include <ocl/random.h>
 #include <ocl/test/tools.h>
-#include <cftal/lvec.h>
+#include <cftal/vsvec.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -247,7 +247,7 @@ int main()
         ocl::rnd_histogram hdst(0.0f, 1.0f, _M);
 #endif
         dvec<float> f;
-        cftal::lvec<float > fh(0.0f, _N);
+        cftal::vsvec<float > fh(0.0f, _N);
         for (int l=0; l<4; ++l) {
             for (int k=0; k<72; ++k) {
                 for (int i=0; i<16; ++i) {
