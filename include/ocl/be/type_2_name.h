@@ -105,7 +105,7 @@ namespace ocl {
         TYPE_2_NAME(cl_half8, half8);
         TYPE_2_NAME(cl_half16, half16);
 #endif
-        
+
         std::string
         type_2_name_vec_t(const char* tname, size_t n);
         std::string
