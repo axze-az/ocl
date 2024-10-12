@@ -1,0 +1,22 @@
+Compiler options:
+-save-temps
+under the default directory
+_temp_nn_xxx_yyy.il, _temp_nn_xxx_yyy.isa
+
+-save-temps=aaa
+under the default directory
+aaa_nn_xxx_yyy.il, aaa_nn_xxx_yyy.isa
+
+-save-temps=C:\\youdir\\bbb
+under C:\\youdir
+bbb_nn_xxx_yyy.il, bbb_nn_xxx_yyy.isa
+
+where xxx and yyy are the device name and kernel name for this build,
+respectively, and nn is an internal number to identify a build to
+avoid overriding temporary files. Note that this naming convention is
+subject to change.
+
+To avoid source changes, there are two environment variables that can
+be used to change CL options during the runtime.
+AMD_OCL_BUILD_OPTIONS — Overrides the CL options specified in clBuildProgram().
+AMD_OCL_BUILD_OPTIONS_APPEND — Appends options to those specified in clBuildProgram().
