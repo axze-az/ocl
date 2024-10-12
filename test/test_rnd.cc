@@ -76,8 +76,9 @@ namespace ocl {
             : _min(min_val), _max(max_val),
               _rec_interval(float(1)/(_max - _min)),
               _n(n),
-              _val(p, n+2, 0),
-              _val_hi(_val) {}
+              _val(p, 0u, n+2),
+              _val_hi(p, 0u, n+2) {
+        }
         void
         insert(const dvec<float>& v);
         std::vector<std::uint64_t>
@@ -221,7 +222,7 @@ int main()
     try {
 
         // const int _N=1000000;
-        const unsigned _N = 1*1024*1024;
+        const unsigned _N = 2*1024*1024;
 #if 0
         const float _R=1.f/_N;
         std::uniform_int_distribution<> dx(0, _N+1);
@@ -240,7 +241,7 @@ int main()
 #else
         ocl::rand t(_N);
 #endif
-        constexpr const int _M=2;
+        constexpr const int _M=10;
 #if __USE_HOST>0
         ocl::rnd_distribution<float, _M> dst(0, 1.0);
 #else
