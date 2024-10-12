@@ -155,7 +155,7 @@ insert_headers(std::ostream& s,
     s << "#if defined (cl_khr_fp16)\n"
          "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
          "#endif\n\n";
-#if 1
+#if 0
     const int f32_div_sqrt_correctly_round=0;
 #else
     const auto& d=b->dcq().d();
