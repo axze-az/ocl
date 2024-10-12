@@ -6,7 +6,7 @@
 namespace {
 
     cl_command_queue_properties
-    enable_ooo_execution(const ocl::cl::device& d) {
+    enable_ooo_execution(const ocl::be::device& d) {
         cl_command_queue_properties p=0;
         cl_command_queue_properties cqp(
             d.get_info<cl_command_queue_properties>(CL_DEVICE_QUEUE_PROPERTIES));
