@@ -20,7 +20,7 @@ namespace ocl {
                     const std::string_view& coeff_tname,
                     size_t _N);
     }
-    
+
     template <typename _X, typename _C1, typename _C0>
     auto
     horner(const _X& x, const _C1& c1, const _C0& c0);
@@ -30,7 +30,7 @@ namespace ocl {
     auto
     horner(const _X& x, const _CN& cn,
            const _CNM1& cnm1, _CS... cs);
-    
+
     template <typename _T, typename _C, size_t _N>
     auto
     horner(const dvec<_T>& x, const _C(&ci)[_N]);
@@ -38,7 +38,7 @@ namespace ocl {
     template <typename _T, typename _C, size_t _N>
     auto
     horner2(const dvec<_T>& x, const dvec<_T>& x2, const _C(&ci)[_N]);
-    
+
     template <typename _T, typename _C, size_t _N>
     auto
     horner4(const dvec<_T>& x, const dvec<_T>& x2, const dvec<_T>& x4,
@@ -53,7 +53,7 @@ ocl::horner(const dvec<_T>& x, const _C(&a)[_N])
     const auto tname= be::type_2_name<_T>::v();
     const auto cname= be::type_2_name<_C>::v();
     auto hb=impl::gen_horner(tname, cname, _N);
-    return custom_func<_T>(hb.name(), hb.body(), x, a); 
+    return custom_func<_T>(hb.name(), hb.body(), x, a);
 }
 
 template <typename _T, typename _C, size_t _N>
@@ -65,7 +65,7 @@ ocl::horner2(const dvec<_T>& x, const dvec<_T>& x2,
     const auto tname= be::type_2_name<_T>::v();
     const auto cname= be::type_2_name<_C>::v();
     auto hb=impl::gen_horner2(tname, cname, _N);
-    return custom_func<_T>(hb.name(), hb.body(), x, x2, a); 
+    return custom_func<_T>(hb.name(), hb.body(), x, x2, a);
 }
 
 template <typename _T, typename _C, size_t _N>
@@ -77,7 +77,7 @@ ocl::horner4(const dvec<_T>& x, const dvec<_T>& x2, const dvec<_T>& x4,
     const auto tname= be::type_2_name<_T>::v();
     const auto cname= be::type_2_name<_C>::v();
     auto hb=impl::gen_horner4(tname, cname, _N);
-    return custom_func<_T>(hb.name(), hb.body(), x, x2, x4, a); 
+    return custom_func<_T>(hb.name(), hb.body(), x, x2, x4, a);
 }
 
 template <typename _X, typename _C1, typename _C0>
