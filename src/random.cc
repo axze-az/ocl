@@ -149,7 +149,7 @@ mrand48()
 {
     next();
     const unsigned shift=48-32;
-    return cvt<dvec<std::int32_t> >(_state>>shift);
+    return as<dvec<std::int32_t> >(cvt<dvec<std::uint32_t> >(_state>>shift));
 }
 
 ocl::dvec<float>
