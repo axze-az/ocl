@@ -267,7 +267,7 @@ ocl::dop::names::div_base::body(const char* tname)
 std::string
 ocl::dop::names::div_base::body(const std::string& tname)
 {
-    std::string inl="inline ";
+    std::string inl="static inline ";
 #if 0
     // not precise enough
     // -0x1.9d9e4cp+0/-0x1.afc97ep+0=0x1.ea74c2p-1 != 0x1.ea74cp-1 0x1p-24

@@ -21,7 +21,7 @@ ocl::dop::names::f_sqrt_base::body(const char* tname)
 std::string
 ocl::dop::names::f_sqrt_base::body(const std::string& tname)
 {
-    std::string inl="inline ";
+    std::string inl="static inline ";
     std::string fbody =
         inl +
         tname + " __sqrt_" + tname + "(" +
@@ -382,8 +382,8 @@ ocl::impl::permute2(const std::string_view& tname,
         "        " << iname << " sidx= idx[gid];\n"
         "        " << iname << " in= (" << iname << ")n;\n"
         "        int zero= sidx < 0;\n"
-        "        __global const " << tname << "* src= sidx < in ? src0 : src1;\n" 
-        "        sidx = sidx < in ? sidx : sidx - in;\n" 
+        "        __global const " << tname << "* src= sidx < in ? src0 : src1;\n"
+        "        sidx = sidx < in ? sidx : sidx - in;\n"
         "        res[gid] = zero ? 0 : src[sidx];\n"
         "    }\n"
         "}\n";
