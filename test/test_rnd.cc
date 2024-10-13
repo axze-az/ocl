@@ -115,7 +115,7 @@ ocl::rnd_histogram::insert(const dvec<float>& v)
         "        o = (v > max_val) ? entries + 1 : o;\n"
         "        o = (v < min_val) ? entries : o;\n"
         "        uint old=atomic_add((h+o), 1);\n"
-        "        uint inc_hi= old == ~0 ? 1 : 0;\n"
+        "        uint inc_hi= select(0, 1, old == ~0);\n"
         "        atomic_add((h_hi+o), inc_hi);\n"
         "    }\n"
         "}\n";
