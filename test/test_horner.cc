@@ -35,7 +35,7 @@ clang -S -emit-llvm -o $1.ll -include /usr/local/include/clc/clc.h
 
 
 namespace ocl {
-    
+
     namespace impl {
 
         template <typename _T, typename _C, size_t _N, size_t _I>
@@ -58,7 +58,7 @@ namespace ocl {
                 return x*e + p[_N-1];
             }
         };
-        
+
     }
 
     namespace test {
@@ -130,7 +130,7 @@ namespace ocl {
             static
             constexpr
             const double exp_c13=+1.6594686274338619941159e-10;
-        
+
             static
             const float coeff4[4];
 
@@ -157,7 +157,7 @@ namespace ocl {
 
             static
             const float coeff12[12];
-            
+
             static
             const float coeff13[13];
 
@@ -169,7 +169,7 @@ namespace ocl {
                 : b_t(n, float(-M_LN2/2), float(2*M_LN2/2)) {}
             bool perform();
         };
-        
+
     }
 
 };
@@ -330,9 +330,9 @@ ocl::test::horner_f32::perform()
     vsvec<float> h_x2=_h_a0 * _h_a0;
     vsvec<float> h_x4=h_x2 * h_x2;
 
-    constexpr const auto max_rel_tol=0x1p-24f*2.0f; 
+    constexpr const auto max_rel_tol=0x1p-24f*1.5f;
     // std::numeric_limits<float>::epsilon();
-    
+
     _res = horner(_a0, coeff4);
     _h_res = horner(_h_a0, coeff4);
     rc &= check_res("horner(v, c[4])", max_rel_tol);
@@ -341,7 +341,7 @@ ocl::test::horner_f32::perform()
     rc &= check_res("horner2(v, c[4])", 2*max_rel_tol);
     _res = horner4(_a0, x2, x4, coeff4);
     rc &= check_res("horner4(v, c[4])", 2*max_rel_tol);
-    
+
     _res = horner(_a0, coeff5);
     _h_res = horner(_h_a0, coeff5);
     rc &= check_res("horner(v, c[5])", max_rel_tol);
@@ -405,7 +405,7 @@ ocl::test::horner_f32::perform()
     rc &= check_res("horner2(v, c[12])", 2*max_rel_tol);
     _res = horner4(_a0, x2, x4, coeff12);
     rc &= check_res("horner4(v, c[12])", 4*max_rel_tol);
-    
+
     _res = horner(_a0, coeff13);
     _h_res = horner(_h_a0, coeff13);
     rc &= check_res("horner(v, c[13])", max_rel_tol);
@@ -436,7 +436,7 @@ int main()
         using rtype = float;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
-        for (std::size_t i=4; i<16*16384; i <<=1) {
+        for (std::size_t i=4; i<32*1024*1024; i <<=1) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
