@@ -257,7 +257,7 @@ gen_kernel_src(_RES& res, const _SRC& r, const void* cookie)
     s << def_custom_func(fnames, r);
 
     // the real kernel follows now
-    s << "inline void " << k_name;
+    s << "static inline void " << k_name;
     s << "\n(\n";
     const char nl='\n';
     // argument generation

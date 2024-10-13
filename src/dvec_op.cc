@@ -159,7 +159,7 @@ eval_vars_dvec_t(const std::string_view& tname,
     s << spaces(8) << tname
       << " v" << arg_num;
     if (ro== true) {
-        s << " = arg"
+        s << "= arg"
           << arg_num << "[gid];";
     }
     std::string a(s.str());

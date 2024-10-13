@@ -1,7 +1,31 @@
 #include "ocl/expr_custom.h"
 
+
+std::string
+ocl::impl::__cf_body::add_static_to_body(const std::string& b)
+{
+    using namespace std::literals;
+    static constexpr const std::string_view s[]={
+        "static "sv,
+        "static\t"sv,
+        "static\n"sv,
+        "static\r"sv
+    };
+    bool prepend=true;
+    for (auto bs=std::cbegin(s), be=std::cend(s); bs != be; ++bs) {
+        if (b.starts_with(*bs)) {
+            prepend = false;
+            break;
+        }
+    }
+    std::string r=
+        prepend ? std::string(s[0]) : std::string();
+    r += b;
+    return r;
+}
+
 ocl::impl::__cf_body::__cf_body(const std::string& n, const std::string& b)
-    : _name(n), _body(b)
+    : _name(n), _body(add_static_to_body(b))
 {
 }
 

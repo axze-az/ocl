@@ -14,7 +14,7 @@ fill_with_global_id(std::size_t s, be::data_ptr p)
             "    if (gid < n) {\n"
             "        d[gid]=gid;\n"
             "    }\n"
-            "}";
+            "}\n";
         auto ck=custom_kernel<std::uint32_t>(kname, ksrc, r);
         execute_custom(ck, s, p);
     }
