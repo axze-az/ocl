@@ -155,7 +155,7 @@ insert_headers(std::ostream& s,
     s << "#if defined (cl_khr_fp16)\n"
          "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
          "#endif\n\n";
-#if 1
+#if 0
     const int f32_div_sqrt_correctly_round=0;
 #else
     const auto& d=b->dcq().d();
@@ -192,11 +192,17 @@ compile(const std::string& s, const std::string& k_name,
     try {
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=clc++");
         // pgm=program::build_with_source(ss, d->c(), "-cl-std=CL1.1");
-        pgm.build( "-cl-std=CL1.1 "
-                   // "-cl-mad-enable "
-                   // "-cl-fp32-correctly-rounded-divide-sqrt "
-		   // "-opaque-pointers"
-	    );
+        std::string build_args="-cl-std=CL1.2"
+                               " -cl-mad-enable";
+        const auto& d=b->dcq().d();
+        auto f32_prop=
+            d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
+        const int f32_div_sqrt_correctly_round=
+            (f32_prop & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT) != 0 ? 1 : 0;
+        if (f32_div_sqrt_correctly_round) {
+            build_args += " -cl-fp32-correctly-rounded-divide-sqrt";
+        }
+        pgm.build(build_args);
     }
     catch (const be::error& e) {
         std::cerr << "error info: " << e.what() << '\n';
