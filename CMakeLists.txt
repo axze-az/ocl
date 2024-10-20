@@ -66,9 +66,56 @@ endif()
 
 #message(${CMAKE_CXX_COMPILER_ID})
 #message(${CMAKE_LIBRARY_ARCHITECTURE})
-set(OCL_GCC_ARCH "native" CACHE STRING "argument for gcc -march=")
+set(OCL_GCC_ARCH "native" CACHE STRING "argument for gcc option -march=")
+set(OCL_GCC_TUNE "" CACHE STRING "argument for gcc option -mtune=")
 if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # please note that -Os does not work for unknown reasons
+        # whereas -O0, -O1, -O2, -O3 do
+        set (CMAKE_CXX_FLAGS_RELEASE
+            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=${OCL_GCC_ARCH}")
+        set (CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} -O0 -march=${OCL_GCC_ARCH}")
+        set (CMAKE_CXX_FLAGS_PROFILE
+            "${CMAKE_CXX_FLAGS_PROFILE} -O3 -march=${OCL_GCC_ARCH}")
+        if (NOT (OCL_GCC_TUNE STREQUAL ""))
+            set (CMAKE_CXX_FLAGS_RELEASE
+                "${CMAKE_CXX_FLAGS_RELEASE} -mtune=${OCL_GCC_TUNE}")
+            set (CMAKE_CXX_FLAGS_DEBUG
+                "${CMAKE_CXX_FLAGS_DEBUG} -mtune=${OCL_GCC_TUNE}")
+            set (CMAKE_CXX_FLAGS_PROFILE
+                "${CMAKE_CXX_FLAGS_PROFILE} -mtune=${OCL_GCC_TUNE}")
+            if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+                # undefine the tune flag from arch
+                if (NOT (OCL_GCC_ARCH STREQUAL ""))
+                    set (CMAKE_CXX_FLAGS_RELEASE
+                        "${CMAKE_CXX_FLAGS_RELEASE} -U__tune_${OCL_GCC_ARCH}__")
+                    set (CMAKE_CXX_FLAGS_DEBUG
+                        "${CMAKE_CXX_FLAGS_DEBUG} -U__tune_${OCL_GCC_ARCH}__")
+                    set (CMAKE_CXX_FLAGS_PROFILE
+                        "${CMAKE_CXX_FLAGS_PROFILE} -U__tune_${OCL_GCC_ARCH}__")
+                endif()
+                set (CMAKE_CXX_FLAGS_RELEASE
+                    "${CMAKE_CXX_FLAGS_RELEASE} -D__tune_${OCL_GCC_TUNE}__=1")
+                set (CMAKE_CXX_FLAGS_DEBUG
+                    "${CMAKE_CXX_FLAGS_DEBUG} -D__tune_${OCL_GCC_TUNE}__=1")
+                set (CMAKE_CXX_FLAGS_PROFILE
+                    "${CMAKE_CXX_FLAGS_PROFILE} -D__tune_${OCL_GCC_TUNE}__=1")
+            endif()
+        endif()
+        #set (CMAKE_CXX_FLAGS_RELEASE
+        #    "${CMAKE_CXX_FLAGS_RELEASE} -march=x86-64-v3")
+        #set (CMAKE_CXX_FLAGS_DEBUG
+        #    "${CMAKE_CXX_FLAGS_DEBUG}  -march=x86-64-v3")
+        #set (CMAKE_CXX_FLAGS_PROFILE
+        #    "${CMAKE_CXX_FLAGS_PROFILE} -march=x86-64-v3")
+    endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        #set (CMAKE_CXX_FLAGS_RELEASE
+        #    "${CMAKE_CXX_FLAGS_RELEASE} -fno-tree-ter")
+        set (CMAKE_CXX_FLAGS_RELEASE
+            "${CMAKE_CXX_FLAGS_RELEASE} -fexpensive-optimizations")
         set (CMAKE_CXX_FLAGS_RELEASE
             "${CMAKE_CXX_FLAGS_RELEASE} -fsched-pressure")
         set (CMAKE_CXX_FLAGS_RELEASE
@@ -83,15 +130,6 @@ if ("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES ^x86_64* )
         #    "${CMAKE_CXX_FLAGS_RELEASE} -fselective-scheduling2")
         #set (CMAKE_CXX_FLAGS_RELEASE
         #    "${CMAKE_CXX_FLAGS_RELEASE} -fsel-sched-pipelining")
-    endif()
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
-        set (CMAKE_CXX_FLAGS_RELEASE
-            "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=${OCL_GCC_ARCH}")
-        set (CMAKE_CXX_FLAGS_DEBUG
-            "${CMAKE_CXX_FLAGS_DEBUG} -Og -march=${OCL_GCC_ARCH}")
-        set (CMAKE_CXX_FLAGS_PROFILE
-            "${CMAKE_CXX_FLAGS_PROFILE} -O3 -march=${OCL_GCC_ARCH}")
     endif()
 endif()
 
