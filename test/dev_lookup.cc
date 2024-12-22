@@ -11,7 +11,7 @@ namespace ocl {
                  const std::string_view& iname);
         };
     }
-    
+
     template <typename _T, typename _I>
     class variable_vec_lookup_table : private impl::variable_vec_lookup_table {
         using base_type = impl::variable_vec_lookup_table;
@@ -28,7 +28,7 @@ namespace ocl {
     make_variable_lookup_table(const dvec<_I>& idx) {
         return variable_vec_lookup_table<_T, _I>(idx);
     };
-    
+
     namespace test {
         void
         lookup();
@@ -79,7 +79,9 @@ ocl::test::lookup()
     };
     dvec<float> r({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f,
                    -1.0f, -2.0f, -3.0f, -4.0f, -5.0f, -6.0f, -7.0f, -8.0f});
+    dump(r, "r: ");
     dvec<int> i=(cvt<dvec<int>>(r)-1) & 7;
+    dump(i, "i= (r-1) & 7 ");
     auto lck=make_variable_lookup_table<float>(i);
     dvec<float> rs=lck.from(tbl);
     dump(rs, "rs: ");
