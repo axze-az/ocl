@@ -18,33 +18,40 @@ namespace ocl {
         }
 
         template <typename _C>
-        void
-        dump(const _C& vh, const std::string& pfx="") {
+        std::ostream&
+        dump(std::ostream& s, const _C& vh, const std::string& pfx="") {
             using std::size;
             using std::cbegin;
             using std::cend;
             std::size_t n=size(vh);
-            std::cout << &vh << ' ' << pfx << " (" << size(vh)
-                      << " elements)\n";
+            s << &vh << ' ' << pfx << " (" << size(vh)
+              << " elements)\n";
             std::size_t i=0;
             for (auto b=cbegin(vh), e=cend(vh); b!=e; ++b, ++i) {
-                std::cout << *b;
+                s << *b;
                 if ((i&7)==7) {
-                    std::cout << '\n';
+                    s << '\n';
                 } else if (i+1 < n){
-                    std::cout << ", ";
+                    s << ", ";
                 }
             }
             if ((n & 7) != 0) {
-                std::cout << '\n';
+                s << '\n';
             }
+            return s;
         }
 
         template <typename _T>
-        void
-        dump(const dvec<_T>& v, const std::string& pfx="") {
+        std::ostream&
+        dump(std::ostream& s, const dvec<_T>& v, const std::string& pfx="") {
             std::vector<_T> vh(v);
-            dump(vh, pfx);
+            return dump(s, vh, pfx);
+        }
+
+        template <typename _C>
+        void
+        dump(const _C& vh, const std::string& pfx="") {
+            dump(std::cout, vh, pfx);
         }
 
 #if 0
