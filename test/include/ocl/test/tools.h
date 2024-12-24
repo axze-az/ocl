@@ -89,13 +89,21 @@ namespace ocl {
             d.copy_to_host(&dh[0]);
             return dh;
         }
-        
+
         // compare the results of a calculation between device and host
         template <typename _T>
         bool
-        compare_d_h(const dvec<_T>& d, const vsvec<_T> h) {
+        compare_d_h_on_host(const dvec<_T>& d, const vsvec<_T> h) {
             vsvec<_T> dh=make_vsvec(d);
             typename vsvec<_T>::mask_type cv=dh == h;
+            return all_of(cv);
+        }
+
+        template <typename _T>
+        bool
+        compare_d_h_on_device(const dvec<_T>& d, const vsvec<_T> h) {
+            dvec<_T> hd=make_dvvec(d);
+            typename vsvec<_T>::mask_type cv=d == hd;
             return all_of(cv);
         }
     }
