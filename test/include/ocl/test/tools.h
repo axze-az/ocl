@@ -16,26 +16,38 @@ namespace ocl {
         make_vec(std::size_t s, const _T& v) {
             return dvec<_T>(s, v);
         }
-        
-        template <typename _T>
+
+        template <typename _C>
         void
-        dump(const dvec<_T>& v, const std::string& pfx="") {
-            std::vector<_T> vh(v);
-            std::cout << &v << ' ' << pfx << " (" << vh.size()
+        dump(const _C& vh, const std::string& pfx="") {
+            using std::size;
+            using std::cbegin;
+            using std::cend;
+            std::size_t n=size(vh);
+            std::cout << &vh << ' ' << pfx << " (" << size(vh)
                       << " elements)\n";
-            for (std::size_t i=0; i<vh.size(); ++i) {
-                std::cout << vh[i];
+            std::size_t i=0;
+            for (auto b=cbegin(vh), e=cend(vh); b!=e; ++b, ++i) {
+                std::cout << *b;
                 if ((i&7)==7) {
                     std::cout << '\n';
-                } else if (i+1 < vh.size()){
+                } else if (i+1 < n){
                     std::cout << ", ";
                 }
             }
-            if ((vh.size() & 7) != 0) {
+            if ((n & 7) != 0) {
                 std::cout << '\n';
             }
         }
 
+        template <typename _T>
+        void
+        dump(const dvec<_T>& v, const std::string& pfx="") {
+            std::vector<_T> vh(v);
+            dump(vh, pfx);
+        }
+
+#if 0
         template <typename _T>
         void
         dump(const cftal::vsvec<_T>& vh, const std::string& pfx="") {
@@ -53,7 +65,8 @@ namespace ocl {
                 std::cout << '\n';
             }
         }
-        
+#endif
+
         // create a dvec<_T> from an vsvec
         template <typename _T>
         dvec<_T>
