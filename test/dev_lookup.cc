@@ -22,6 +22,10 @@ namespace ocl {
         template <std::size_t _N>
         auto
         from(const _T(&tbl)[_N]) const;
+
+        template <std::size_t _N>
+        auto
+        from(const _T(&tbl)[_N], size_t zero_offset) const;
     };
 
     template <typename _T, typename _I>
@@ -48,12 +52,13 @@ gen_body(const std::string_view& tname, const std::string_view& iname)
         "ulong n,\n"
         "__global " << tname << "* res,\n"
         "__global const " << iname << "* idx,\n"
-        "__arg_local const " << tname << "* s\n"
+        "__arg_local const " << tname << "* s,\n"
+	"ulong zero_offset\n"
         ")\n"
         "{\n"
         "    ulong gid=get_global_id(0);\n"
         "    if (gid < n) {\n"
-        "        res[gid] = s[idx[gid]];\n"
+        "        res[gid] = s[zero_offset+idx[gid]];\n"
         "    }\n"
         "}\n";
     const std::string ksrc=s.str();
@@ -63,13 +68,24 @@ gen_body(const std::string_view& tname, const std::string_view& iname)
 template <typename _T, typename _I>
 template <std::size_t _N>
 auto
-ocl::variable_dvec_lookup_table<_T, _I>::from(const _T(&tbl)[_N])
+ocl::variable_dvec_lookup_table<_T, _I>::
+from(const _T(&tbl)[_N], size_t zero_offset)
     const
 {
     const auto tname=be::type_2_name<_T>::v();
     const auto iname=be::type_2_name<_I>::v();
     impl::__ck_body ckb=base_type::gen_body(tname, iname);
-    return custom_kernel<_T>(ckb.name(), ckb.body(), *_idx, tbl);
+    return custom_kernel<_T>(ckb.name(), ckb.body(), *_idx, tbl, zero_offset);
+}
+
+template <typename _T, typename _I>
+template <std::size_t _N>
+auto
+ocl::variable_dvec_lookup_table<_T, _I>::
+from(const _T(&tbl)[_N])
+    const
+{
+    return from(tbl, 0);
 }
 
 void
