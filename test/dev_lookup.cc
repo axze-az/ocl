@@ -102,6 +102,17 @@ ocl::test::lookup()
     auto lck=make_variable_lookup_table<float>(i);
     dvec<float> rs=lck.from(tbl);
     dump(rs, "result after lookup: ");
+
+    static const float tblnz[]={
+        -3.0f, -2.0f, -1.0f, +0.0f, +1.0f, +2.0f, +3.0f
+    };
+    dvec<int> inz{-3, -2, -1, +0, +1, +2, +3,
+                  +3, +2, +1, +0, -1, -2, -3};
+    dump(tblnz, "lookup_table: ");
+    dump(inz, "index=");
+    auto lcknz=make_variable_lookup_table<float>(inz);
+    dvec<float> rsnz=lcknz.from(tblnz, 3);
+    dump(rsnz, "result after lookup: ");
 }
 
 int main()
