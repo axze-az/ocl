@@ -1,0 +1,3 @@
+[submodule "cftal"]
+	path = cftal
+	url = srv1:/usr/local/git/cftal
