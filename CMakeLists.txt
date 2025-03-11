@@ -42,7 +42,7 @@ set (OCL_VERSION_STR
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
     # warnings for all
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-attributes")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-attributes")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
@@ -166,20 +166,16 @@ option(OCL_STATIC_LIB "create static libocl.a" OFF)
 # Full test ?
 option(OCL_FULL_TEST "perform a full test with long compile times" OFF)
 
-include_directories(include)
-include_directories(test/include)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include/ocl)
 include_directories(${PROJECT_BINARY_DIR}/include)
-
+include_directories(include)
+include_directories(test/include)
+include_directories(cftal/include)
+include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 configure_file("include/ocl/config.h.in"
                "${PROJECT_BINARY_DIR}/include/ocl/config.h")
 
-include_directories(../cftal/gcc14/include)
-include_directories(../cftal/include)
-include_directories(../cftal/test/include)
-include_directories(../dev-cftal/include)
-include_directories(../dev-cftal/test/include)
 #include_directories(${PROJECT_BINARY_DIR}/cftal/include)
 
 find_package(Threads REQUIRED)
@@ -194,7 +190,7 @@ message("open cl library: ${LIBOPENCL}")
 find_library(LIBM m)
 find_library(LIB_BOOST_SYSTEM boost_system)
 
-#add_subdirectory(../cftal cftal)
+add_subdirectory(cftal)
 add_subdirectory(src)
 add_subdirectory(test)
 
