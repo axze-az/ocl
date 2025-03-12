@@ -402,24 +402,51 @@ namespace ocl {
     // convert with round nearest even
     template <class _D, class _S>
     inline
-    expr<dop::cvt<_D>, _S, void>
-    cvt(const _S& s) {
-        return expr<dop::cvt<_D>, _S, void>(s);
+    expr<dop::cvt<_D>, dvec<_S>, void>
+    cvt(const dvec<_S>& s) {
+        return expr<dop::cvt<_D>, dvec<_S>, void>(s);
+    }
+
+    template <class _D, class _S,
+              template <class _T> class _DOP,
+              class _L, class _R>
+    inline
+    expr<dop::cvt<_D>, expr<_DOP<dvec<_S> >, _L, _R>, void>
+    cvt(const expr<_DOP<dvec<_S> >, _L, _R>& s) {
+        return expr<dop::cvt<_D>, expr<_DOP<dvec<_S> >, _L, _R> , void>(s);
     }
 
     // convert with round to zero
     template <class _D, class _S>
     inline
-    expr<dop::cvt_rz<_D>, _S, void>
-    cvt_rz(const _S& s) {
-        return expr<dop::cvt_rz<_D>, _S, void>(s);
+    expr<dop::cvt_rz<_D>, dvec<_S>, void>
+    cvt_rz(const dvec<_S>& s) {
+        return expr<dop::cvt_rz<_D>, dvec<_S>, void>(s);
+    }
+
+    template <class _D, class _S,
+              template <class _T> class _DOP,
+              class _L, class _R>
+    inline
+    expr<dop::cvt_rz<_D>, expr<_DOP<dvec<_S> >, _L, _R>, void>
+    cvt_rz(const expr<_DOP<dvec<_S> >, _L, _R>& s) {
+        return expr<dop::cvt_rz<_D>, expr<_DOP<dvec<_S> >, _L, _R> , void>(s);
     }
 
     template <class _D, class _S>
     inline
-    expr<dop::as<_D>, _S, void>
-    as(const _S& s) {
-        return expr<dop::as<_D>, _S, void>(s);
+    expr<dop::as<_D>, dvec<_S>, void>
+    as(const dvec<_S>& s) {
+        return expr<dop::as<_D>, dvec<_S>, void>(s);
+    }
+
+    template <class _D, class _S,
+              template <class _T> class _DOP,
+              class _L, class _R>
+    inline
+    expr<dop::as<_D>, expr<_DOP<dvec<_S> >, _L, _R>, void>
+    as(const expr<_DOP<dvec<_S> >, _L, _R>& s) {
+        return expr<dop::as<_D>, expr<_DOP<dvec<_S> >, _L, _R> , void>(s);
     }
 
     DEF_UNARY_FUNC(rint, rint_f)
