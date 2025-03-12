@@ -655,7 +655,7 @@ namespace ocl {
 
         template <typename _T>
         typename dvec<_T>::mask_value_type
-        xxx_of(const __ck_body& nb, const dvec<_T>& z);
+        dvec_xxx_of(const __ck_body& nb, const dvec<_T>& z);
 
     }
 
@@ -800,7 +800,7 @@ def_custom_func(
 
 template <typename _T>
 typename ocl::dvec<_T>::mask_value_type
-ocl::impl::xxx_of(const __ck_body& nb, const dvec<_T>& v)
+ocl::impl::dvec_xxx_of(const __ck_body& nb, const dvec<_T>& v)
 {
     auto p=v.backend_data();
     using type= typename dvec<_T>::mask_value_type;
@@ -828,7 +828,7 @@ ocl::all_of(const dvec<_T>& v)
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
     auto nb=impl::gen_all_of(tname);
-    auto r=impl::xxx_of(nb, v);
+    auto r=impl::dvec_xxx_of(nb, v);
     return r!=0;
 }
 
@@ -839,7 +839,7 @@ ocl::none_of(const dvec<_T>& v)
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
     auto nb=impl::gen_none_of(tname);
-    auto r=impl::xxx_of(nb, v);
+    auto r=impl::dvec_xxx_of(nb, v);
     return r==0;
 }
 
@@ -850,7 +850,7 @@ ocl::any_of(const dvec<_T>& v)
     using type= typename dvec<_T>::mask_value_type;
     const auto tname=be::type_2_name<type>::v();
     auto nb=impl::gen_any_of(tname);
-    auto r=impl::xxx_of(nb, v);
+    auto r=impl::dvec_xxx_of(nb, v);
     return r!=0;
 }
 
