@@ -1,4 +1,5 @@
 #include "ocl/be/types.h"
+#include <algorithm>
 
 ocl::cl::
 device::device(cl_device_id id, bool retain)
@@ -154,6 +155,14 @@ extensions() const
         i=n+1;
     }
     return r;
+}
+
+bool
+ocl::cl::device::
+supports_extension(const std::string& name) const
+{
+    auto v=extensions();
+    return std::find(std::cbegin(v), std::cend(v), name) != std::cend(v);
 }
 
 uint64_t

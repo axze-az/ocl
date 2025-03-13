@@ -89,7 +89,7 @@ namespace ocl {
                 accelerator = CL_DEVICE_TYPE_ACCELERATOR
             };
             device() : _id(0) {}
-            device(cl_device_id, bool retain=true);
+            explicit device(cl_device_id, bool retain=true);
             device(const device& r);
             device(device&& r);
             device& operator=(const device& r);
@@ -118,6 +118,8 @@ namespace ocl {
             std::string driver_version() const;
             std::vector<std::string>
             extensions() const;
+            bool
+            supports_extension(const std::string& name) const;
             uint64_t global_memory_size() const;
             uint64_t local_memory_size() const;
             uint32_t address_bits() const;
