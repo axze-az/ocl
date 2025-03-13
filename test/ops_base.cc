@@ -6,6 +6,6 @@ namespace ocl {
 
         template class ops_base<float>;
         template class ops_base<double>;
-        
+
     }
 }
