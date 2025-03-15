@@ -1,4 +1,5 @@
 #include "ocl/be/types.h"
+#include <algorithm>
 
 ocl::cl::
 device::device(cl_device_id id, bool retain)
@@ -118,6 +119,13 @@ device::is_subdevice()
     return false;
 }
 
+cl_device_type
+ocl::cl::device::
+type() const
+{
+    return get_info<cl_device_type>(CL_DEVICE_TYPE);
+}
+
 std::string
 ocl::cl::device::
 name() const
@@ -154,6 +162,15 @@ extensions() const
         i=n+1;
     }
     return r;
+}
+
+bool
+ocl::cl::device::supports_extension(const std::string& n)
+    const
+{
+    auto v=extensions();
+    auto e=std::cend(v);
+    return std::find(std::cbegin(v), e, n) != e;
 }
 
 uint64_t
