@@ -172,12 +172,12 @@ ocl::be::devices()
 
 std::vector<ocl::be::device>
 ocl::be::filter_devices(const std::vector<device>& v,
-                          device_type::type dt)
+                        device_type::type dt)
 {
     std::vector<device> r;
     for (std::size_t i=0; i< v.size(); ++i) {
         const device& d= v[i];
-        cl_device_type t(d.get_info<cl_device_type>(CL_DEVICE_TYPE));
+        cl_device_type t=d.type();
         if ((t & static_cast<cl_device_type>(dt)) ==
             static_cast<cl_device_type>(dt))
             r.push_back(d);
@@ -209,6 +209,18 @@ ocl::be::cpu_devices()
 {
     std::vector<device> all_devs(devices());
     return cpu_devices(all_devs);
+}
+
+float
+ocl::be::cores_per_unit(const device& d)
+{
+    float cores_per_unit=1;
+#if 0
+    if (d.supports_extension(CL_AMD_DEVICE_ATTRIBUTE_QUERY_EXTENSION_NAME)) {
+
+    }
+#endif
+    return cores_per_unit;
 }
 
 ocl::be::device
