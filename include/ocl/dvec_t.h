@@ -100,7 +100,7 @@ namespace ocl {
         template <template <class _V> class _OP,
                   class _L, class _R>
         dvec(const expr<_OP<dvec<_T> >, _L, _R>& r);
-        // assignment from scalar
+        // assignment of expressions scalar
         template <template <class _V> class _OP,
                   class _L, class _R>
         dvec& operator=(const expr<_OP<dvec<_T> >, _L, _R>& r);

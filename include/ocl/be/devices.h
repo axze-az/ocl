@@ -89,6 +89,10 @@ namespace ocl {
         std::vector<device>
         cpu_devices();
 
+        // determine the f32 gflops of the device
+        float
+        gflops_f32(const device& d);
+
         // determine the cores per unit
         float
         cores_per_unit(const device& d);

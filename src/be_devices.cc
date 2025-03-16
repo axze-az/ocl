@@ -1,6 +1,7 @@
 #include "ocl/be/devices.h"
 #include <boost/compute/system.hpp>
 #include <iostream>
+#include <iomanip>
 
 std::ostream&
 ocl::be::operator<<(std::ostream& s, const device_info& dd)
@@ -74,9 +75,17 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
     cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
     s << "global memory cache line size: " << cs << '\n';
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+    float gflops=static_cast<float>(t)*0.001f;
     s << "max freq: " << t << " MHz\n";
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+    gflops *= static_cast<float>(t);
     s << "max compute units: " << t << '\n';
+    gflops *= cores_per_unit(d);
+    auto fpcfg=d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
+    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA)
+        gflops *= 2.0f;
+    s << "estimated GFLOPS(float): " << std::fixed
+      << std::setprecision(1) << gflops << '\n';
     return s;
 }
 
@@ -212,14 +221,31 @@ ocl::be::cpu_devices()
 }
 
 float
+ocl::be::gflops_f32(const device& d)
+{
+    cl_uint t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+    float gflops=static_cast<float>(t)*0.001f;
+    t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+    gflops *= static_cast<float>(t);
+    gflops *= cores_per_unit(d);
+    auto fpcfg=d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
+    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA)
+        gflops *= 2.0f;
+    return gflops;
+}
+
+float
 ocl::be::cores_per_unit(const device& d)
 {
     float cores_per_unit=1;
-#if 0
     if (d.supports_extension(CL_AMD_DEVICE_ATTRIBUTE_QUERY_EXTENSION_NAME)) {
-
+        cl_uint simd_per_unit=
+            d.get_info<cl_uint>(CL_DEVICE_SIMD_PER_COMPUTE_UNIT_AMD);
+        cl_uint simd_instruction_width=
+            d.get_info<cl_uint>(CL_DEVICE_SIMD_WIDTH_AMD);
+        cores_per_unit=static_cast<float>(simd_per_unit)*
+            static_cast<float>(simd_instruction_width);
     }
-#endif
     return cores_per_unit;
 }
 
@@ -230,16 +256,17 @@ ocl::be::device_with_max_freq_x_units(const std::vector<device>& v)
         throw error(CL_DEVICE_NOT_FOUND);
     }
     device r;
-    double p(-1);
+    float sp(-1.0f);
     for (std::size_t i=0; i<v.size(); ++i) {
         const device& d= v[i];
         cl_uint t= d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
-        double pi(t);
+        float spi(t);
         t= d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
-        pi *= double(t);
-        if (pi> p) {
+        spi *= float(t);
+        spi *= cores_per_unit(d);
+        if (spi> sp) {
             r=d;
-            p=pi;
+            sp=spi;
         }
     }
     return r;
