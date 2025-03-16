@@ -321,11 +321,19 @@ namespace ocl {
         struct cvt {
             static
             std::string body(const std::string& l) {
+#if 0
+                std::string res("((");
+                res += be::type_2_name<_D>::v();
+                res +=")";
+                res +=l;
+                res +=")";
+#else
                 std::string res("convert_");
                 res += be::type_2_name<_D>::v();
                 res += "_rte(";
                 res += l;
                 res += ")";
+#endif
                 return res;
             }
         };
