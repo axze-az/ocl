@@ -72,20 +72,14 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
         s << "none";
     }
     s << '\n';
-    cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
+    cs=d.get_info<cl_uint>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
     s << "global memory cache line size: " << cs << '\n';
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
-    float gflops=static_cast<float>(t)*0.001f;
     s << "max freq: " << t << " MHz\n";
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
-    gflops *= static_cast<float>(t);
     s << "max compute units: " << t << '\n';
-    gflops *= cores_per_unit(d);
-    auto fpcfg=d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
-    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA)
-        gflops *= 2.0f;
     s << "estimated GFLOPS(float): " << std::fixed
-      << std::setprecision(1) << gflops << '\n';
+      << std::setprecision(1) << gflops_f32(d) << '\n';
     return s;
 }
 
@@ -229,8 +223,15 @@ ocl::be::gflops_f32(const device& d)
     gflops *= static_cast<float>(t);
     gflops *= cores_per_unit(d);
     auto fpcfg=d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
-    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA)
+    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA) {
         gflops *= 2.0f;
+    } else {
+        platform pf(d.get_info<cl_platform_id>(CL_DEVICE_PLATFORM));
+        if (pf.name() == "rusticl" && d.type() == CL_DEVICE_TYPE_GPU &&
+            d.get_info<cl_uint>(CL_DEVICE_VENDOR_ID)==0x1002) {
+            gflops *= 2.0f;
+        }
+    }
     return gflops;
 }
 
@@ -245,6 +246,21 @@ ocl::be::cores_per_unit(const device& d)
             d.get_info<cl_uint>(CL_DEVICE_SIMD_WIDTH_AMD);
         cores_per_unit=static_cast<float>(simd_per_unit)*
             static_cast<float>(simd_instruction_width);
+        return cores_per_unit;
+    }
+    auto dt = d.type();
+    if (dt == CL_DEVICE_TYPE_CPU) {
+
+    } else if (dt == CL_DEVICE_TYPE_GPU) {
+        auto vendor_id=d.get_info<cl_uint>(CL_DEVICE_VENDOR_ID);
+        switch(vendor_id) {
+        case 0x8086:
+            cores_per_unit=8;
+            break;
+        case 0x1002:
+            cores_per_unit=64;
+            break;
+        }
     }
     return cores_per_unit;
 }
