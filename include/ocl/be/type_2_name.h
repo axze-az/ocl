@@ -120,6 +120,30 @@ namespace ocl {
             }
         };
 
+        template <typename _T>
+        struct type_func_suffix {
+            static
+            std::string v() {
+                return std::string();
+            }
+        };
+
+        template <>
+        struct type_func_suffix<float> {
+            static
+            std::string v() {
+                return std::string("f");
+            }
+        };
+
+        template <>
+        struct type_func_suffix<long double> {
+            static
+            std::string v() {
+                return std::string("l");
+            }
+        };
+
     }
 }
 
