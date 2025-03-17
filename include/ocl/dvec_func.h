@@ -336,7 +336,6 @@ namespace ocl {
                     res +=l;
                 } else {
                     res += "rint";
-                    res += be::type_func_suffix<_S>::v();
                     res += "(";
                     res += l;
                     res += ")";

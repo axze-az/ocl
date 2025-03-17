@@ -120,6 +120,7 @@ namespace ocl {
             }
         };
 
+#if 0
         template <typename _T>
         struct type_func_suffix {
             static
@@ -143,7 +144,7 @@ namespace ocl {
                 return std::string("l");
             }
         };
-
+#endif
     }
 }
 
