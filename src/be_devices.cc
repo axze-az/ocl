@@ -1,6 +1,7 @@
 #include "ocl/be/devices.h"
 #include <boost/compute/system.hpp>
 #include <iostream>
+#include <iomanip>
 
 std::ostream&
 ocl::be::operator<<(std::ostream& s, const device_info& dd)
@@ -71,12 +72,14 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
         s << "none";
     }
     s << '\n';
-    cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
+    cs=d.get_info<cl_uint>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
     s << "global memory cache line size: " << cs << '\n';
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
     s << "max freq: " << t << " MHz\n";
     t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
     s << "max compute units: " << t << '\n';
+    s << "estimated GFLOPS(float): " << std::fixed
+      << std::setprecision(1) << gflops_f32(d) << '\n';
     return s;
 }
 
@@ -172,12 +175,12 @@ ocl::be::devices()
 
 std::vector<ocl::be::device>
 ocl::be::filter_devices(const std::vector<device>& v,
-                          device_type::type dt)
+                        device_type::type dt)
 {
     std::vector<device> r;
     for (std::size_t i=0; i< v.size(); ++i) {
         const device& d= v[i];
-        cl_device_type t(d.get_info<cl_device_type>(CL_DEVICE_TYPE));
+        cl_device_type t=d.type();
         if ((t & static_cast<cl_device_type>(dt)) ==
             static_cast<cl_device_type>(dt))
             r.push_back(d);
@@ -211,6 +214,57 @@ ocl::be::cpu_devices()
     return cpu_devices(all_devs);
 }
 
+float
+ocl::be::gflops_f32(const device& d)
+{
+    cl_uint t=d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+    float gflops=static_cast<float>(t)*0.001f;
+    t=d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+    gflops *= static_cast<float>(t);
+    gflops *= cores_per_unit(d);
+    auto fpcfg=d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
+    if ((fpcfg & CL_FP_FMA) == CL_FP_FMA) {
+        gflops *= 2.0f;
+    } else {
+        platform pf(d.get_info<cl_platform_id>(CL_DEVICE_PLATFORM));
+        if (pf.name() == "rusticl" && d.type() == CL_DEVICE_TYPE_GPU &&
+            d.get_info<cl_uint>(CL_DEVICE_VENDOR_ID)==0x1002) {
+            gflops *= 2.0f;
+        }
+    }
+    return gflops;
+}
+
+float
+ocl::be::cores_per_unit(const device& d)
+{
+    float cores_per_unit=1;
+    if (d.supports_extension(CL_AMD_DEVICE_ATTRIBUTE_QUERY_EXTENSION_NAME)) {
+        cl_uint simd_per_unit=
+            d.get_info<cl_uint>(CL_DEVICE_SIMD_PER_COMPUTE_UNIT_AMD);
+        cl_uint simd_instruction_width=
+            d.get_info<cl_uint>(CL_DEVICE_SIMD_WIDTH_AMD);
+        cores_per_unit=static_cast<float>(simd_per_unit)*
+            static_cast<float>(simd_instruction_width);
+        return cores_per_unit;
+    }
+    auto dt = d.type();
+    if (dt == CL_DEVICE_TYPE_CPU) {
+
+    } else if (dt == CL_DEVICE_TYPE_GPU) {
+        auto vendor_id=d.get_info<cl_uint>(CL_DEVICE_VENDOR_ID);
+        switch(vendor_id) {
+        case 0x8086:
+            cores_per_unit=8;
+            break;
+        case 0x1002:
+            cores_per_unit=64;
+            break;
+        }
+    }
+    return cores_per_unit;
+}
+
 ocl::be::device
 ocl::be::device_with_max_freq_x_units(const std::vector<device>& v)
 {
@@ -218,16 +272,17 @@ ocl::be::device_with_max_freq_x_units(const std::vector<device>& v)
         throw error(CL_DEVICE_NOT_FOUND);
     }
     device r;
-    double p(-1);
+    float sp(-1.0f);
     for (std::size_t i=0; i<v.size(); ++i) {
         const device& d= v[i];
         cl_uint t= d.get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
-        double pi(t);
+        float spi(t);
         t= d.get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
-        pi *= double(t);
-        if (pi> p) {
+        spi *= float(t);
+        spi *= cores_per_unit(d);
+        if (spi> sp) {
             r=d;
-            p=pi;
+            sp=spi;
         }
     }
     return r;

@@ -202,6 +202,13 @@ compile(const std::string& s, const std::string& k_name,
         if (f32_div_sqrt_correctly_round) {
             build_args += " -cl-fp32-correctly-rounded-divide-sqrt";
         }
+        if (b->debug() != 0) {
+            std::ostringstream st;
+            st << std::this_thread::get_id() << ": "
+            << k_name << ": build options:\n"
+            << build_args << '\n';
+            be::data::debug_print(st.str());
+        }
         pgm.build(build_args);
     }
     catch (const be::error& e) {

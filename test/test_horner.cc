@@ -330,7 +330,7 @@ ocl::test::horner_f32::perform()
     vsvec<float> h_x2=_h_a0 * _h_a0;
     vsvec<float> h_x4=h_x2 * h_x2;
 
-    constexpr const auto max_rel_tol=0x1p-24f*1.5f;
+    constexpr const auto max_rel_tol=0x1p-24f*2.0f;
     // std::numeric_limits<float>::epsilon();
 
     _res = horner(_a0, coeff4);

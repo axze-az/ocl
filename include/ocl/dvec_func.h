@@ -319,22 +319,45 @@ namespace ocl {
 
         template <class _D>
         struct cvt {
+            template <typename _S>
             static
             std::string body(const std::string& l) {
+#if 1
+                // rusticl on rx460 workaround for now because
+                // convert_ulong_rte(uint) is undefined
+                using namespace std;
+                constexpr const bool cast_only=
+                    is_floating_point_v<_D> ||
+                    (is_integral_v<_D> && is_integral_v<_S>);
+                string res("((");
+                res += be::type_2_name<_D>::v();
+                res +=")";
+                if (cast_only) {
+                    res +=l;
+                } else {
+                    res += "rint";
+                    res += "(";
+                    res += l;
+                    res += ")";
+                }
+                res +=")";
+#else
                 std::string res("convert_");
                 res += be::type_2_name<_D>::v();
                 res += "_rte(";
                 res += l;
                 res += ")";
+#endif
                 return res;
             }
         };
 
         template <class _D>
         struct cvt<dvec<_D> > {
+            template <typename _S>
             static
             std::string body(const std::string& l) {
-                return cvt<_D>::body(l);
+                return cvt<_D>::template body<_S>(l);
             }
         };
 
@@ -355,7 +378,7 @@ namespace ocl {
         struct cvt_rz<dvec<_D> > {
             static
             std::string body(const std::string& l) {
-                return cvt<_D>::body(l);
+                return cvt_rz<_D>::body(l);
             }
         };
 
@@ -414,6 +437,26 @@ namespace ocl {
     expr<dop::cvt<_D>, expr<_DOP<dvec<_S> >, _L, _R>, void>
     cvt(const expr<_DOP<dvec<_S> >, _L, _R>& s) {
         return expr<dop::cvt<_D>, expr<_DOP<dvec<_S> >, _L, _R> , void>(s);
+    }
+
+    template <class _D, class _S>
+    std::string
+    eval_ops(const expr<dop::cvt<_D>, dvec<_S>, void>& a,
+             unsigned& arg_num) {
+        auto l=eval_ops(a._l, arg_num);
+        std::string t=dop::cvt<_D>::template body<_S>(l);
+        return std::string("(") + t + std::string(")");
+    }
+
+    template <class _D, class _S,
+              template <class _T> class _DOP,
+              class _L, class _R>
+    std::string
+    eval_ops(const expr<dop::cvt<_D>, expr<_DOP<dvec<_S> >, _L, _R>, void>& a,
+             unsigned& arg_num) {
+        auto l=eval_ops(a._l, arg_num);
+        std::string t=dop::cvt<_D>::template body<_S>(l);
+        return std::string("(") + t + std::string(")");
     }
 
     // convert with round to zero

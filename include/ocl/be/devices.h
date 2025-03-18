@@ -89,6 +89,14 @@ namespace ocl {
         std::vector<device>
         cpu_devices();
 
+        // determine the f32 gflops of the device
+        float
+        gflops_f32(const device& d);
+
+        // determine the cores per unit
+        float
+        cores_per_unit(const device& d);
+
         // return the device with the maximum product
         // of units and frequency
         device

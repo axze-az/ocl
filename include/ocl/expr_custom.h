@@ -36,6 +36,9 @@ namespace ocl {
         public:
             __cf_body(const std::string& n,
                       const std::string& b);
+            __cf_body(const std::string& n,
+                      const std::string& b,
+                      bool prepend_static);
             __cf_body(const __cf_body& r);
             __cf_body(__cf_body&& r);
             __cf_body&

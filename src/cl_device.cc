@@ -119,6 +119,13 @@ device::is_subdevice()
     return false;
 }
 
+cl_device_type
+ocl::cl::device::
+type() const
+{
+    return get_info<cl_device_type>(CL_DEVICE_TYPE);
+}
+
 std::string
 ocl::cl::device::
 name() const
@@ -162,7 +169,8 @@ ocl::cl::device::
 supports_extension(const std::string& name) const
 {
     auto v=extensions();
-    return std::find(std::cbegin(v), std::cend(v), name) != std::cend(v);
+    auto e=std::cend(v);
+    return std::find(std::cbegin(v), e, name) != e;
 }
 
 uint64_t

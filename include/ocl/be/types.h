@@ -113,6 +113,7 @@ namespace ocl {
                 return res;
             }
 
+            cl_device_type type() const;
             std::string name() const;
             std::string vendor() const;
             std::string driver_version() const;
