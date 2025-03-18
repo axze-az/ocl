@@ -24,8 +24,15 @@ ocl::impl::__cf_body::add_static_to_body(const std::string& b)
     return r;
 }
 
-ocl::impl::__cf_body::__cf_body(const std::string& n, const std::string& b)
+ocl::impl::__cf_body::
+__cf_body(const std::string& n, const std::string& b)
     : _name(n), _body(add_static_to_body(b))
+{
+}
+
+ocl::impl::__cf_body::
+__cf_body(const std::string& n, const std::string& b, bool prepend_static)
+    : _name(n), _body(prepend_static ? add_static_to_body(b) : b)
 {
 }
 
@@ -63,12 +70,12 @@ ocl::impl::__cf_body::~__cf_body()
 
 ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b,
                                 size_t s)
-    : __cf_body(n, b), _s(s)
+    : __cf_body(n, b, false), _s(s)
 {
 }
 
 ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b)
-    : __cf_body(n, b), _s()
+    : __cf_body(n, b, false), _s()
 {
 }
 
