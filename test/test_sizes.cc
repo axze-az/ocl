@@ -95,16 +95,24 @@ int main()
         // const unsigned GALLIUM_MAX_BUFFER_SIZE=2048*4096;
         rtype a(rtype(2.0)), b(rtype(3.0));
         rtype c= test_func(a, b);
-        for (std::size_t i=1; i<8192*8; ++i) {
-            if ((i & 0x7f) == 0x7f || i==1) {
+        const size_t max_alloc=(2*1024*1024*1024UL)/sizeof(rtype);
+        std::cout << std::fixed;
+        for (std::size_t i=1; i<=max_alloc; i *=2) {
+            // if ((i & 0x7f) == 0x7f || i==1) {
                 std::cout << "using buffers of "
-                          <<  i*sizeof(rtype)
-                          << " bytes\r" << std::flush;
-            }
+                          <<  double(i)*sizeof(rtype)/(1024*1024)
+                          << " MB\n" << std::flush;
+                std::cout << "total requested memory "
+                          << double(4)*double(i)*sizeof(rtype)/(1024*1024)
+                          << " MB\n";
+            // }
             dvec<ftype> va(a, i);
             dvec<ftype> vb(b, i);
             dvec<ftype> vc=test_func(va, vb);
             std::vector<ftype> vhc(vc);
+            std::cout << "total consumed memory "
+                      << double(4)*double(i)*sizeof(rtype)/(1024*1024)
+                      << " MB\n";
             for (std::size_t j=0; j<i; ++j) {
                 if (vhc[j] != c) {
                     std::cout << "error for elem "
@@ -162,13 +170,13 @@ int main()
 #endif
     }
     catch (const ocl::be::error& e) {
-        std::cout << "caught exception: " << e.what()
+        std::cout << "caught exception: ocl::be::error " << e.what()
                   << '\n'
                   << e.error_string()
                   << std::endl;
     }
     catch (const std::runtime_error& e) {
-        std::cout << "caught exception: " << e.what()
+        std::cout << "caught exception: runtime error: " << e.what()
                   << std::endl;
     }
     return 0;
