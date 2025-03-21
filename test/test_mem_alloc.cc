@@ -30,11 +30,13 @@ int main()
         for (std::size_t i=0; i<max_count; ++i) {
             double mb=(double(vv.size())*elem_count*sizeof(ftype))/
                 double(1024*1024);
-            std::cout << "Total allocated memory: " << mb << " MB\n";
+            std::cout << "total allocated memory: " << mb << " MB\n";
             auto init_val=static_cast<ftype>(i+1);
             dvec<ftype> vi(init_val, elem_count);
             vv.emplace_back(std::move(vi));
-            vv.back() += init_val;
+            for (size_t j=0; j<vv.size(); ++j) {
+                vv[j] += init_val;
+            }
         }
         std::cout << "test passed\n";
     }
