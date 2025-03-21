@@ -2,21 +2,11 @@
 #include <ocl/ocl.h>
 #include <iostream>
 #include <iomanip>
-#include <sstream>
-#include <map>
-#include <atomic>
-#include <mutex>
-#include <memory> // for shared_ptr
-#include <cmath>
-
-namespace ocl {
-}
 
 
 int main()
 {
     try {
-        using namespace cftal;
         using namespace ocl;
 
         using ftype = float;
