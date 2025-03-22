@@ -32,7 +32,7 @@ int main()
         std::cout << "test passed\n";
     }
     catch (const ocl::be::error& e) {
-        std::cout << "caught exception: ocl::be::error " << e.what()
+        std::cout << "caught exception: ocl::be::error: " << e.what()
                   << '\n'
                   << e.error_string()
                   << std::endl;
