@@ -133,11 +133,14 @@ kexec_1d_info::kexec_1d_info(const device& d, const kernel& k, size_t s)
 std::size_t
 ocl::be::request_local_mem(const device& d, size_t lmem_req)
 {
-    cl_device_local_mem_type lt=
-        d.get_info<cl_device_local_mem_type>(CL_DEVICE_LOCAL_MEM_TYPE);
-    bool has_local_mem= lt == CL_LOCAL;
-    if (has_local_mem == false)
-        return 0;
+    platform pf(d.get_info<cl_platform_id>(CL_DEVICE_PLATFORM));
+    if (pf.name() != "rusticl") {
+        cl_device_local_mem_type lt=
+            d.get_info<cl_device_local_mem_type>(CL_DEVICE_LOCAL_MEM_TYPE);
+        bool has_local_mem= lt == CL_LOCAL;
+        if (has_local_mem == false)
+            return 0;
+    }
     size_t lmem_size=d.local_memory_size();
     // allow maximum of a 1/8 of the local device memory:
     return ((lmem_req << 3) < lmem_size) ? lmem_req : 0;
