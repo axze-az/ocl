@@ -15,7 +15,7 @@ int main()
         std::vector<dvec<ftype> > vv;
 
         constexpr const std::size_t max_count=
-            (8*1024*1024ULL*1024ULL)/sizeof(ftype)/elem_count;
+            (2*1024*1024ULL*1024ULL)/sizeof(ftype)/elem_count;
         std::cout << std::fixed << std::setprecision(2);
         for (std::size_t i=0; i<max_count; ++i) {
             double mb=(double(vv.size())*elem_count*sizeof(ftype))/
