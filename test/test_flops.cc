@@ -4,6 +4,70 @@
 #include <iomanip>
 #include <chrono>
 
+
+namespace ocl {
+    namespace test {
+        template <typename _T>
+        float gflops();
+    }
+}
+
+template <typename _T>
+float
+ocl::test::
+gflops()
+{
+
+    constexpr const size_t COEFF_COUNT=256+1;
+    _T coeffs[COEFF_COUNT];
+    _T ci=_T(1);
+    for (size_t i=0; i<COEFF_COUNT; ++i) {
+        coeffs[i]= (i & 1)==1 ? -ci : ci;
+        ci *= 0.75;
+    }
+    constexpr const size_t elem_count=(32*1024*1024ULL);
+    constexpr const size_t _N=32;
+    float gflops=0.0f;
+    try {
+        for (size_t i=0; i<_N; ++i) {
+            dvec<_T> v_src(_T(0.25), elem_count);
+            dvec<_T> v_dst(_T(0.0), elem_count);
+            auto start = std::chrono::steady_clock::now();
+            v_dst=horner(v_src, coeffs);
+            auto end = std::chrono::steady_clock::now();
+            auto ns_elapsed=(end - start).count();
+            // std::cout << ns_elapsed << std::endl;
+            float gflops_i=(elem_count * (COEFF_COUNT-1)*2)/float(ns_elapsed);
+            std::cout << gflops_i << std::endl;
+            gflops += gflops_i;
+        }
+        gflops *= 1.0f/float(_N);
+        std::cout << "mean: " << gflops << std::endl;
+    }
+    catch (const ocl::be::error& e) {
+        std::cout << "caught exception: ocl::be::error: " << e.what()
+                  << '\n'
+                  << e.error_string()
+                  << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        std::cout << "caught exception: runtime error: " << e.what()
+                  << std::endl;
+    }
+    return gflops;
+}
+
+
+#if 1
+
+int main()
+{
+    ocl::test::gflops<float>();
+    return 0;
+}
+
+#else
+
 int main()
 {
     // [-0.292893230915069580078125, 0.4142135679721832275390625] : | p - f | <= 2^-31.90625
@@ -111,3 +175,4 @@ int main()
     }
     return 0;
 }
+#endif
