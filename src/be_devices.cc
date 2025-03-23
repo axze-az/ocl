@@ -58,7 +58,8 @@ ocl::be::operator<<(std::ostream& s, const device_info& dd)
     t=d.local_memory_size();
     s << "local memory size: " << t <<'\n';
     size_t gs=d.global_memory_size();
-    s << "global memory size: " << gs <<'\n';
+    s << "global memory size: " << gs
+      <<" (" << double(gs)/(1024.0*1024.0) << " MB)\n";
     size_t cs=d.get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE);
     s << "global memory cache size: " << cs << '\n';
     cl_device_mem_cache_type ct=
