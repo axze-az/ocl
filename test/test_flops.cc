@@ -27,19 +27,22 @@ gflops()
     }
     constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
     constexpr const size_t _N=32;
+    constexpr const size_t _WARMUP=4;
     float gflops=0.0f;
     try {
-        for (size_t i=0; i<_N; ++i) {
+        for (size_t i=0; i<_N+_WARMUP; ++i) {
             dvec<_T> v_src(_T(0.25), elem_count);
             dvec<_T> v_dst(v_src.backend_data(), elem_count);
             auto start = std::chrono::steady_clock::now();
             v_dst=horner(v_src, coeffs);
             auto end = std::chrono::steady_clock::now();
             auto ns_elapsed=(end - start).count();
-            // std::cout << ns_elapsed << std::endl;
-            float gflops_i=(elem_count * (COEFF_COUNT-1)*2)/float(ns_elapsed);
-            std::cout << gflops_i << '\n';
-            gflops += gflops_i;
+            if (i >= _WARMUP) {
+                float gflops_i=
+                    (elem_count*(COEFF_COUNT-1)*2)/float(ns_elapsed);
+                std::cout << gflops_i << '\n';
+                gflops += gflops_i;
+            }
         }
         gflops *= 1.0f/float(_N);
         std::cout << "mean: " << gflops << std::endl;
