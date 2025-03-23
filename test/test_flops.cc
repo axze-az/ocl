@@ -17,15 +17,15 @@ float
 ocl::test::
 gflops()
 {
-    std::cout << "testing "  << be::type_2_name<_T>::v() << '\n';
+    std::cout << "testing "  << be::type_2_name<_T>::v() << " gflops\n";
     constexpr const size_t COEFF_COUNT=256+1;
     _T coeffs[COEFF_COUNT];
     _T ci=_T(1);
     for (size_t i=0; i<COEFF_COUNT; ++i) {
         coeffs[i]= (i & 1)==1 ? -ci : ci;
-        ci *= 0.75;
+        // ci *= 0.75;
     }
-    constexpr const size_t elem_count=(16*1024*1024ULL);
+    constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
     constexpr const size_t _N=32;
     float gflops=0.0f;
     try {
