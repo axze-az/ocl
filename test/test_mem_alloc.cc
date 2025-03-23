@@ -14,6 +14,10 @@ int main()
         constexpr const std::size_t elem_count=(64*1024*1024ULL)/sizeof(ftype);
         std::vector<dvec<ftype> > vv;
 
+        size_t dmem=be::data::instance()->dcq().d().global_memory_size();
+        double dmem_mb=static_cast<double>(dmem)/(1024.0*1024.0);
+        std::cout << "available device memory: " << dmem_mb << " MB\n";
+
         constexpr const std::size_t max_count=
             (2*1024*1024ULL*1024ULL)/sizeof(ftype)/elem_count;
         std::cout << std::fixed << std::setprecision(2);

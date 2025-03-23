@@ -17,7 +17,7 @@ float
 ocl::test::
 gflops()
 {
-
+    std::cout << "testing "  << be::type_2_name<_T>::v() << '\n';
     constexpr const size_t COEFF_COUNT=256+1;
     _T coeffs[COEFF_COUNT];
     _T ci=_T(1);
@@ -31,14 +31,14 @@ gflops()
     try {
         for (size_t i=0; i<_N; ++i) {
             dvec<_T> v_src(_T(0.25), elem_count);
-            dvec<_T> v_dst(_T(0.0), elem_count);
+            dvec<_T> v_dst(v_src.backend_data(), elem_count);
             auto start = std::chrono::steady_clock::now();
             v_dst=horner(v_src, coeffs);
             auto end = std::chrono::steady_clock::now();
             auto ns_elapsed=(end - start).count();
             // std::cout << ns_elapsed << std::endl;
             float gflops_i=(elem_count * (COEFF_COUNT-1)*2)/float(ns_elapsed);
-            std::cout << gflops_i << std::endl;
+            std::cout << gflops_i << '\n';
             gflops += gflops_i;
         }
         gflops *= 1.0f/float(_N);
