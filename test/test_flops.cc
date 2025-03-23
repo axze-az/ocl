@@ -25,7 +25,7 @@ gflops()
         coeffs[i]= (i & 1)==1 ? -ci : ci;
         ci *= 0.75;
     }
-    constexpr const size_t elem_count=(32*1024*1024ULL);
+    constexpr const size_t elem_count=(16*1024*1024ULL);
     constexpr const size_t _N=32;
     float gflops=0.0f;
     try {
@@ -63,6 +63,7 @@ gflops()
 int main()
 {
     ocl::test::gflops<float>();
+    ocl::test::gflops<double>();
     return 0;
 }
 
