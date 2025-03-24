@@ -29,6 +29,7 @@ gflops()
     constexpr const size_t _N=32;
     constexpr const size_t _WARMUP=4;
     float gflops=0.0f;
+    std::cout << std::fixed << std::setprecision(1);
     try {
         for (size_t i=0; i<_N+_WARMUP; ++i) {
             dvec<_T> v_src(_T(0.25), elem_count);
