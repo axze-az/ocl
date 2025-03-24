@@ -38,7 +38,8 @@ ocl::impl::__cf_body
 ocl::impl::
 gen_horner2(const std::string_view& tname,
             const std::string_view& cname,
-            size_t n, bool use_fma, bool use_mad)
+            size_t n,
+            bool x2_internal, bool use_fma, bool use_mad)
 {
     std::ostringstream s;
     s << "horner2_" << n << '_' << tname << '_' << cname;
@@ -47,15 +48,23 @@ gen_horner2(const std::string_view& tname,
     } else if (use_mad) {
         s << "_mad";
     }
+    if (x2_internal) {
+        s << "_x2";
+    }
     const std::string hname=s.str();
     s.str("");
     s << tname << " " << hname << "("
-      << tname << " x, "
-      << tname << " x2, "
-        "__arg_local const " << cname << "* c)\n"
-        "{\n"
-        "    " << tname << " r0=c[0];\n"
-        "    " << tname << " r1=c[1];\n";
+      << tname << " x, ";
+    if (x2_internal==false) {
+        s << tname << " x2, ";
+    }
+    s << "__arg_local const " << cname << "* c)\n"
+         "{\n";
+    if (x2_internal) {
+        s <<"    " << tname << " x2=x*x;\n";
+    }
+    s << "    " << tname << " r0=c[0];\n"
+         "    " << tname << " r1=c[1];\n";
     const std::size_t _NE= n & ~(std::size_t(1));
     for (size_t i=2; i<_NE; i+=2) {
         if (use_fma) {
@@ -95,7 +104,8 @@ ocl::impl::__cf_body
 ocl::impl::
 gen_horner4(const std::string_view& tname,
             const std::string_view& cname,
-            size_t n, bool use_fma, bool use_mad)
+            size_t n,
+            bool x2x4_internal, bool use_fma, bool use_mad)
 {
     std::ostringstream s;
     s << "horner4_" << n << '_' << tname << '_' << cname;
@@ -104,15 +114,24 @@ gen_horner4(const std::string_view& tname,
     } else if (use_mad) {
         s << "_mad";
     }
+    if (x2x4_internal) {
+        s << "_x2x4";
+    }
     const std::string hname=s.str();
     s.str("");
     s << tname << " " << hname << "("
-      << tname << " x, "
-      << tname << " x2, "
-      << tname << " x4, "
-        "__arg_local const " << cname << "* c)\n"
-        "{\n"
-        "    " << tname << " r0=c[0];\n"
+      << tname << " x, ";
+    if (x2x4_internal==false) {
+      s << tname << " x2, "
+        << tname << " x4, ";
+    }
+    s<< "__arg_local const " << cname << "* c)\n"
+        "{\n";
+    if (x2x4_internal==true) {
+        s <<"    " << tname << " x2=x*x;\n";
+        s <<"    " << tname << " x4=x2*x2;\n";
+    }
+    s<< "    " << tname << " r0=c[0];\n"
         "    " << tname << " r1=c[1];\n"
         "    " << tname << " r2=c[2];\n"
         "    " << tname << " r3=c[3];\n";
