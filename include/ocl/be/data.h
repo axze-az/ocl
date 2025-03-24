@@ -57,6 +57,15 @@ namespace ocl {
             event
             enqueue_1d_kernel(const kernel& k,
                               const kexec_1d_info& ki);
+
+            enum class query_bool {
+                fp16_fma,
+                fp32_fma,
+                fp64_fma
+            };
+
+            bool supports(query_bool q);
+
             // shared, default backend data
             static
             std::shared_ptr<data>

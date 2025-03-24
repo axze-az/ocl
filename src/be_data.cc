@@ -71,6 +71,34 @@ enqueue_1d_kernel(const kernel& k, size_t s)
     return enqueue_1d_kernel(k, ki);
 }
 
+bool
+ocl::be::data::
+supports(query_bool q)
+{
+    auto& d= dcq().d();
+    bool r=false;
+    switch (q) {
+    case query_bool::fp16_fma: {
+        cl_device_fp_config cfg=d.get_info<cl_device_fp_config>(
+            CL_DEVICE_HALF_FP_CONFIG);
+        r = (cfg & CL_FP_FMA) == CL_FP_FMA;
+        break;
+    }
+    case query_bool::fp32_fma:{
+        cl_device_fp_config cfg=d.get_info<cl_device_fp_config>(
+            CL_DEVICE_SINGLE_FP_CONFIG);
+        r = (cfg & CL_FP_FMA) == CL_FP_FMA;
+        break;
+    }
+    case query_bool::fp64_fma: {
+        cl_device_fp_config cfg=d.get_info<cl_device_fp_config>(
+            CL_DEVICE_DOUBLE_FP_CONFIG);
+        r = (cfg & CL_FP_FMA) == CL_FP_FMA;
+        break;
+    }}
+    return r;
+}
+
 ocl::be::data_ptr
 ocl::be::data::instance()
 {

@@ -17,6 +17,7 @@
 #endif
 
 #include <CL/cl.h>
+#include <CL/cl_ext.h>
 #include <stdexcept>
 #include <vector>
 
