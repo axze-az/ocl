@@ -164,9 +164,17 @@ namespace ocl {
             static
             const float coeff14[14];
 
+            dvec<float> _x2;
+            dvec<float> _x4;
+
+            template <size_t _N>
+            bool perform(const float (&f)[_N]);
         public:
             horner_f32(size_t n)
-                : b_t(n, float(-M_LN2/2), float(2*M_LN2/2)) {}
+                : b_t(n, float(-M_LN2/2), float(2*M_LN2/2)),
+                  _x2(_a0*_a0),
+                  _x4(_x2*_x2) {
+            }
             bool perform();
         };
 
@@ -317,110 +325,73 @@ ocl::test::horner_f32::coeff14[14]= {
     exp_c0
 };
 
+template <ocl::size_t _N>
 bool
-ocl::test::horner_f32::perform()
+ocl::test::horner_f32::perform(const float (&c)[_N])
 {
     using cftal::math::horner;
     using cftal::math::horner2;
     using cftal::math::horner4;
-    bool rc=true;
 
-    dvec<float> x2=_a0*_a0;
-    dvec<float> x4=x2*x2;
-    vsvec<float> h_x2=_h_a0 * _h_a0;
-    vsvec<float> h_x4=h_x2 * h_x2;
+    std::ostringstream s;
+    s << "c[" << _N << "]";
+    std::string cn=s.str();
+    s.str("");
+    s << "horner(v, " << cn << ")";
+    std::string s_horner=s.str();
+    s.str("");
+    s << "horner2(v, x2, " << cn << ")";
+    std::string s_horner2_x2=s.str();
+    s.str("");
+    s << "horner2(v, " << cn << ")";
+    std::string s_horner2=s.str();
+    s.str("");
+
+    s << "horner4(v, x2, x4, " << cn << ")";
+    std::string s_horner4_x2x4=s.str();
+    s.str("");
+    s << "horner4(v, " << cn << ")";
+    std::string s_horner4=s.str();
 
     constexpr const auto max_rel_tol=0x1p-24f*2.0f;
-    // std::numeric_limits<float>::epsilon();
+    bool rc=true;
 
-    _res = horner(_a0, coeff4);
-    _h_res = horner(_h_a0, coeff4);
-    rc &= check_res("horner(v, c[4])", max_rel_tol);
+    _res = horner(_a0, c);
+    _h_res = horner(_h_a0, c);
+    rc &= check_res(s_horner, max_rel_tol);
 
-    _res = horner2(_a0, x2, coeff4);
-    rc &= check_res("horner2(v, c[4])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff4);
-    rc &= check_res("horner4(v, c[4])", 2*max_rel_tol);
+    _res = horner2(_a0, _x2, c);
+    rc &= check_res(s_horner2_x2, 2*max_rel_tol);
 
-    _res = horner(_a0, coeff5);
-    _h_res = horner(_h_a0, coeff5);
-    rc &= check_res("horner(v, c[5])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff5);
-    rc &= check_res("horner2(v, c[5])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff5);
-    rc &= check_res("horner4(v, c[5])", 2*max_rel_tol);
+    _res = horner2(_a0, c);
+    rc &= check_res(s_horner2_x2, 2*max_rel_tol);
 
-    _res = horner(_a0, coeff6);
-    _h_res = horner(_h_a0, coeff6);
-    rc &= check_res("horner(v, c[6])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff6);
-    rc &= check_res("horner2(v, c[6])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff6);
-    rc &= check_res("horner4(v, c[6])", 4*max_rel_tol);
+    _res = horner4(_a0, _x2, _x4, c);
+    rc &= check_res(s_horner4_x2x4, 4*max_rel_tol);
 
-    _res = horner(_a0, coeff7);
-    _h_res = horner(_h_a0, coeff7);
-    rc &= check_res("horner(v, c[7])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff7);
-    rc &= check_res("horner2(v, c[7])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff7);
-    rc &= check_res("horner4(v, c[7])", 4*max_rel_tol);
+    _res = horner4(_a0, c);
+    rc &= check_res(s_horner4, 4*max_rel_tol);
 
-    _res = horner(_a0, coeff8);
-    _h_res = horner(_h_a0, coeff8);
-    rc &= check_res("horner(v, c[8])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff8);
-    rc &= check_res("horner2(v, c[8])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff8);
-    rc &= check_res("horner4(v, c[8])", 4*max_rel_tol);
+    return rc;
+}
 
-    _res = horner(_a0, coeff9);
-    _h_res = horner(_h_a0, coeff9);
-    rc &= check_res("horner(v, c[9])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff9);
-    rc &= check_res("horner2(v, c[9])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff9);
-    rc &= check_res("horner4(v, c[9])", 4*max_rel_tol);
 
-    _res = horner(_a0, coeff10);
-    _h_res = horner(_h_a0, coeff10);
-    rc &= check_res("horner(v, c[10])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff10);
-    rc &= check_res("horner2(v, c[10])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff10);
-    rc &= check_res("horner4(v, c[10])", 4*max_rel_tol);
+bool
+ocl::test::horner_f32::perform()
+{
+    bool rc=true;
 
-    _res = horner(_a0, coeff11);
-    _h_res = horner(_h_a0, coeff11);
-    rc &= check_res("horner(v, c[11])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff11);
-    rc &= check_res("horner2(v, c[11])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff11);
-    rc &= check_res("horner4(v, c[11])", 4*max_rel_tol);
-
-    _res = horner(_a0, coeff12);
-    _h_res = horner(_h_a0, coeff12);
-    rc &= check_res("horner(v, c[12])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff12);
-    rc &= check_res("horner2(v, c[12])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff12);
-    rc &= check_res("horner4(v, c[12])", 4*max_rel_tol);
-
-    _res = horner(_a0, coeff13);
-    _h_res = horner(_h_a0, coeff13);
-    rc &= check_res("horner(v, c[13])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff13);
-    rc &= check_res("horner2(v, c[13])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff13);
-    rc &= check_res("horner4(v, c[13])", 4*max_rel_tol);
-
-    _res = horner(_a0, coeff14);
-    _h_res = horner(_h_a0, coeff14);
-    rc &= check_res("horner(v, c[14])", max_rel_tol);
-    _res = horner2(_a0, x2, coeff14);
-    rc &= check_res("horner2(v, c[14])", 2*max_rel_tol);
-    _res = horner4(_a0, x2, x4, coeff14);
-    rc &= check_res("horner4(v, c[14])", 4*max_rel_tol);
+    rc &= perform(coeff4);
+    rc &= perform(coeff5);
+    rc &= perform(coeff6);
+    rc &= perform(coeff7);
+    rc &= perform(coeff8);
+    rc &= perform(coeff9);
+    rc &= perform(coeff10);
+    rc &= perform(coeff11);
+    rc &= perform(coeff12);
+    rc &= perform(coeff13);
+    rc &= perform(coeff14);
 
     return rc;
 }
