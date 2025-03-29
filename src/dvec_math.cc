@@ -20,15 +20,29 @@ gen_horner(const std::string_view& tname,
         "__arg_local const " << cname << "* c)\n"
         "{\n"
         "    "<< tname << " r=c[0];\n";
+#if 1
+    s << "    "<< tname << " ci;\n";
     for (size_t i=1; i<n; ++i) {
+        s << "    ci=c[" << i<< "];\n";
         if (use_fma) {
-            s << "    r=fma(x, r, c["<< i<<"]);\n";
+            s << "    r=fma(x, r, ci);\n";
         } else if (use_mad) {
-            s << "    r=mad(x, r, c["<< i<<"]);\n";
+            s << "    r=mad(x, r, ci);\n";
         } else {
-            s << "    r=x*r+c["<< i<<"];\n";
+            s << "    r=x*r+ci;\n";
         }
     }
+#else
+     for (size_t i=1; i<n; ++i) {
+         if (use_fma) {
+             s << "    r=fma(x, r, c["<< i<<"]);\n";
+         } else if (use_mad) {
+             s << "    r=mad(x, r, c["<< i<<"]);\n";
+         } else {
+             s << "    r=x*r+c["<< i<<"];\n";
+         }
+     }
+#endif
     s << "    return r;\n"
          "}\n";
     return __cf_body(hname, s.str());
