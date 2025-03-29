@@ -21,6 +21,19 @@ gen_horner(const std::string_view& tname,
         "{\n"
         "    "<< tname << " r=c[0];\n";
 #if 1
+#if 0
+    s << "#pragma unroll ("<< std::min(n, size_t(256)) << ")\n";
+    s << "    for (size_t i=1; i<" << n << "; ++i) {\n"
+      << "        " << tname << " ci=c[i];\n";
+    if (use_fma) {
+        s << "        r=fma(x, r, ci);\n";
+    } else if (use_mad) {
+        s << "        r=mad(x, r, ci);\n";
+    } else {
+        s << "        r=x*r+ci;\n";
+    }
+    s << "    };\n";
+#else
     s << "    "<< tname << " ci;\n";
     for (size_t i=1; i<n; ++i) {
         s << "    ci=c[" << i<< "];\n";
@@ -32,6 +45,7 @@ gen_horner(const std::string_view& tname,
             s << "    r=x*r+ci;\n";
         }
     }
+#endif
 #else
      for (size_t i=1; i<n; ++i) {
          if (use_fma) {
