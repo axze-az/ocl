@@ -1,5 +1,6 @@
 #include <cftal/vec.h>
 #include <ocl/ocl.h>
+#include <vector>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
@@ -8,16 +9,20 @@
 namespace ocl {
     namespace test {
         template <typename _T>
-        float gflops();
+        float gflops(be::data_ptr bedp);
+
+        void
+        test_gflops(int argc, char** argv);
     }
 }
 
 template <typename _T>
 float
 ocl::test::
-gflops()
+gflops(be::data_ptr bedp)
 {
-    std::cout << "testing "  << be::type_2_name<_T>::v() << " gflops\n";
+    std::cout << "testing "  << bedp->dcq().d().name() << ' '
+              << be::type_2_name<_T>::v() << " gflops\n";
     constexpr const size_t COEFF_COUNT=256+1;
     _T coeffs[COEFF_COUNT];
     _T ci=_T(1);
@@ -32,7 +37,7 @@ gflops()
     std::cout << std::fixed << std::setprecision(1);
     try {
         for (size_t i=0; i<_N+_WARMUP; ++i) {
-            dvec<_T> v_src(_T(0.25), elem_count);
+            dvec<_T> v_src(bedp, _T(0.25), elem_count);
             dvec<_T> v_dst(v_src.backend_data(), elem_count);
             auto start = std::chrono::steady_clock::now();
             v_dst=horner(v_src, coeffs);
@@ -62,12 +67,82 @@ gflops()
 }
 
 
+void
+ocl::test::test_gflops(int argc, char** argv)
+{
+    int device=-1;
+    using std::string_view;
+    int err=0;
+    for (int i=1; i<argc; ++i) {
+        string_view argi(argv[i]);
+        string_view::size_type eq_pos=argi.find('=');
+        string_view ai(argi.substr(0, eq_pos));
+        if (ai == "--device") {
+            if (argi.length()>eq_pos) {
+                string_view pl=argi.substr(eq_pos+1);
+                std::istringstream is(std::string(pl.data(), pl.length()));
+                int32_t d=0;
+                is >> d;
+                if (is.fail() || !is.eof()) {
+                    if (pl.size()==0) {
+                        std::cerr << "device number is missing\n";
+                    } else {
+                        std::cerr << "invalid device number " << pl << '\n';
+                    }
+                    ++err;
+                } else {
+                    device=d;
+                }
+            } else {
+                std::cerr << "device number is missing\n";
+                ++err;
+            }
+        } else {
+            std::cerr << "invalid argument " << argi << '\n';
+            ++err;
+        }
+    }
+    if (err) {
+        return;
+    }
+    try {
+        std::vector<ocl::be::device> v(ocl::be::devices());
+        if (device >= int(v.size())) {
+            std::cerr << "device number " << device << "is undefined:\n";
+            for (size_t i=0; i<v.size(); ++i) {
+                std::cerr << i << ": " << v[i].name() << '\n';
+            }
+            return;
+        }
+        if (device > -1) {
+            auto bedp=ocl::be::data::create(v[device]);
+            ocl::test::gflops<float>(bedp);
+            ocl::test::gflops<double>(bedp);
+        }  else {
+            for (auto& d : v) {
+                auto bedp=ocl::be::data::create(d);
+                ocl::test::gflops<float>(bedp);
+                ocl::test::gflops<double>(bedp);
+            }
+        }
+    }
+    catch (const ocl::be::error& e) {
+        std::cout << "caught exception: ocl::be::error: " << e.what()
+                  << '\n'
+                  << e.error_string()
+                  << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        std::cout << "caught exception: runtime error: " << e.what()
+                  << std::endl;
+    }
+}
+
 #if 1
 
-int main()
+int main(int argc, char** argv)
 {
-    ocl::test::gflops<float>();
-    ocl::test::gflops<double>();
+    ocl::test::test_gflops(argc, argv);
     return 0;
 }
 
