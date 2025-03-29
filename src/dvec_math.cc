@@ -22,6 +22,7 @@ gen_horner(const std::string_view& tname,
         "    "<< tname << " r=c[0];\n";
 #if 1
 #if 0
+    // this code is terrrible
     s << "#pragma unroll ("<< std::min(n, size_t(256)) << ")\n";
     s << "    for (size_t i=1; i<" << n << "; ++i) {\n"
       << "        " << tname << " ci=c[i];\n";

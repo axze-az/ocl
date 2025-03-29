@@ -28,7 +28,7 @@ gflops(be::data_ptr bedp)
     _T ci=_T(1);
     for (size_t i=0; i<COEFF_COUNT; ++i) {
         coeffs[i]= (i & 1)==1 ? -ci : ci;
-        // ci *= 0.75;
+        ci *= _T(0.875);
     }
     constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
     constexpr const size_t _N=32;
