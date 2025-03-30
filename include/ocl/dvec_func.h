@@ -691,15 +691,14 @@ namespace ocl {
         gen_all_of(const std::string_view& tname);
 
         __ck_body
-        gen_any_of(const std::string_view& tname);
+        gen_none_of(const std::string_view& tname);
 
         __ck_body
-        gen_none_of(const std::string_view& tname);
+        gen_any_of(const std::string_view& tname);
 
         template <typename _T>
         typename dvec<_T>::mask_value_type
         dvec_xxx_of(const __ck_body& nb, const dvec<_T>& z);
-
     }
 
     template <typename _T>
@@ -713,6 +712,15 @@ namespace ocl {
     template <typename _T>
     bool
     any_of(const dvec<_T>& v);
+
+    namespace impl {
+        __ck_body
+        gen_hadd(const std::string_view& tname);
+    }
+
+    template <typename _T>
+    _T
+    hadd(const dvec<_T>& v);
 
     namespace impl {
         // worker function for evem_elements(v)
@@ -895,6 +903,31 @@ ocl::any_of(const dvec<_T>& v)
     auto nb=impl::gen_any_of(tname);
     auto r=impl::dvec_xxx_of(nb, v);
     return r!=0;
+}
+
+template <typename _T>
+_T
+ocl::hadd(const dvec<_T>& v)
+{
+    auto p=v.backend_data();
+    dvec<uint64_t> dcnt(p, 1);
+    uint64_t hdcnt=v.size();
+    // create a working copy:
+    dvec<_T> vc(p, hdcnt);
+    const auto tname=be::type_2_name<_T>::v();
+    auto nb=impl::gen_hadd(tname);
+    // Note: in custom kernels the left hand side may be
+    // read also from the kernel:
+    auto k=custom_kernel<_T>(nb.name(), nb.body(),
+                             vc, dcnt, local_mem_per_workitem<_T>(1));
+    do {
+        execute_custom(k, hdcnt, p);
+        dcnt.copy_to_host(&hdcnt);
+    } while (hdcnt>1);
+    // copy only one element from vc
+    _T r;
+    vc.copy_to_host(&r, 0, 1);
+    return r;
 }
 
 template <typename _T>

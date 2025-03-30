@@ -188,6 +188,49 @@ gen_any_of(const std::string_view& tname)
 }
 
 ocl::impl::__ck_body
+ocl::impl::
+gen_hadd(const std::string_view& tname)
+{
+    std::ostringstream s;
+    s << "hadd_" << tname;
+    std::string kname=s.str();
+    s.str("");
+    s <<"void " << kname << "(\n"
+        "    ulong n,\n"
+        "    __global " << tname << "* d,\n"
+        // "    __global const " << tname << "* s,\n"
+        "    __global ulong* dcnt,\n"
+        "    __local " << tname << "* t\n"
+        ")\n"
+        "{\n"
+        "    ulong gid= get_global_id(0);\n"
+        "    uint lid= get_local_id(0);\n"
+        "    uint lsz= get_local_size(0);\n"
+        "    // copy s[gid] into t[lid]\n"
+        "    " << tname << " v= gid < n ? d[gid] : 0;\n"
+        "    t[lid]=v;\n"
+        "    barrier(CLK_LOCAL_MEM_FENCE);\n"
+        "    // loop over t[0, lsz)\n"
+        "    for (uint stride=lsz>>1; stride>0; stride >>=1) {\n"
+        "        if (lid < stride) {\n"
+        "            uint pos=lid + stride;\n"
+        "            t[lid] |= t[pos];\n"
+        "        }\n"
+        "        barrier(CLK_LOCAL_MEM_FENCE);\n"
+        "    }\n"
+        "    if (lid == 0) {\n"
+        "        ulong grp_id=get_group_id(0);\n"
+        "        d[grp_id]=t[0];\n"
+        "    }\n"
+        "    if (gid == 0) {\n"
+        "        ulong grps=get_num_groups(0);\n"
+        "        dcnt[0]=grps;\n"
+        "    }\n"
+        "}\n";
+    return __ck_body(kname, s.str());
+}
+
+ocl::impl::__ck_body
 ocl::impl::even_elements(const std::string_view& tname)
 {
     std::ostringstream s;
