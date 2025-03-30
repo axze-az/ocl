@@ -325,8 +325,8 @@ ocl::impl::copy_odd_to_even(const std::string_view& tname)
         ")\n"
         "{\n"
         "    ulong gid=get_global_id(0);\n"
-        "    if (gid < n) {\n"
-        "        ulong sgid= min(gid|1ul, n-1ul);\n"
+        "    ulong sgid= gid|1ul;\n"
+        "    if (sgid < n) {\n"
         "        res[gid] = src[sgid];\n"
         "    }\n"
         "}\n";
