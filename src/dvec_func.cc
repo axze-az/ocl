@@ -214,7 +214,7 @@ gen_hadd(const std::string_view& tname)
         "    for (uint stride=lsz>>1; stride>0; stride >>=1) {\n"
         "        if (lid < stride) {\n"
         "            uint pos=lid + stride;\n"
-        "            t[lid] |= t[pos];\n"
+        "            t[lid] += t[pos];\n"
         "        }\n"
         "        barrier(CLK_LOCAL_MEM_FENCE);\n"
         "    }\n"
