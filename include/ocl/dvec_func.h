@@ -983,7 +983,6 @@ ocl::copy_even_to_odd(const dvec<_T>& s)
     return r;
 }
 
-
 template <typename _T>
 ocl::dvec<_T>
 ocl::copy_odd_to_even(const dvec<_T>& s)
