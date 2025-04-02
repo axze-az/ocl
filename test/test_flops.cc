@@ -103,6 +103,7 @@ ocl::test::test_gflops(int argc, char** argv)
         }
     }
     if (err) {
+        std::cout << "usage: "  << argv[0]  << " [--device=X]\n";
         return;
     }
     try {
