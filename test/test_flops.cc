@@ -9,21 +9,24 @@
 namespace ocl {
     namespace test {
         template <typename _T>
-        float gflops(be::data_ptr bedp);
+        float horner_gflops(be::data_ptr bedp);
 
         void
         test_gflops(int argc, char** argv);
+
+
     }
 }
 
 template <typename _T>
 float
 ocl::test::
-gflops(be::data_ptr bedp)
+horner_gflops(be::data_ptr bedp)
 {
-    std::cout << "testing "  << bedp->dcq().d().name() << ' '
-              << be::type_2_name<_T>::v() << " gflops\n";
     constexpr const size_t COEFF_COUNT=256+1;
+    std::cout << "testing\n"  << bedp->dcq().d().name() << '\n'
+              << be::type_2_name<_T>::v() << " gflops using a polynomial with "
+              << COEFF_COUNT << " coefficients\n";
     _T coeffs[COEFF_COUNT];
     _T ci=_T(1);
     for (size_t i=0; i<COEFF_COUNT; ++i) {
@@ -107,7 +110,7 @@ ocl::test::test_gflops(int argc, char** argv)
         return;
     }
     try {
-        std::vector<ocl::be::device> v(ocl::be::devices());
+        std::vector<be::device> v(be::devices());
         if (device >= int(v.size())) {
             std::cerr << "device number " << device << "is undefined:\n";
             for (size_t i=0; i<v.size(); ++i) {
@@ -116,19 +119,19 @@ ocl::test::test_gflops(int argc, char** argv)
             return;
         }
         if (device > -1) {
-            auto bedp=ocl::be::data::create(v[device]);
-            ocl::test::gflops<float>(bedp);
-            ocl::test::gflops<double>(bedp);
+            auto bedp=be::data::create(v[device]);
+            test::horner_gflops<float>(bedp);
+            test::horner_gflops<double>(bedp);
         }  else {
             for (auto& d : v) {
-                auto bedp=ocl::be::data::create(d);
-                ocl::test::gflops<float>(bedp);
-                ocl::test::gflops<double>(bedp);
+                auto bedp=be::data::create(d);
+                test::horner_gflops<float>(bedp);
+                test::horner_gflops<double>(bedp);
             }
         }
     }
-    catch (const ocl::be::error& e) {
-        std::cout << "caught exception: ocl::be::error: " << e.what()
+    catch (const be::error& e) {
+        std::cout << "caught exception: be::error: " << e.what()
                   << '\n'
                   << e.error_string()
                   << std::endl;
