@@ -7,16 +7,26 @@
 
 
 namespace ocl {
+
+    namespace impl {
+        __cf_body
+        gen_peak_flops(const std::string_view& tname,
+                       size_t n,
+                       bool use_fma, bool use_mad,
+                       const std::string_view& literal_suffix);
+    }
+
+    template <typename _T>
+    auto
+    peak_flops(const dvec<_T>& x, size_t n);
+
     namespace test {
         template <typename _T>
         float horner_gflops(be::data_ptr bedp);
 
+        template <typename _T>
+        float peak_gflops(be::data_ptr bedp);
 
-        impl::__cf_body
-        gen_peak_f(const std::string_view& tname,
-                   size_t n,
-                   bool use_fma, bool use_mad,
-                   const std::string_view& literal_suffix);
 
         void
         test_gflops(int argc, char** argv);
@@ -26,11 +36,11 @@ namespace ocl {
 }
 
 ocl::impl::__cf_body
-ocl::test::
-gen_peak_f(const std::string_view& tname,
-           size_t n,
-           bool use_fma, bool use_mad,
-           const std::string_view& literal_suffix)
+ocl::impl::
+gen_peak_flops(const std::string_view& tname,
+               size_t n,
+               bool use_fma, bool use_mad,
+               const std::string_view& literal_suffix)
 {
     std::ostringstream s;
     s << "peak_f_" << n << '_' << tname;
@@ -53,7 +63,7 @@ gen_peak_f(const std::string_view& tname,
             s << "    c=fma(fac, c, c);\n";
         } else if (use_mad) {
             s << "    r=mad(x, r, c);\n";
-            s << "    r=mad(fac, c, c);\n";
+            s << "    c=mad(fac, c, c);\n";
         } else {
             s << "    r=x*r+c;\n";
             s << "    c=fac*c+c;\n";
@@ -62,6 +72,21 @@ gen_peak_f(const std::string_view& tname,
     s << "    return r;\n"
          "}\n";
     return impl::__cf_body(hname, s.str());
+}
+
+template <typename _T>
+auto
+ocl::peak_flops(const dvec<_T>& x, size_t n)
+{
+    const auto tname= be::type_2_name<_T>::v();
+    auto use_fma_mad=impl::horner_use_fma_mad(x);
+    std::string_view lit_suffix="";
+    if (tname=="float")
+        lit_suffix="f";
+    auto hb=impl::gen_peak_flops(tname, n,
+                                 use_fma_mad.first, use_fma_mad.second,
+                                 lit_suffix);
+    return custom_func<_T>(hb.name(), hb.body(), x);
 }
 
 template <typename _T>
@@ -95,6 +120,51 @@ horner_gflops(be::data_ptr bedp)
             if (i >= _WARMUP) {
                 float gflops_i=
                     (elem_count*(COEFF_COUNT-1)*2)/float(ns_elapsed);
+                std::cout << gflops_i << '\n';
+                gflops += gflops_i;
+            }
+        }
+        gflops *= 1.0f/float(_N);
+        std::cout << "mean: " << gflops << std::endl;
+    }
+    catch (const ocl::be::error& e) {
+        std::cout << "caught exception: ocl::be::error: " << e.what()
+                  << '\n'
+                  << e.error_string()
+                  << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        std::cout << "caught exception: runtime error: " << e.what()
+                  << std::endl;
+    }
+    return gflops;
+}
+
+template <typename _T>
+float
+ocl::test::
+peak_gflops(be::data_ptr bedp)
+{
+    constexpr const size_t COUNT=128;
+    std::cout << "testing\n"  << bedp->dcq().d().name() << '\n'
+              << be::type_2_name<_T>::v() << " gflops using a polynomial with "
+              << COUNT << " calculated coefficients\n";
+    constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
+    constexpr const size_t _N=32;
+    constexpr const size_t _WARMUP=4;
+    float gflops=0.0f;
+    std::cout << std::fixed << std::setprecision(1);
+    try {
+        for (size_t i=0; i<_N+_WARMUP; ++i) {
+            dvec<_T> v_src(bedp, _T(0.25), elem_count);
+            dvec<_T> v_dst(v_src.backend_data(), elem_count);
+            auto start = std::chrono::steady_clock::now();
+            v_dst=peak_flops(v_src, COUNT);
+            auto end = std::chrono::steady_clock::now();
+            auto ns_elapsed=(end - start).count();
+            if (i >= _WARMUP) {
+                float gflops_i=
+                    (elem_count*(COUNT)*4)/float(ns_elapsed);
                 std::cout << gflops_i << '\n';
                 gflops += gflops_i;
             }
@@ -168,11 +238,15 @@ ocl::test::test_gflops(int argc, char** argv)
             auto bedp=be::data::create(v[device]);
             test::horner_gflops<float>(bedp);
             test::horner_gflops<double>(bedp);
+            test::peak_gflops<float>(bedp);
+            test::peak_gflops<double>(bedp);
         }  else {
             for (auto& d : v) {
                 auto bedp=be::data::create(d);
                 test::horner_gflops<float>(bedp);
                 test::horner_gflops<double>(bedp);
+                test::peak_gflops<float>(bedp);
+                test::peak_gflops<double>(bedp);
             }
         }
     }
