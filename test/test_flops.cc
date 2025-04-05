@@ -11,11 +11,57 @@ namespace ocl {
         template <typename _T>
         float horner_gflops(be::data_ptr bedp);
 
+
+        impl::__cf_body
+        gen_peak_f(const std::string_view& tname,
+                   size_t n,
+                   bool use_fma, bool use_mad,
+                   const std::string_view& literal_suffix);
+
         void
         test_gflops(int argc, char** argv);
 
 
     }
+}
+
+ocl::impl::__cf_body
+ocl::test::
+gen_peak_f(const std::string_view& tname,
+           size_t n,
+           bool use_fma, bool use_mad,
+           const std::string_view& literal_suffix)
+{
+    std::ostringstream s;
+    s << "peak_f_" << n << '_' << tname;
+    if (use_fma) {
+        s << "_fma";
+    } else if (use_mad) {
+        s << "_mad";
+    }
+    const std::string hname=s.str();
+    s.str("");
+    s << tname << " " << hname << "("
+      << tname << " x)\n"
+        "{\n";
+    s << "    " << tname << " c=0x1.0p-124" << literal_suffix << ";\n"
+      << "    const " << tname << " fac=-2.0" << literal_suffix << ";\n"
+      << "    " << tname << " r=c;\n";
+    for (size_t i=0; i<n; ++i) {
+        if (use_fma) {
+            s << "    r=fma(x, r, c);\n";
+            s << "    c=fma(fac, c, c);\n";
+        } else if (use_mad) {
+            s << "    r=mad(x, r, c);\n";
+            s << "    r=mad(fac, c, c);\n";
+        } else {
+            s << "    r=x*r+c;\n";
+            s << "    c=fac*c+c;\n";
+        }
+    }
+    s << "    return r;\n"
+         "}\n";
+    return impl::__cf_body(hname, s.str());
 }
 
 template <typename _T>
