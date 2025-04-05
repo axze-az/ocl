@@ -60,13 +60,16 @@ gen_peak_flops(const std::string_view& tname,
     for (size_t i=0; i<n; ++i) {
         if (use_fma) {
             s << "    r=fma(x, r, c);\n";
-            s << "    c=fma(fac, c, c);\n";
+            if (i < n-1)
+                s << "    c=fma(fac, c, c);\n";
         } else if (use_mad) {
             s << "    r=mad(x, r, c);\n";
-            s << "    c=mad(fac, c, c);\n";
+            if (i < n-1)
+                s << "    c=mad(fac, c, c);\n";
         } else {
             s << "    r=x*r+c;\n";
-            s << "    c=fac*c+c;\n";
+            if (i < n-1)
+                s << "    c=fac*c+c;\n";
         }
     }
     s << "    return r;\n"
@@ -164,7 +167,7 @@ peak_gflops(be::data_ptr bedp)
             auto ns_elapsed=(end - start).count();
             if (i >= _WARMUP) {
                 float gflops_i=
-                    (elem_count*(COUNT)*4)/float(ns_elapsed);
+                    (elem_count*(COUNT*4-2))/float(ns_elapsed);
                 std::cout << gflops_i << '\n';
                 gflops += gflops_i;
             }
