@@ -14,6 +14,10 @@ namespace ocl {
                        size_t n,
                        bool use_fma, bool use_mad,
                        const std::string_view& literal_suffix);
+
+        template <typename _T>
+        _T
+        peak_flops(_T x, size_t n);
     }
 
     template <typename _T>
@@ -55,7 +59,7 @@ gen_peak_flops(const std::string_view& tname,
       << tname << " x)\n"
         "{\n";
     s << "    " << tname << " c=0x1.0p-124" << literal_suffix << ";\n"
-      << "    const " << tname << " fac=-2.0" << literal_suffix << ";\n"
+      << "    const " << tname << " fac=-3.0" << literal_suffix << ";\n"
       << "    " << tname << " r=c;\n";
     for (size_t i=0; i<n; ++i) {
         if (use_fma) {
@@ -75,6 +79,21 @@ gen_peak_flops(const std::string_view& tname,
     s << "    return r;\n"
          "}\n";
     return impl::__cf_body(hname, s.str());
+}
+
+template <typename _T>
+_T
+ocl::impl::peak_flops(_T x, size_t n)
+{
+    const _T fac=_T(-3.0);
+    _T c=_T(0x1.0p-124);
+    _T r=c;
+    for (size_t i=0; i<n; ++i) {
+        r = x*r + c;
+        if (i < n-1)
+            c = fac* c + c;
+    }
+    return r;
 }
 
 template <typename _T>
@@ -158,8 +177,15 @@ peak_gflops(be::data_ptr bedp)
     float gflops=0.0f;
     std::cout << std::fixed << std::setprecision(1);
     try {
+        const _T x=_T(0.25);
+#if 0
+        _T res=impl::peak_flops(x, COUNT);
+        std::cout << "res= "
+                  // << std::scientific << std::setprecision(18)
+                  << res << std::endl;
+#endif
         for (size_t i=0; i<_N+_WARMUP; ++i) {
-            dvec<_T> v_src(bedp, _T(0.25), elem_count);
+            dvec<_T> v_src(bedp, x, elem_count);
             dvec<_T> v_dst(v_src.backend_data(), elem_count);
             auto start = std::chrono::steady_clock::now();
             v_dst=peak_flops(v_src, COUNT);
