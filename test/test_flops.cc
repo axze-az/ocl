@@ -127,7 +127,7 @@ horner_gflops(be::data_ptr bedp)
         ci *= _T(0.875);
     }
     constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
-    constexpr const size_t _N=32;
+    constexpr const size_t _N=48;
     constexpr const size_t _WARMUP=4;
     float gflops=0.0f;
     std::cout << std::fixed << std::setprecision(1);
@@ -142,9 +142,17 @@ horner_gflops(be::data_ptr bedp)
             if (i >= _WARMUP) {
                 float gflops_i=
                     (elem_count*(COEFF_COUNT-1)*2)/float(ns_elapsed);
-                std::cout << gflops_i << '\n';
+                std::cout << std::setw(12) << gflops_i;
+                if (((i-_WARMUP) % 6)== 5) {
+                    std::cout << '\n';
+                } else {
+                    std::cout << ' ' << std::flush;
+                }
                 gflops += gflops_i;
             }
+        }
+        if ((_N % 6)!= 0) {
+            std::cout << '\n';
         }
         gflops *= 1.0f/float(_N);
         std::cout << "mean: " << gflops << std::endl;
@@ -172,7 +180,7 @@ peak_gflops(be::data_ptr bedp)
               << be::type_2_name<_T>::v() << " gflops using a polynomial with "
               << COUNT << " calculated coefficients\n";
     constexpr const size_t elem_count=(128*1024*1024ULL)/sizeof(_T);
-    constexpr const size_t _N=32;
+    constexpr const size_t _N=48;
     constexpr const size_t _WARMUP=4;
     float gflops=0.0f;
     std::cout << std::fixed << std::setprecision(1);
@@ -194,9 +202,17 @@ peak_gflops(be::data_ptr bedp)
             if (i >= _WARMUP) {
                 float gflops_i=
                     (elem_count*(COUNT*4-2))/float(ns_elapsed);
-                std::cout << gflops_i << '\n';
+                std::cout << std::setw(12) << gflops_i;
+                if (((i-_WARMUP) % 6)==5) {
+                    std::cout << '\n';
+                } else {
+                    std::cout << ' '  << std::flush;
+                }
                 gflops += gflops_i;
             }
+        }
+        if ((_N % 6)!= 0) {
+            std::cout << '\n';
         }
         gflops *= 1.0f/float(_N);
         std::cout << "mean: " << gflops << std::endl;
