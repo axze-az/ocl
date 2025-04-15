@@ -723,6 +723,15 @@ namespace ocl {
     hadd(const dvec<_T>& v);
 
     namespace impl {
+        __ck_body
+        gen_dot_product(const std::string_view& tname);
+    }
+
+    template <typename _T>
+    _T
+    dot_product(const dvec<_T>& a, const dvec<_T>& b);
+
+    namespace impl {
         // worker function for evem_elements(v)
         __ck_body
         even_elements(const std::string_view& tname);
