@@ -922,7 +922,7 @@ ocl::hadd(const dvec<_T>& v)
     dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=v.size();
     // create a working copy:
-    dvec<_T> vc(p, hdcnt);
+    dvec<_T> vc(v);
     const auto tname=be::type_2_name<_T>::v();
     auto nb=impl::gen_hadd(tname);
     // Note: in custom kernels the left hand side may be
@@ -933,6 +933,39 @@ ocl::hadd(const dvec<_T>& v)
         execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
     } while (hdcnt>1);
+    // copy only one element from vc
+    _T r;
+    vc.copy_to_host(&r, 0, 1);
+    return r;
+}
+
+template <typename _T>
+_T
+ocl::dot_product(const dvec<_T>& a, const dvec<_T>& b)
+{
+    auto p=a.backend_data();
+    dvec<uint64_t> dcnt(p, 1);
+    uint64_t hdcnt=a.size();
+    // create a working copy
+    dvec<_T> vc(p, hdcnt/2);
+    const auto tname=be::type_2_name<_T>::v();
+    auto nb=impl::gen_dot_product(tname);
+    // Note: in custom kernels the left hand side may be
+    // read also from the kernel:
+    auto k=custom_kernel<_T>(nb.name(), nb.body(),
+                             vc, a, b,
+                             dcnt, local_mem_per_workitem<_T>(1));
+    execute_custom(k, hdcnt, p);
+    dcnt.copy_to_host(&hdcnt);
+    if (hdcnt > 1) {
+        auto nhadd=impl::gen_hadd(tname);
+        auto k1=custom_kernel<_T>(nhadd.name(), nhadd.body(),
+                                  vc, dcnt, local_mem_per_workitem<_T>(1));
+        do {
+            execute_custom(k1, hdcnt, p);
+            dcnt.copy_to_host(&hdcnt);
+        } while (hdcnt>1);
+    }
     // copy only one element from vc
     _T r;
     vc.copy_to_host(&r, 0, 1);
