@@ -171,7 +171,7 @@ namespace ocl {
             bool perform(const float (&f)[_N]);
         public:
             horner_f32(size_t n)
-                : b_t(n, float(-M_LN2/2), float(2*M_LN2/2)),
+                : b_t(n, float(-M_LN2*0.5), float(M_LN2*0.5)),
                   _x2(_a0*_a0),
                   _x4(_x2*_x2) {
             }

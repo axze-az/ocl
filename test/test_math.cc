@@ -104,6 +104,23 @@ namespace ocl {
 
     namespace test {
 
+        template <typename _T>
+        class test_functions : public ops_base<_T> {
+            using b_t = ops_base<_T>;
+            using b_t::_res;
+            using b_t::_a0;
+            using b_t::_a1;
+            using b_t::_h_res;
+            using b_t::_h_a0;
+            using b_t::_h_a1;
+            using b_t::check_res;
+        public:
+            test_functions(size_t n)
+                : b_t(n, _T(-M_LN2*.5), _T(M_LN2*0.5)) {
+            }
+            bool perform();
+        };
+
         const int VEC_SIZE=1;
         const int ELEMENTS=((4*1024*1024)/VEC_SIZE)-1;
 
@@ -114,8 +131,27 @@ namespace ocl {
         test_mul12(const dvec<float>& x);
 
     }
-
 };
+
+template <typename _T>
+bool
+ocl::test::test_functions<_T>::perform()
+{
+    bool rc=true;
+
+    using cftal::hadd;
+
+    std::cout << "testing hadd\n";
+    _T r_hadd=hadd(_h_a0);
+    _T d_hadd=hadd(_a0);
+
+    _T delta_hadd=r_hadd - d_hadd;
+    _T rel_delta_hadd=delta_hadd/((r_hadd+d_hadd)*_T(0.5));
+    std::cout << "delta: "  << std::setprecision(19) << std::scientific
+              << delta_hadd
+              << "\nrel_delta"  << rel_delta_hadd << '\n';
+    return rc;
+}
 
 void
 ocl::test::test_add12cond(const dvec<float>& x)
@@ -156,14 +192,20 @@ int main()
         using rtype = float;
         // using itype = int64_t;
         // using v8fXX = cftal::vec<ftype, 8>;
-        constexpr const std::size_t N=16*16*1024;
-        for (std::size_t i=4; i<N; ++i) {
-            if ((i & 0x7f) == 0x7f || i==1) {
+        for (std::size_t i=4; i<32*1024*1024; i <<=1) {
+            if (1) {
                 std::cout << "using buffers with "
                           <<  i
                           << " elements (" << i*sizeof(rtype)
                           << " bytes)\r" << std::flush;
             }
+#if 0
+            test_functions<rtype> t(i);
+            if (t.perform() == false) {
+                std::cout << "\ntest for vector length " << i << " failed\n";
+                std::exit(3);
+            }
+#endif
         }
         std::cout << "\ntest passed\n";
     }
