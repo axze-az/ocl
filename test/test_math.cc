@@ -138,18 +138,22 @@ bool
 ocl::test::test_functions<_T>::perform()
 {
     bool rc=true;
-
-    using cftal::hadd;
-
-    std::cout << "testing hadd\n";
     _T r_hadd=hadd(_h_a0);
     _T d_hadd=hadd(_a0);
 
     _T delta_hadd=r_hadd - d_hadd;
     _T rel_delta_hadd=delta_hadd/((r_hadd+d_hadd)*_T(0.5));
-    std::cout << "delta: "  << std::setprecision(19) << std::scientific
-              << delta_hadd
-              << "\nrel_delta"  << rel_delta_hadd << '\n';
+
+    _T max_rel_err=_a0.size() * std::numeric_limits<_T>::epsilon();
+    using std::abs;
+    if (abs(rel_delta_hadd) > max_rel_err) {
+        std::cout << std::setprecision(19) << std::scientific;
+        std::cout << "elements: " << _a0.size()
+                  << " max_rel_err: " << max_rel_err << '\n';
+        std::cout << "delta: " << delta_hadd
+                  << "\nrel_delta: "  << rel_delta_hadd << '\n';
+        rc = false;
+    }
     return rc;
 }
 
@@ -199,13 +203,11 @@ int main()
                           << " elements (" << i*sizeof(rtype)
                           << " bytes)\r" << std::flush;
             }
-#if 0
             test_functions<rtype> t(i);
             if (t.perform() == false) {
                 std::cout << "\ntest for vector length " << i << " failed\n";
                 std::exit(3);
             }
-#endif
         }
         std::cout << "\ntest passed\n";
     }
