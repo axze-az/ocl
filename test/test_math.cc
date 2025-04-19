@@ -155,6 +155,8 @@ bool
 ocl::test::test_functions<_T>::perform()
 {
     bool rc=true;
+
+    // hadd
     _T r_hadd=hadd(_h_a0);
     _T d_hadd=hadd(_a0);
 
@@ -173,6 +175,7 @@ ocl::test::test_functions<_T>::perform()
         rc = false;
     }
 
+    // dot_product
     _T r_dot_product=dot_product(_h_a0, _h_a1);
     _T d_dot_product=dot_product(_a0, _a1);
 
