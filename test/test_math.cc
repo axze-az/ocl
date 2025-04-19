@@ -141,10 +141,10 @@ namespace ocl {
         const int VEC_SIZE=1;
         const int ELEMENTS=((4*1024*1024)/VEC_SIZE)-1;
 
-        void
+        float
         test_add12cond(const dvec<float>& x);
 
-        void
+        float
         test_mul12(const dvec<float>& x);
 
     }
@@ -195,7 +195,7 @@ ocl::test::test_functions<_T>::perform()
     return rc;
 }
 
-void
+float
 ocl::test::test_add12cond(const dvec<float>& x)
 {
     using vf_type = dvec<float>;
@@ -207,9 +207,12 @@ ocl::test::test_add12cond(const dvec<float>& x)
     vf_type hh, ll;
     d_ops::add22cond(hh, ll, h, l, h, l);
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
+    vf_type t=hh+ll;
+    float r=hadd(t);
+    return r;
 }
 
-void
+float
 ocl::test::test_mul12(const dvec<float>& x)
 {
     using vf_type = dvec<float>;
@@ -222,6 +225,9 @@ ocl::test::test_mul12(const dvec<float>& x)
     d_ops::div22(hh, ll, hh, ll, h, l);
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
     // std::dvec<float> hh(h), hl(l);
+    vf_type t=hh+ll;
+    float r=hadd(t);
+    return r;
 }
 
 int main()
