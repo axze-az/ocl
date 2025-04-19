@@ -161,14 +161,32 @@ ocl::test::test_functions<_T>::perform()
     _T delta_hadd=r_hadd - d_hadd;
     _T rel_delta_hadd=delta_hadd/((r_hadd+d_hadd)*_T(0.5));
 
-    _T max_rel_err=_a0.size() * std::numeric_limits<_T>::epsilon();
+    _T max_rel_err_hadd=
+        _a0.size() * std::numeric_limits<_T>::epsilon();
     using std::abs;
-    if (abs(rel_delta_hadd) > max_rel_err) {
+    if (abs(rel_delta_hadd) > max_rel_err_hadd) {
         std::cout << std::setprecision(19) << std::scientific;
-        std::cout << "elements: " << _a0.size()
-                  << " max_rel_err: " << max_rel_err << '\n';
+        std::cout << "hadd elements: " << _a0.size()
+                  << " max_rel_err: " << max_rel_err_hadd << '\n';
         std::cout << "delta: " << delta_hadd
                   << "\nrel_delta: "  << rel_delta_hadd << '\n';
+        rc = false;
+    }
+
+    _T r_dot_product=dot_product(_h_a0, _h_a1);
+    _T d_dot_product=dot_product(_a0, _a1);
+
+    _T delta_dot_product=r_dot_product - d_dot_product;
+    _T rel_delta_dot_product=
+        delta_dot_product/((r_dot_product+d_dot_product)*_T(0.5));
+    _T max_rel_err_dot_product=
+        _a0.size() * std::numeric_limits<_T>::epsilon() * _T(4.0);
+    if (abs(rel_delta_dot_product) > max_rel_err_dot_product) {
+        std::cout << std::setprecision(19) << std::scientific;
+        std::cout << "dot_product elements: " << _a0.size()
+                  << " max_rel_err: " << max_rel_err_dot_product << '\n';
+        std::cout << "delta: " << delta_dot_product
+                  << "\nrel_delta: "  << rel_delta_dot_product << '\n';
         rc = false;
     }
     return rc;
