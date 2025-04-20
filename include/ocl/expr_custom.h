@@ -44,18 +44,9 @@ namespace ocl {
         class __cf_body {
             std::string _name;
             std::string _body;
-
-            // add "static " in front of b if it does not begin
-            // with static
-            static
-            std::string
-            add_static_to_body(const std::string& b);
         public:
             __cf_body(const std::string& n,
                       const std::string& b);
-            __cf_body(const std::string& n,
-                      const std::string& b,
-                      bool prepend_static);
             __cf_body(const __cf_body& r);
             __cf_body(__cf_body&& r);
             __cf_body&

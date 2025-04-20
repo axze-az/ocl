@@ -17,39 +17,9 @@
 //
 #include "ocl/expr_custom.h"
 
-
-std::string
-ocl::impl::__cf_body::add_static_to_body(const std::string& b)
-{
-    using namespace std::literals;
-    static constexpr const std::string_view s[]={
-        "static "sv,
-        "static\t"sv,
-        "static\n"sv,
-        "static\r"sv
-    };
-    bool prepend=true;
-    for (auto bs=std::cbegin(s), be=std::cend(s); bs != be; ++bs) {
-        if (b.starts_with(*bs)) {
-            prepend = false;
-            break;
-        }
-    }
-    std::string r=
-        prepend ? std::string(s[0]) : std::string();
-    r += b;
-    return r;
-}
-
 ocl::impl::__cf_body::
 __cf_body(const std::string& n, const std::string& b)
-    : _name(n), _body(add_static_to_body(b))
-{
-}
-
-ocl::impl::__cf_body::
-__cf_body(const std::string& n, const std::string& b, bool prepend_static)
-    : _name(n), _body(prepend_static ? add_static_to_body(b) : b)
+    : _name(n), _body(b)
 {
 }
 
@@ -87,12 +57,12 @@ ocl::impl::__cf_body::~__cf_body()
 
 ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b,
                                 size_t s)
-    : __cf_body(n, b, false), _s(s)
+    : __cf_body(n, b), _s(s)
 {
 }
 
 ocl::impl::__ck_body::__ck_body(const std::string& n, const std::string& b)
-    : __cf_body(n, b, false), _s()
+    : __cf_body(n, b), _s()
 {
 }
 
