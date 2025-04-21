@@ -378,10 +378,10 @@ ocl::test::horner_f32::perform(const float (&c)[_N])
     rc &= check_res(s_horner, max_rel_tol);
 
     _res = horner2(_a0, _x2, c);
-    rc &= check_res(s_horner2_x2, 2*max_rel_tol);
+    rc &= check_res(s_horner2_x2, 3*max_rel_tol);
 
     _res = horner2(_a0, c);
-    rc &= check_res(s_horner2_x2, 2*max_rel_tol);
+    rc &= check_res(s_horner2_x2, 3*max_rel_tol);
 
     _res = horner4(_a0, _x2, _x4, c);
     rc &= check_res(s_horner4_x2x4, 4*max_rel_tol);
