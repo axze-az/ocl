@@ -21,7 +21,6 @@
 #include <cftal/d_real.h>
 #include <ocl/test/ops_base.h>
 #include "ocl/dvec.h"
-// #include <vexcl/vexcl.hpp>
 #include <chrono>
 #include <thread>
 #include <limits>
