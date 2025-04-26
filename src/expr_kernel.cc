@@ -171,7 +171,7 @@ insert_headers(std::ostream& s,
     // fp16
     s << "#if defined (cl_khr_fp16)\n"
          "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
-         "#endif\n\n";
+         "#endif\n";
     const auto& d=b->dcq().d();
     auto f32_prop=
         d.get_info<cl_device_fp_config>(CL_DEVICE_SINGLE_FP_CONFIG);
@@ -179,12 +179,15 @@ insert_headers(std::ostream& s,
         (f32_prop & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT) != 0 ? 1 : 0;
     const int f32_subnormals=
         (f32_prop & CL_FP_DENORM) != 0 ? 1 : 0;
+    const int f32_fma=
+        (f32_prop & CL_FP_FMA) != 0 ? 1 : 0;
 
-    s << "#define F32_CORRECTLY_ROUNDED_DIVIDE_SQRT "
+    s << "\n#define F32_CORRECTLY_ROUNDED_DIVIDE_SQRT "
       << f32_div_sqrt_correctly_round
-      << "\n"
-         "#define F32_SUBNORMALS "
+      << "\n#define F32_SUBNORMALS "
       << f32_subnormals
+      << "\n#define F32_FMA "
+      << f32_fma
       << "\n\n";
      // gen_byte_swaps(s);
     if (lmem_size==0) {
