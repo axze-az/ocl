@@ -248,7 +248,7 @@ int main()
         using namespace ocl::test;
 
         const size_t max_buffer_size=512*1024*1024;
-        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i *=3) {
+        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i = (i*3)>>1) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
@@ -268,7 +268,7 @@ int main()
             }
         }
         std::cout << "\nfloat test passed\n";
-        for (std::size_t i=4; i<max_buffer_size/sizeof(double); i*= 3) {
+        for (std::size_t i=4; i<max_buffer_size/sizeof(double); i= (i*3)>>1) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
