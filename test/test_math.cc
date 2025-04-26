@@ -169,7 +169,7 @@ ocl::test::test_functions<_T>::perform()
     _T rel_delta_hadd=delta_hadd/((r_hadd+d_hadd)*_T(0.5));
 
     _T max_rel_err_hadd=
-        _a0.size() * std::numeric_limits<_T>::epsilon() * _T(2.0);
+        _a0.size() * std::numeric_limits<_T>::epsilon() * _T(1.0);
     using std::abs;
     if (abs(rel_delta_hadd) > max_rel_err_hadd) {
         std::cout << std::setprecision(19) << std::scientific;
@@ -192,7 +192,7 @@ ocl::test::test_functions<_T>::perform()
     _T rel_delta_dot_product=
         delta_dot_product/((r_dot_product+d_dot_product)*_T(0.5));
     _T max_rel_err_dot_product=
-        _a0.size() * std::numeric_limits<_T>::epsilon() * _T(4.0);
+        _a0.size() * std::numeric_limits<_T>::epsilon() * _T(2.0);
     if (abs(rel_delta_dot_product) > max_rel_err_dot_product) {
         std::cout << std::setprecision(19) << std::scientific;
         std::cout << "dot_product elements: " << _a0.size()
@@ -248,7 +248,7 @@ int main()
         using namespace ocl::test;
 
         const size_t max_buffer_size=512*1024*1024;
-        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i = (i*3)>>1) {
+        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i = (i*5)>>2) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
@@ -268,7 +268,7 @@ int main()
             }
         }
         std::cout << "\nfloat test passed\n";
-        for (std::size_t i=4; i<max_buffer_size/sizeof(double); i= (i*3)>>1) {
+        for (std::size_t i=4; i<max_buffer_size/sizeof(double); i= (i*5)>>2) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
