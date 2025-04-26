@@ -48,6 +48,12 @@ ocl::cl::error::to_string(cl_int code)
         return "Build Program Failure";
     case CL_MAP_FAILURE:
         return "Map Failure";
+#if CL_VERSION_1_1 || CL_TARGET_OPENCL_VERSION >= 110
+    case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+        return "Misaligned sub buffer offset";
+    case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+        return "exec status error for events in wait list";
+#endif
     case CL_INVALID_VALUE:
         return "Invalid Value";
     case CL_INVALID_DEVICE_TYPE:
@@ -203,12 +209,12 @@ ocl::cl::error::~error()
 }
 
 std::string
-ocl::cl::error::error_string() 
-    const 
+ocl::cl::error::error_string()
+    const
 {
         return what();
 }
-            
+
 void
 ocl::cl::error::
 _throw_on(cl_int code)
