@@ -26,7 +26,7 @@
 #include <thread>
 #include <limits>
 
-#define DEBUG_MATH 1
+#define DEBUG_MATH 0
 
 /*
 You can dump the list of kernels and the LLVM IR when a program runs by
@@ -247,9 +247,8 @@ int main()
         using namespace ocl;
         using namespace ocl::test;
 
-        const size_t max_buffer_size=256*1024*1024;
-#if 0
-        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i <<=1) {
+        const size_t max_buffer_size=512*1024*1024;
+        for (std::size_t i=4; i<max_buffer_size/sizeof(float); i *=3) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i
@@ -268,9 +267,8 @@ int main()
                 std::exit(3);
             }
         }
-#endif
         std::cout << "\nfloat test passed\n";
-        for (std::size_t i=4; i<max_buffer_size/sizeof(double); ++i) {
+        for (std::size_t i=4; i<max_buffer_size/sizeof(double); i*= 3) {
             if (1) {
                 std::cout << "using buffers with "
                           <<  i

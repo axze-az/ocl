@@ -881,20 +881,25 @@ ocl::impl::dvec_xxx_of(const __ck_body& nb, const dvec<_T>& v)
 {
     auto p=v.backend_data();
     using type= typename dvec<_T>::mask_value_type;
-    typename dvec<_T>::mask_type nz= v != _T(0);
+    typename dvec<_T>::mask_type nzs= v != _T(0);
     dvec<uint64_t> dcnt(p, 1);
-    uint64_t hdcnt=nz.size();
+    uint64_t hdcnt=nzs.size();
+    typename dvec<_T>::mask_type nzd(p, hdcnt/2);
     // Note: in custom kernels the left hand side may be
-    // read also from the kernel:
+    // read also from the kernel, but this is a bad idea
+    // if input and output indices are not equal
     auto k=custom_kernel<type>(nb.name(), nb.body(),
-                               nz, dcnt, local_mem_per_workitem<type>(1));
+                               nzd, nzs, dcnt, local_mem_per_workitem<type>(1));
     do {
         execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
-    } while (hdcnt>1);
+        if (hdcnt <= 1)
+            break;
+        nzd.swap(nzs);
+    } while (1);
     // copy only one element from nz
     type r;
-    nz.copy_to_host(&r, 0, 1);
+    nzd.copy_to_host(&r, 0, 1);
     return r;
 }
 
@@ -939,23 +944,28 @@ ocl::hadd(const dvec<_T>& v)
     dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=v.size();
     // create a working copy:
-    dvec<_T> vc(v);
+    dvec<_T> vcs(v);
+    dvec<_T> vcd(p, hdcnt/2);
     const auto tname=be::type_2_name<_T>::v();
     auto nb=impl::gen_hadd(tname);
     // Note: in custom kernels the left hand side may be
-    // read also from the kernel:
+    // read also from the kernel, but this is a bad idea
+    // if input and output indices are not equal
     auto k=custom_kernel<_T>(nb.name(), nb.body(),
-                             vc, dcnt, local_mem_per_workitem<_T>(1));
+                             vcd, vcs, dcnt, local_mem_per_workitem<_T>(1));
     do {
-#if 1
+#if 0
         std::cout << "hadd hdnct=" << hdcnt << std::endl;
 #endif
         execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
-    } while (hdcnt>1);
+        if (hdcnt <= 1)
+            break;
+        vcd.swap(vcs);
+    } while (1);
     // copy only one element from vc
     _T r;
-    vc.copy_to_host(&r, 0, 1);
+    vcd.copy_to_host(&r, 0, 1);
     return r;
 }
 
@@ -967,28 +977,36 @@ ocl::dot_product(const dvec<_T>& a, const dvec<_T>& b)
     dvec<uint64_t> dcnt(p, 1);
     uint64_t hdcnt=a.size();
     // create a working copy
-    dvec<_T> vc(p, hdcnt/2);
+    dvec<_T> vcd(p, hdcnt/2);
     const auto tname=be::type_2_name<_T>::v();
     auto nb=impl::gen_dot_product(tname);
     // Note: in custom kernels the left hand side may be
-    // read also from the kernel:
+    // read also from the kernel, but this is a bad idea
+    // if input and output indices are not equal
     auto k=custom_kernel<_T>(nb.name(), nb.body(),
-                             vc, a, b,
-                             dcnt, local_mem_per_workitem<_T>(1));
+                             vcd, a, b,
+                             dcnt,
+                             local_mem_per_workitem<_T>(1));
     execute_custom(k, hdcnt, p);
     dcnt.copy_to_host(&hdcnt);
     if (hdcnt > 1) {
+        dvec<_T> vcs(p, hdcnt/2);
+        vcd.swap(vcs);
         auto nhadd=impl::gen_hadd(tname);
         auto k1=custom_kernel<_T>(nhadd.name(), nhadd.body(),
-                                  vc, dcnt, local_mem_per_workitem<_T>(1));
+                                  vcd, vcs,
+                                  dcnt, local_mem_per_workitem<_T>(1));
         do {
             execute_custom(k1, hdcnt, p);
             dcnt.copy_to_host(&hdcnt);
-        } while (hdcnt>1);
+            if (hdcnt <= 1)
+                break;
+            vcd.swap(vcs);
+        } while (1);
     }
     // copy only one element from vc
     _T r;
-    vc.copy_to_host(&r, 0, 1);
+    vcd.copy_to_host(&r, 0, 1);
     return r;
 }
 
