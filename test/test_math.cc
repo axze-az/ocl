@@ -179,7 +179,7 @@ ocl::test::test_functions<_T>::perform()
                   << "\nrel_delta: "  << rel_delta_hadd << '\n';
         rc = false;
     }
-#if 0
+
     // dot_product
     _T r_dot_product=dot_product(_h_a0, _h_a1);
     _T d_dot_product=dot_product(_a0, _a1);
@@ -201,7 +201,7 @@ ocl::test::test_functions<_T>::perform()
                   << "\nrel_delta: "  << rel_delta_dot_product << '\n';
         rc = false;
     }
-#endif
+
     return rc;
 }
 
