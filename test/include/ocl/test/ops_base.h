@@ -71,17 +71,19 @@ namespace ocl {
 template <typename _T>
 ocl::test::ops_base<_T>::
 ops_base(size_t n, const _T& min_val, const _T& max_val)
-    : _res(_T(0), n), _a0(_res), _a1(_res), _h_res_d(_res),
+    : _res(_T(0), n), _a0(min_val, n), _a1(max_val, n), _h_res_d(_res),
       _cmp_res(typename dvec<_T>::mask_value_type(0), n),
       _h_cmp_res(typename dvec<_T>::mask_value_type(0), n),
       _h_d_res(_T(0), n),
       _h_res(_h_d_res), _h_a0(_h_d_res), _h_a1(_h_d_res)
 {
 #if 1
-    rand48 rnd(n);
-    rnd.seed_times_global_id(n);
-    _a0 = uniform_float_random_vector(rnd, min_val, max_val);
-    _a1 = uniform_float_random_vector(rnd, min_val, max_val);
+    if (min_val != max_val) {
+        rand48 rnd(n);
+        rnd.seed_times_global_id(n);
+        _a0 = uniform_float_random_vector(rnd, min_val, max_val);
+        _a1 = uniform_float_random_vector(rnd, min_val, max_val);
+    }
     _a0.copy_to_host(&_h_a0[0]);
     _a1.copy_to_host(&_h_a1[0]);
 #else

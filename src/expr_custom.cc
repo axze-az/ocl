@@ -149,7 +149,8 @@ bind_buffer_args_local_mem(const std::string_view& tname,
           << tname << "> with "
           << elements
           << " elements and "
-          << wg_size << " workitems "
+          << wg_size << " workitems ("
+          << bytes << " bytes) "
           << "to arg " << buf_num << '\n';
         be::data::debug_print(s.str());
     }

@@ -947,6 +947,9 @@ ocl::hadd(const dvec<_T>& v)
     auto k=custom_kernel<_T>(nb.name(), nb.body(),
                              vc, dcnt, local_mem_per_workitem<_T>(1));
     do {
+#if 1
+        std::cout << "hadd hdnct=" << hdcnt << std::endl;
+#endif
         execute_custom(k, hdcnt, p);
         dcnt.copy_to_host(&hdcnt);
     } while (hdcnt>1);
