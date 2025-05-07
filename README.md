@@ -1,9 +1,18 @@
 # ocl
 
 A c++-20 template based variable lenght vector library with an OpenCL
-backed.
+backend.
 
 ## Description
+
+ocl is a c++-20 template based variable length vector library with an OpenCL 
+backend. It defines a template class ocl::dvec<_T> with common vector 
+operations like addition, subtraction, multiplication using expression 
+templates.
+Most of these vector operations return expressions instead real result. 
+These expressions are executed during the assignment to a vector to avoid 
+temporary results requiring large amounts of memory if the vector lengths
+are large.
 
 ## Getting Started
 
