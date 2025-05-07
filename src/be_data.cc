@@ -67,7 +67,7 @@ enqueue_1d_kernel(const kernel& k, const kexec_1d_info& ki)
     q.flush();
     wl.clear();
     // TODO: figure out why we have memory leaks here:
-    // evs.insert(ev);
+    // wl.insert(ev);
     if (_debug != 0) {
         std::string kn=k.name();
         std::ostringstream s;
