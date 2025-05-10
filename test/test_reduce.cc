@@ -33,7 +33,7 @@ int main()
         using namespace ocl;
         using cftal::v8f32;
 
-        const unsigned SIZE=512*1024*1024;
+        const unsigned SIZE=128*1024*1024;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(float))/(1024*1024)
                   << "MiB\n";
