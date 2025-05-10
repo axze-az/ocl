@@ -26,14 +26,6 @@
 #include <memory> // for shared_ptr
 #include <cmath>
 
-namespace ocl {
-
-
-    class custom_kernel {
-    };
-
-}
-
 int main()
 {
     try {
@@ -41,7 +33,7 @@ int main()
         using namespace ocl;
         using cftal::v8f32;
 
-        const unsigned SIZE=512;
+        const unsigned SIZE=512*1024*1024;
         std::cout << "using buffers of "
                   << double(SIZE*sizeof(float))/(1024*1024)
                   << "MiB\n";
@@ -49,7 +41,7 @@ int main()
 
         dvec<float> va(a, SIZE);
         dvec<float> vb(b, SIZE);
-        dvec<int32_t> tgt= va == vb;
+        typename dvec<float>::mask_type tgt= va == vb;
 
         // va != vb
         // all_of == false
