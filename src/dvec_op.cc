@@ -264,7 +264,7 @@ ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,
 }
 
 std::string
-ocl::dop::names::div_base::name(const char* tname)
+ocl::dop::names::div_base::name(const std::string_view& tname)
 {
     return name(std::string(tname));
 }
@@ -276,7 +276,7 @@ ocl::dop::names::div_base::name(const std::string& tname)
 }
 
 std::string
-ocl::dop::names::div_base::body(const char* tname)
+ocl::dop::names::div_base::body(const std::string_view& tname)
 {
     return body(std::string(tname));
 }

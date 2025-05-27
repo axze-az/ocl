@@ -144,13 +144,13 @@ namespace ocl {
             struct f_sqrt_base {
                 // function name
                 static
-                std::string name(const char* tname);
+                std::string name(const std::string_view& tname);
                 // function name
                 static
                 std::string name(const std::string& tname);
                 // function body
                 static
-                std::string body(const char* tname);
+                std::string body(const std::string_view& tname);
                 static
                 std::string body(const std::string& tname);
             };

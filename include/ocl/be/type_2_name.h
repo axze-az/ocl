@@ -44,7 +44,7 @@ namespace ocl {
 #define TYPE_2_NAME(type, name) \
     template <>      \
     struct type_2_name<type> { \
-        static constexpr const char* v() { return #name ; } \
+        static constexpr std::string_view v() { return #name ; } \
     }
 
         TYPE_2_NAME(cl_ulong, ulong);
@@ -98,7 +98,7 @@ namespace ocl {
         template <>
         struct type_2_name<char> {
             static
-            constexpr const char* v() {
+            constexpr std::string_view v() {
                 return "char";
             }
         };

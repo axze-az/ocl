@@ -18,7 +18,7 @@
 #include "ocl/dvec_func.h"
 
 std::string
-ocl::dop::names::f_sqrt_base::name(const char* tname)
+ocl::dop::names::f_sqrt_base::name(const std::string_view& tname)
 {
     return name(std::string(tname));
 }
@@ -30,7 +30,7 @@ ocl::dop::names::f_sqrt_base::name(const std::string& tname)
 }
 
 std::string
-ocl::dop::names::f_sqrt_base::body(const char* tname)
+ocl::dop::names::f_sqrt_base::body(const std::string_view& tname)
 {
     return body(std::string(tname));
 }
