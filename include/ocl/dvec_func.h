@@ -28,23 +28,23 @@ namespace ocl {
 
             struct f_fabs {
                 constexpr
-                const char* operator()() const { return "fabs"; }
+                std::string_view operator()() const { return "fabs"; }
             };
             struct f_abs {
                 constexpr
-                const char* operator()() const { return "abs"; }
+                std::string_view operator()() const { return "abs"; }
             };
             struct f_rint {
                 constexpr
-                const char* operator()() const { return "rint"; }
+                std::string_view operator()() const { return "rint"; }
             };
             struct f_isinf {
                 constexpr
-                const char* operator()() const { return "isinf"; }
+                std::string_view operator()() const { return "isinf"; }
             };
             struct f_isnan {
                 constexpr
-                const char* operator()() const { return "isnan"; }
+                std::string_view operator()() const { return "isnan"; }
             };
         };
 
@@ -138,7 +138,7 @@ namespace ocl {
 
             struct f_sqrt {
                 constexpr
-                const char* operator()() const { return "sqrt"; }
+                std::string_view operator()() const { return "sqrt"; }
             };
 
             struct f_sqrt_base {
@@ -191,7 +191,7 @@ namespace ocl {
         namespace names {
             struct f_rsqrt {
                 constexpr
-                const char* operator()() const { return "exp"; }
+                std::string_view operator()() const { return "exp"; }
             };
         }
 
@@ -201,19 +201,19 @@ namespace ocl {
         namespace names {
             struct f_exp {
                 constexpr
-                const char* operator()() const { return "exp"; }
+                std::string_view operator()() const { return "exp"; }
             };
             struct f_expm1 {
                 constexpr
-                const char* operator()() const { return "expm1"; }
+                std::string_view operator()() const { return "expm1"; }
             };
             struct f_exp2 {
                 constexpr
-                const char* operator()() const { return "exp2"; }
+                std::string_view operator()() const { return "exp2"; }
             };
             struct f_exp10 {
                 constexpr
-                const char* operator()() const { return "exp10"; }
+                std::string_view operator()() const { return "exp10"; }
             };
         }
 
@@ -232,19 +232,19 @@ namespace ocl {
         namespace names {
             struct f_log {
                 constexpr
-                const char* operator()() const { return "log"; }
+                std::string_view operator()() const { return "log"; }
             };
             struct f_log1p {
                 constexpr
-                const char* operator()() const { return "log1p"; }
+                std::string_view operator()() const { return "log1p"; }
             };
             struct f_log2 {
                 constexpr
-                const char* operator()() const { return "log2"; }
+                std::string_view operator()() const { return "log2"; }
             };
             struct f_log10 {
                 constexpr
-                const char* operator()() const { return "log10"; }
+                std::string_view operator()() const { return "log10"; }
             };
         }
 
@@ -263,15 +263,15 @@ namespace ocl {
         namespace names {
             struct f_sinh {
                 constexpr
-                const char* operator()() const { return "sinh"; }
+                std::string_view operator()() const { return "sinh"; }
             };
             struct f_cosh {
                 constexpr
-                const char* operator()() const { return "cosh"; }
+                std::string_view operator()() const { return "cosh"; }
             };
             struct f_tanh {
                 constexpr
-                const char* operator()() const { return "tanh"; }
+                std::string_view operator()() const { return "tanh"; }
             };
         }
 
@@ -287,15 +287,15 @@ namespace ocl {
         namespace names {
             struct f_sin {
                 constexpr
-                const char* operator()() const { return "sin"; }
+                std::string_view operator()() const { return "sin"; }
             };
             struct f_cos {
                 constexpr
-                const char* operator()() const { return "cos"; }
+                std::string_view operator()() const { return "cos"; }
             };
             struct f_tan {
                 constexpr
-                const char* operator()() const { return "tan"; }
+                std::string_view operator()() const { return "tan"; }
             };
         }
 
@@ -312,16 +312,16 @@ namespace ocl {
 
             struct f_min {
                 constexpr
-                const char* operator()() const { return  "min"; }
+                std::string_view operator()() const { return  "min"; }
             };
             struct f_max {
                 constexpr
-                const char* operator()() const { return  "max"; }
+                std::string_view operator()() const { return  "max"; }
             };
 
             struct f_pow {
                 constexpr
-                const char* operator()() const { return  "pow"; }
+                std::string_view operator()() const { return  "pow"; }
             };
         };
 
