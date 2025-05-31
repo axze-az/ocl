@@ -182,15 +182,24 @@ namespace ocl {
             static
             std::string
             body(const std::string& l, bool is_operator,
+                 const std::string_view& name);
+            // generate the body of an unary_func object
+            static
+            std::string
+            body(const std::string& l, bool is_operator,
                  const std::string& name);
         };
 
-        template <typename _P, bool _OP=false>
+        // typename _P must contain an operator ()(void)  returning
+        // the function name or the operator name, _OPERATOR_SYNTAX
+        // describes if p() is an operator name e.g + or a function
+        // name eg max
+        template <typename _P, bool _OPERATOR_SYNTAX=false>
         struct unary_func : private unary_func_base {
             static
             std::string body(const std::string& l) {
                 _P p;
-                return unary_func_base::body(l, _OP, p());
+                return unary_func_base::body(l, _OPERATOR_SYNTAX, p());
             }
         };
 
@@ -204,26 +213,36 @@ namespace ocl {
             static
             std::string
             body(const std::string& l, const std::string& r,
+                 bool is_operator, const std::string_view& name);
+            // generate the body of a binary_func object
+            static
+            std::string
+            body(const std::string& l, const std::string& r,
                  bool is_operator, const std::string& name);
         };
 
-        template <typename _P, bool _OP = false>
+        // typename _P must contain an operator ()(void)  returning
+        // the function name or the operator name, _OPERATOR_SYNTAX
+        // describes if p() is an operator name e.g + or a function
+        // name eg max
+        template <typename _P, bool _OPERATOR_SYNTAX = false>
         struct binary_func : private binary_func_base {
             static
-            std::string body(const std::string& l, const std::string& r) {
+            std::string
+            body(const std::string& l, const std::string& r) {
                 _P p;
-                return binary_func_base::body(l, r, _OP, p());
+                return binary_func_base::body(l, r, _OPERATOR_SYNTAX, p());
             }
         };
 
         namespace names {
             struct neg {
                 constexpr
-                const char* operator()() const { return "-"; }
+                std::string_view operator()() const { return "-"; }
             };
             struct bit_not {
                 constexpr
-                const char* operator()() const { return "~"; }
+                std::string_view operator()() const { return "~"; }
             };
         }
 
@@ -238,63 +257,63 @@ namespace ocl {
 
             struct add {
                 constexpr
-                const char* operator()() const { return "+"; }
+                std::string_view operator()() const { return "+"; }
             };
             struct sub {
                 constexpr
-                const char* operator()() const { return "-"; }
+                std::string_view operator()() const { return "-"; }
             };
             struct mul {
                 constexpr
-                const char* operator()() const { return "*"; }
+                std::string_view operator()() const { return "*"; }
             };
             struct div {
                 constexpr
-                const char* operator()() const { return "/"; }
+                std::string_view operator()() const { return "/"; }
             };
             struct bit_and {
                 constexpr
-                const char* operator()() const { return "&"; }
+                std::string_view operator()() const { return "&"; }
             };
             struct bit_or {
                 constexpr
-                const char* operator()() const { return "|"; }
+                std::string_view operator()() const { return "|"; }
             };
             struct bit_xor {
                 constexpr
-                const char* operator()() const { return "^"; }
+                std::string_view operator()() const { return "^"; }
             };
             struct shl {
                 constexpr
-                const char* operator()() const { return "<<"; }
+                std::string_view operator()() const { return "<<"; }
             };
             struct shr {
                 constexpr
-                const char* operator()() const { return ">>"; }
+                std::string_view operator()() const { return ">>"; }
             };
             struct lt {
                 constexpr
-                const char* operator()() const { return "<"; }
+                std::string_view operator()() const { return "<"; }
             };
             struct le {
                 constexpr
-                const char* operator()() const { return "<="; }
+                std::string_view operator()() const { return "<="; }
             };
             struct eq {
                 constexpr
-                const char* operator()() const { return "=="; }
+                std::string_view operator()() const { return "=="; }
             };
             struct ne {
                 constexpr
-                const char* operator()() const { return "!="; }
+                std::string_view operator()() const { return "!="; }
             };
             struct ge {
                 constexpr
-                const char* operator()() const { return ">="; }
+                std::string_view operator()() const { return ">="; }
             };
             struct gt {
                 constexpr
-                const char* operator()() const { return ">"; }
+                std::string_view operator()() const { return ">"; }
             };
         }
 

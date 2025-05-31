@@ -222,6 +222,13 @@ ocl::dop::unary_func_base::body(const std::string& l, bool is_operator,
 
 std::string
 ocl::dop::unary_func_base::body(const std::string& l, bool is_operator,
+                                const std::string_view& name)
+{
+    return body(l, is_operator, std::string(name));
+}
+
+std::string
+ocl::dop::unary_func_base::body(const std::string& l, bool is_operator,
                                 const std::string& name)
 {
     std::string res=name;
@@ -235,16 +242,27 @@ ocl::dop::unary_func_base::body(const std::string& l, bool is_operator,
 
 // generate the body of an binary_func object
 std::string
-ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,
-                                 bool is_operator, const char* name)
+ocl::dop::binary_func_base::
+body(const std::string& l, const std::string& r, bool is_operator,
+     const char* name)
 {
     return body(l, r, is_operator, std::string(name));
 }
 
 // generate the body of an binary_func object
 std::string
-ocl::dop::binary_func_base::body(const std::string& l, const std::string& r,
-                                 bool is_operator, const std::string& name)
+ocl::dop::binary_func_base::
+body(const std::string& l, const std::string& r, bool is_operator,
+     const std::string_view& name)
+{
+    return body(l, r, is_operator, std::string(name));
+}
+
+// generate the body of an binary_func object
+std::string
+ocl::dop::binary_func_base::
+body(const std::string& l, const std::string& r, bool is_operator,
+     const std::string& name)
 {
     std::string res;
     if (is_operator == false) {
