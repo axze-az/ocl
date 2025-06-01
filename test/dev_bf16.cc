@@ -27,6 +27,8 @@ namespace ocl {
     }
 
     namespace dop {
+
+        // conversion operations for bf16_t
         struct bf16_base {
 
             struct emit_type_def {
@@ -85,8 +87,8 @@ ocl::dop::bf16_base::bf16_to_f32::
 body()
 {
     std::ostringstream s;
-    s << emit_type_def::body();
-    s << "inline\n"
+    s << emit_type_def::body()
+      << "inline\n"
          "float " << name() << "(bf16_t s)"
          "{\n"
          "    unsigned int us=s;\n"
@@ -109,7 +111,28 @@ ocl::dop::bf16_base::f32_to_bf16::
 body()
 {
     std::ostringstream s;
-    s << emit_type_def::body();
+    s << emit_type_def::body()
+      << "inline\n"
+         "bf16_t " << name() << "(float ff)"
+         "{\n"
+         "    int f=as_int(ff);\n"
+         "    int af=f & 0x7fffffff;\n"
+         "    int sf=f & 0x80000000;\n"
+         "    int r_nan = af;\n"
+         "    const int rnd_bias = 0x7fff;\n"
+         "    const int rnd_bias_p1 = 0x8000;\n"
+         "    // force round nearest even if bit 16 is set\n"
+         "    int r_def= (af & 0x00010000) ? af + rnd_bias_p1 : af + rnd_bias;\n"
+         "    // subnormal result:\n"
+         "    int r_sn = 0;\n"
+         "    // select subnormal normal\n"
+         "    int r_def_sn = (af < 0x00800000) ? r_sn : r_def;\n"
+         "    // select nan or subnormal normal\n"
+         "    int r = (af > 0x7f800000) ? r_nan : r_def_sn;\n"
+         "    r |= sf;\n"
+         "    r >>= 16;\n"
+         "    return r;\n"
+         "}\n";
     return s.str();
 }
 
