@@ -89,13 +89,13 @@ body()
     std::ostringstream s;
     s << emit_type_def::body()
       << "inline\n"
-         "float " << name() << "(bf16_t s)"
+         "float " << name() << "(bf16_t s)\n"
          "{\n"
          "    unsigned int us=s;\n"
          "    us <<=16;"
          "    float r= as_float(us);"
          "    return r;"
-         "}\n";
+         "}\n\n";
     return s.str();
 }
 
@@ -113,7 +113,7 @@ body()
     std::ostringstream s;
     s << emit_type_def::body()
       << "inline\n"
-         "bf16_t " << name() << "(float ff)"
+         "bf16_t " << name() << "(float ff)\n"
          "{\n"
          "    int f=as_int(ff);\n"
          "    int af=f & 0x7fffffff;\n"
@@ -132,7 +132,7 @@ body()
          "    r |= sf;\n"
          "    r >>= 16;\n"
          "    return r;\n"
-         "}\n";
+         "}\n\n";
     return s.str();
 }
 
