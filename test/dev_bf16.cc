@@ -71,6 +71,17 @@ namespace ocl {
                 std::string
                 body();
             };
+
+            static
+            std::string
+            unary_function(const std::string& l,
+                           const std::string_view& op);
+
+            static
+            std::string
+            binary_function(const std::string& l, const std::string& r,
+                            const std::string_view& op);
+
         };
     }
 
@@ -155,6 +166,35 @@ body()
          "    r >>= 16;\n"
          "    return r;\n"
          "}\n\n";
+    return s.str();
+}
+
+std::string
+ocl::dop::bf16_base::
+unary_function(const std::string& l, const std::string_view& op)
+{
+    std::ostringstream s;
+    s << f32_to_bf16::name() << '('
+      << op << bf16_to_f32::name() << '('
+      << l
+      << "))";
+    return s.str();
+}
+
+std::string
+ocl::dop::bf16_base::
+binary_function(const std::string& l, const std::string& r,
+                const std::string_view& op)
+{
+    std::ostringstream s;
+    s << f32_to_bf16::name() << '('
+      << op << bf16_to_f32::name() << '('
+      << l
+      << ')'
+      << op
+      << bf16_to_f32::name() << '('
+      << r
+      << "))";
     return s.str();
 }
 
