@@ -80,7 +80,8 @@ namespace ocl {
             static
             std::string
             binary_function(const std::string& l, const std::string& r,
-                            const std::string_view& op);
+                            const std::string_view& op,
+                            bool op_is_operator);
 
         };
     }
@@ -184,17 +185,29 @@ unary_function(const std::string& l, const std::string_view& op)
 std::string
 ocl::dop::bf16_base::
 binary_function(const std::string& l, const std::string& r,
-                const std::string_view& op)
+                const std::string_view& op,
+                bool op_is_operator)
 {
     std::ostringstream s;
-    s << f32_to_bf16::name() << '('
-      << op << bf16_to_f32::name() << '('
-      << l
-      << ')'
-      << op
-      << bf16_to_f32::name() << '('
-      << r
-      << "))";
+    if (op_is_operator) {
+        s << f32_to_bf16::name() << '('
+        << bf16_to_f32::name() << '('
+        << l
+        << ')'
+        << op
+        << bf16_to_f32::name() << '('
+        << r
+        << "))";
+    } else {
+        s << f32_to_bf16::name() << '('
+        << op << '('
+        << bf16_to_f32::name() << '('
+        << l
+        << "), "
+        << bf16_to_f32::name() << '('
+        << r
+        << ")))";
+    }
     return s.str();
 }
 
