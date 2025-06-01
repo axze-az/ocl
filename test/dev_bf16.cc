@@ -26,6 +26,21 @@ namespace ocl {
 
     }
 
+    using cftal::bf16_t;
+    using cftal::operator ""_bf16;
+
+    namespace be {
+
+        template <>
+        struct type_2_name<bf16_t> {
+            static
+            constexpr
+            std::string_view v() {
+                return "ushort";
+            }
+        };
+    }
+
     namespace dop {
 
         // conversion operations for bf16_t
@@ -59,8 +74,15 @@ namespace ocl {
         };
     }
 
-    namespace test {
+    template <template <class _DVEC> class _OP,
+              typename _L, typename _R>
+    std::string
+    def_custom_func(be::kernel_functions& fnames,
+                    const expr<_OP<dvec<bf16_t> >, _L, _R>& e );
 
+    namespace test {
+        bool
+        dvec_bf16();
     }
 }
 
@@ -71,7 +93,7 @@ body()
     return
         "#if !defined (__BF16_T_DEFINED__)\n"
         "#define __BF16_T_DEFINED__ 1\n"
-        "typedef short int bf16_t;\n"
+        "typedef ushort bf16_t;\n"
         "#endif\n\n";
 }
 
@@ -92,9 +114,9 @@ body()
          "float " << name() << "(bf16_t s)\n"
          "{\n"
          "    unsigned int us=s;\n"
-         "    us <<=16;"
-         "    float r= as_float(us);"
-         "    return r;"
+         "    us <<=16;\n"
+         "    float r= as_float(us);\n"
+         "    return r;\n"
          "}\n\n";
     return s.str();
 }
@@ -136,7 +158,50 @@ body()
     return s.str();
 }
 
+template <template <class _DVEC> class _OP, typename _L, typename _R>
+std::string
+ocl::
+def_custom_func(be::kernel_functions& fnames,
+                const expr<_OP<dvec<bf16_t> >, _L, _R>& e )
+{
+    static_cast<void>(e);
+    const auto fn1=dop::bf16_base::bf16_to_f32::name();
+    std::string s;
+    if (fnames.insert(fn1) == true) {
+        s = dop::bf16_base::bf16_to_f32::body() + '\n';
+    }
+    const auto fn2=dop::bf16_base::f32_to_bf16::name();
+    if (fnames.insert(fn2) == true) {
+        s += dop::bf16_base::f32_to_bf16::body() + '\n';
+    }
+    return s;
+}
+
+bool
+ocl::test::dvec_bf16()
+{
+    bool r=false;
+    try {
+        const size_t N=1024*1024;
+        dvec<bf16_t> v(0.0_bf16, N);
+        dvec<bf16_t> s=v+v;
+        r=true;
+    }
+    catch (const std::exception& ex)  {
+        std::cerr << "caught exception:\n"
+                  << ex.what() << '\n';
+    }
+    catch (...) {
+        std::cerr << "unspecified exception type\n";
+        r=false;
+    }
+    return r;
+}
+
+
+
 int main()
 {
-    return 0;
+    bool r=ocl::test::dvec_bf16();
+    return r==true ? 0 : 1;
 }
