@@ -17,6 +17,7 @@
 //
 #include "ocl/ocl.h"
 #include <cftal/vec.h>
+#include <sstream>
 
 namespace ocl {
 
@@ -25,6 +26,91 @@ namespace ocl {
 
     }
 
+    namespace dop {
+        struct bf16_base {
+
+            struct emit_type_def {
+                static
+                std::string_view
+                body();
+            };
+
+            struct bf16_to_f32 {
+                static
+                std::string_view
+                name();
+
+                static
+                std::string
+                body();
+            };
+
+            struct f32_to_bf16 {
+                static
+                std::string_view
+                name();
+
+                static
+                std::string
+                body();
+            };
+        };
+    }
+
+    namespace test {
+
+    }
+}
+
+std::string_view
+ocl::dop::bf16_base::emit_type_def::
+body()
+{
+    return
+        "#if !defined (__BF16_T_DEFINED__)\n"
+        "#define __BF16_T_DEFINED__ 1\n"
+        "typedef short int bf16_t;\n"
+        "#endif\n\n";
+}
+
+std::string_view
+ocl::dop::bf16_base::bf16_to_f32::
+name()
+{
+    return "__bf16_to_f32";
+}
+
+std::string
+ocl::dop::bf16_base::bf16_to_f32::
+body()
+{
+    std::ostringstream s;
+    s << emit_type_def::body();
+    s << "inline\n"
+         "float " << name() << "(bf16_t s)"
+         "{\n"
+         "    unsigned int us=s;\n"
+         "    us <<=16;"
+         "    float r= as_float(us);"
+         "    return r;"
+         "}\n";
+    return s.str();
+}
+
+std::string_view
+ocl::dop::bf16_base::f32_to_bf16::
+name()
+{
+    return "__f32_to_bf16";
+}
+
+std::string
+ocl::dop::bf16_base::f32_to_bf16::
+body()
+{
+    std::ostringstream s;
+    s << emit_type_def::body();
+    return s.str();
 }
 
 int main()
