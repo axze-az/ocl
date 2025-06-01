@@ -20,6 +20,7 @@
 
 #include <ocl/config.h>
 #include <string>
+#include <string_view>
 #include <set>
 
 namespace ocl {
@@ -37,6 +38,8 @@ namespace ocl {
             ~kernel_functions();
             bool
             insert(const std::string& fn);
+            bool
+            insert(const std::string_view& fn);
             void
             clear();
         };

@@ -58,3 +58,8 @@ ocl::be::kernel_functions::insert(const std::string& fn)
     return _s.insert(fn).second;
 }
 
+bool
+ocl::be::kernel_functions::insert(const std::string_view& fn)
+{
+    return insert(std::string(fn));
+}
