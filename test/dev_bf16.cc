@@ -84,6 +84,42 @@ namespace ocl {
                             bool op_is_operator);
 
         };
+
+        template <>
+        struct neg<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct add<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct sub<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct mul<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct div<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
     }
 
     template <template <class _DVEC> class _OP,
@@ -211,6 +247,43 @@ binary_function(const std::string& l, const std::string& r,
     return s.str();
 }
 
+std::string
+ocl::dop::neg<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    std::string r='(' + l + " ^ 0x8000)";
+    return r;
+}
+
+std::string
+ocl::dop::add<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return binary_function(l, r, "+", true);
+}
+
+std::string
+ocl::dop::sub<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return binary_function(l, r, "-", true);
+}
+
+std::string
+ocl::dop::mul<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return binary_function(l, r, "*", true);
+}
+
+std::string
+ocl::dop::div<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return binary_function(l, r, "/", true);
+}
+
+
 template <template <class _DVEC> class _OP, typename _L, typename _R>
 std::string
 ocl::
@@ -238,6 +311,10 @@ ocl::test::dvec_bf16()
         const size_t N=1024*1024;
         dvec<bf16_t> v(0.0_bf16, N);
         dvec<bf16_t> s=v+v;
+        dvec<bf16_t> d=v-v;
+        dvec<bf16_t> p=v*v;
+        dvec<bf16_t> q=v/v;
+        dvec<bf16_t> m=(s-d)*p/q;
         r=true;
     }
     catch (const std::exception& ex)  {
