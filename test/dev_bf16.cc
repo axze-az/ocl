@@ -120,6 +120,47 @@ namespace ocl {
             body(const std::string& l, const std::string& r);
         };
 
+        template <>
+        struct lt<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct le<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct eq<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct ne<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct ge<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct gt<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
     }
 
     template <template <class _DVEC> class _OP,
@@ -259,28 +300,28 @@ std::string
 ocl::dop::add<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
-    return binary_function(l, r, "+", true);
+    return binary_function(l, r, names::add()(), true);
 }
 
 std::string
 ocl::dop::sub<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
-    return binary_function(l, r, "-", true);
+    return binary_function(l, r, names::sub()(), true);
 }
 
 std::string
 ocl::dop::mul<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
-    return binary_function(l, r, "*", true);
+    return binary_function(l, r, names::mul()(), true);
 }
 
 std::string
 ocl::dop::div<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
-    return binary_function(l, r, "/", true);
+    return binary_function(l, r, names::div()(), true);
 }
 
 
