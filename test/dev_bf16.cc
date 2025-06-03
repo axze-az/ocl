@@ -21,11 +21,6 @@
 
 namespace ocl {
 
-    namespace impl {
-
-
-    }
-
     using cftal::bf16_t;
     using cftal::operator ""_bf16;
 
@@ -36,8 +31,21 @@ namespace ocl {
             static
             constexpr
             std::string_view v() {
+                // use ushort here instead of the bf16_t typedef because
+                // otherwise even the vector copy and assignment functions
+                // require the bf16_t typedef in the kernel sources
                 return "ushort";
             }
+        };
+    }
+
+
+    namespace impl {
+
+        // just in case someone changes the default mask_type
+        template <>
+        struct dvec_select_mask_value<bf16_t> {
+            using type = bf16_t;
         };
     }
 
