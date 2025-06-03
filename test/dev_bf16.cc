@@ -83,6 +83,10 @@ namespace ocl {
                             const std::string_view& op,
                             bool op_is_operator);
 
+            static
+            std::string
+            cmp_operator(const std::string& l, const std::string& r,
+                         const std::string_view& op);
         };
 
         template <>
@@ -268,26 +272,40 @@ binary_function(const std::string& l, const std::string& r,
     std::ostringstream s;
     if (op_is_operator) {
         s << f32_to_bf16::name() << '('
-        << bf16_to_f32::name() << '('
-        << l
-        << ')'
-        << op
-        << bf16_to_f32::name() << '('
-        << r
-        << "))";
+          << bf16_to_f32::name() << '('
+          << l
+          << ')'
+          << op
+          << bf16_to_f32::name() << '('
+          << r
+          << "))";
     } else {
         s << f32_to_bf16::name() << '('
-        << op << '('
-        << bf16_to_f32::name() << '('
-        << l
-        << "), "
-        << bf16_to_f32::name() << '('
-        << r
-        << ")))";
+          << op << '('
+          << bf16_to_f32::name() << '('
+          << l
+          << "), "
+          << bf16_to_f32::name() << '('
+          << r
+          << ")))";
     }
     return s.str();
 }
 
+std::string
+ocl::dop::bf16_base::
+cmp_operator(const std::string& l, const std::string& r,
+             const std::string_view& op)
+{
+    std::ostringstream s;
+    s << bf16_to_f32::name() << '('
+      << l        << ')'
+      << op
+      << bf16_to_f32::name() << '('
+      << r
+      << ')';
+    return s.str();
+}
 std::string
 ocl::dop::neg<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
@@ -324,6 +342,47 @@ body(const std::string& l, const std::string& r)
     return binary_function(l, r, names::div()(), true);
 }
 
+std::string
+ocl::dop::lt<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::lt()());
+}
+
+std::string
+ocl::dop::le<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::le()());
+}
+
+std::string
+ocl::dop::eq<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::eq()());
+}
+
+std::string
+ocl::dop::ne<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::ne()());
+}
+
+std::string
+ocl::dop::ge<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::ge()());
+}
+
+std::string
+ocl::dop::gt<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    return cmp_operator(l, r, names::gt()());
+}
 
 template <template <class _DVEC> class _OP, typename _L, typename _R>
 std::string
@@ -356,6 +415,14 @@ ocl::test::dvec_bf16()
         dvec<bf16_t> p=v*v;
         dvec<bf16_t> q=v/v;
         dvec<bf16_t> m=(s-d)*p/q;
+
+        dvec<bf16_t>::mask_type c_lt=s < v;
+        dvec<bf16_t>::mask_type c_le=s <= v;
+        dvec<bf16_t>::mask_type c_eq=s == v;
+        dvec<bf16_t>::mask_type c_ne=s != v;
+        dvec<bf16_t>::mask_type c_ge=s >= v;
+        dvec<bf16_t>::mask_type c_gt=s > v;
+
         r=true;
     }
     catch (const std::exception& ex)  {
