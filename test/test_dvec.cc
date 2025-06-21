@@ -28,6 +28,7 @@
 
 int main()
 {
+    int r=3;
     try {
         using namespace cftal;
         using namespace ocl;
@@ -51,6 +52,7 @@ int main()
             }
         }
         std::cout << "\ntest passed\n";
+        r = 0;
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
@@ -62,5 +64,5 @@ int main()
         std::cout << "caught exception: " << e.what()
                   << std::endl;
     }
-    return 0;
+    return r;
 }
