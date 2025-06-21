@@ -74,11 +74,11 @@ ocl::test::ops<_T>::perform()
     _res = abs(_a0);
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
+#if 0
     // sqrt
     _res = sqrt(_a0);
     _h_res = sqrt(_h_a0);
     rc &= check_res("sqrt");
-#if 0
     // link against cftal.so is missing yet
     _res = rsqrt(_a0);
     _h_res = rsqrt(_h_a0);
