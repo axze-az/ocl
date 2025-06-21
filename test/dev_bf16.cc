@@ -17,6 +17,7 @@
 //
 #include "ocl/ocl.h"
 #include <cftal/vec.h>
+#include <ocl/test/ops.h>
 #include <sstream>
 
 namespace ocl {
@@ -105,6 +106,13 @@ namespace ocl {
         };
 
         template <>
+        struct bit_not<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
         struct add<dvec<bf16_t> > : private bf16_base {
             static
             std::string
@@ -127,6 +135,27 @@ namespace ocl {
 
         template <>
         struct div<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct bit_and<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct bit_or<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l, const std::string& r);
+        };
+
+        template <>
+        struct bit_xor<dvec<bf16_t> > : private bf16_base {
             static
             std::string
             body(const std::string& l, const std::string& r);
@@ -173,6 +202,8 @@ namespace ocl {
             std::string
             body(const std::string& l, const std::string& r);
         };
+
+
     }
 
     template <template <class _DVEC> class _OP,
@@ -180,6 +211,12 @@ namespace ocl {
     std::string
     def_custom_func(be::kernel_functions& fnames,
                     const expr<_OP<dvec<bf16_t> >, _L, _R>& e );
+
+
+    dvec<bf16_t>
+    uniform_float_random_vector(rand48& rnd,
+                                bf16_t min_val, bf16_t max_val);
+
 
     namespace test {
         bool
@@ -323,6 +360,14 @@ body(const std::string& l)
 }
 
 std::string
+ocl::dop::bit_not<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    std::string r="(~" + l + ")";
+    return r;
+}
+
+std::string
 ocl::dop::add<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
@@ -348,6 +393,30 @@ ocl::dop::div<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
     return binary_function(l, r, names::div()(), true);
+}
+
+std::string
+ocl::dop::bit_and<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    std::string b="(" + l + " & " + r + ")";
+    return b;
+}
+
+std::string
+ocl::dop::bit_or<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    std::string b="(" + l + " | " + r + ")";
+    return b;
+}
+
+std::string
+ocl::dop::bit_xor<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l, const std::string& r)
+{
+    std::string b="(" + l + " ^ " + r + ")";
+    return b;
 }
 
 std::string
@@ -414,7 +483,7 @@ def_custom_func(be::kernel_functions& fnames,
 bool
 ocl::test::dvec_bf16()
 {
-    bool r=false;
+    int r=3;
     try {
         const size_t N=1024*1024;
         dvec<bf16_t> v(0.0_bf16, N);
@@ -430,8 +499,7 @@ ocl::test::dvec_bf16()
         dvec<bf16_t>::mask_type c_ne=s != v;
         dvec<bf16_t>::mask_type c_ge=s >= v;
         dvec<bf16_t>::mask_type c_gt=s > v;
-
-        r=true;
+        r=0;
     }
     catch (const std::exception& ex)  {
         std::cerr << "caught exception:\n"
@@ -439,8 +507,47 @@ ocl::test::dvec_bf16()
     }
     catch (...) {
         std::cerr << "unspecified exception type\n";
-        r=false;
     }
+    if (r) {
+        return r;
+    }
+#if 0
+    r = 3;
+    try {
+        using namespace cftal;
+        using namespace ocl;
+        using namespace ocl::test;
+
+        using rtype = bf16_t;
+        constexpr const std::size_t NMAX=8*16384;
+        std::cout << "testing buffers with up to "
+                  << NMAX-1 << " elements\n.";
+        for (std::size_t i=4; i<NMAX; ++i) {
+            if ((i & 0x7f) == 0x7f || i==1) {
+                std::cout << "using buffers with "
+                          <<  i
+                          << " elements (" << i*sizeof(rtype)
+                          << " bytes)\r" << std::flush;
+            }
+            ops<rtype> t(i);
+            if (t.perform() == false) {
+                std::cout << "\ntest for vector length " << i << " failed\n";
+                std::exit(3);
+            }
+        }
+        std::cout << "\ntest passed\n";
+    }
+    catch (const ocl::be::error& e) {
+        std::cout << "caught exception: " << e.what()
+                  << '\n'
+                  << e.error_string()
+                  << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        std::cout << "caught exception: " << e.what()
+                  << std::endl;
+    }
+#endif
     return r;
 }
 
