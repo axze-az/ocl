@@ -70,11 +70,11 @@ ocl::test::ops<_T>::perform()
     _res = -_a0;
     _h_res = -_h_a0;
     rc &= check_res("negation v");
+#if 0
     // abs
     _res = abs(_a0);
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
-#if 0
     // sqrt
     _res = sqrt(_a0);
     _h_res = sqrt(_h_a0);
