@@ -63,8 +63,6 @@ namespace ocl {
 
         extern
         template class ops_base<float>;
-        extern
-        template class ops_base<double>;
     }
 }
 
@@ -87,12 +85,14 @@ ops_base(size_t n, const _T& min_val, const _T& max_val)
     _a0.copy_to_host(&_h_a0[0]);
     _a1.copy_to_host(&_h_a1[0]);
 #else
-    std::mt19937_64 rnd;
-    rnd.seed(n);
-    std::uniform_real_distribution<_T> distrib(_T(-2.0), _T(2.0));
-    for (std::size_t i=0; i<n; ++i) {
-        _h_a0[i]=distrib(rnd);
-        _h_a1[i]=distrib(rnd);
+    if (min_val != max_val) {
+        std::mt19937_64 rnd;
+        rnd.seed(n);
+        std::uniform_real_distribution<_T> distrib(min_val, max_val);
+        for (std::size_t i=0; i<n; ++i) {
+            _h_a0[i]=distrib(rnd);
+            _h_a1[i]=distrib(rnd);
+        }
     }
     _a0.copy_from_host(&_h_a0[0]);
     _a1.copy_from_host(&_h_a1[0]);

@@ -22,7 +22,7 @@ namespace ocl {
     namespace test {
 
         template class ops_base<float>;
-        template class ops_base<double>;
+        // template class ops_base<double>;
 
     }
 }
