@@ -106,13 +106,6 @@ namespace ocl {
         };
 
         template <>
-        struct bit_not<dvec<bf16_t> > : private bf16_base {
-            static
-            std::string
-            body(const std::string& l);
-        };
-
-        template <>
         struct add<dvec<bf16_t> > : private bf16_base {
             static
             std::string
@@ -135,27 +128,6 @@ namespace ocl {
 
         template <>
         struct div<dvec<bf16_t> > : private bf16_base {
-            static
-            std::string
-            body(const std::string& l, const std::string& r);
-        };
-
-        template <>
-        struct bit_and<dvec<bf16_t> > : private bf16_base {
-            static
-            std::string
-            body(const std::string& l, const std::string& r);
-        };
-
-        template <>
-        struct bit_or<dvec<bf16_t> > : private bf16_base {
-            static
-            std::string
-            body(const std::string& l, const std::string& r);
-        };
-
-        template <>
-        struct bit_xor<dvec<bf16_t> > : private bf16_base {
             static
             std::string
             body(const std::string& l, const std::string& r);
@@ -203,6 +175,33 @@ namespace ocl {
             body(const std::string& l, const std::string& r);
         };
 
+        template <>
+        struct abs_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct rint_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct isinf_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct isnan_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
 
     }
 
@@ -212,6 +211,11 @@ namespace ocl {
     def_custom_func(be::kernel_functions& fnames,
                     const expr<_OP<dvec<bf16_t> >, _L, _R>& e );
 
+    template <template <class _DVEC> class _OP,
+              typename _L>
+    std::string
+    def_custom_func(be::kernel_functions& fnames,
+                    const expr<_OP<dvec<bf16_t> >, _L, void>& e );
 
     dvec<bf16_t>
     uniform_float_random_vector(rand48& rnd,
@@ -351,19 +355,12 @@ cmp_operator(const std::string& l, const std::string& r,
       << ')';
     return s.str();
 }
+
 std::string
 ocl::dop::neg<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
     std::string r='(' + l + " ^ 0x8000)";
-    return r;
-}
-
-std::string
-ocl::dop::bit_not<ocl::dvec<ocl::bf16_t> >::
-body(const std::string& l)
-{
-    std::string r="(~" + l + ")";
     return r;
 }
 
@@ -393,30 +390,6 @@ ocl::dop::div<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l, const std::string& r)
 {
     return binary_function(l, r, names::div()(), true);
-}
-
-std::string
-ocl::dop::bit_and<ocl::dvec<ocl::bf16_t> >::
-body(const std::string& l, const std::string& r)
-{
-    std::string b="(" + l + " & " + r + ")";
-    return b;
-}
-
-std::string
-ocl::dop::bit_or<ocl::dvec<ocl::bf16_t> >::
-body(const std::string& l, const std::string& r)
-{
-    std::string b="(" + l + " | " + r + ")";
-    return b;
-}
-
-std::string
-ocl::dop::bit_xor<ocl::dvec<ocl::bf16_t> >::
-body(const std::string& l, const std::string& r)
-{
-    std::string b="(" + l + " ^ " + r + ")";
-    return b;
 }
 
 std::string
@@ -461,6 +434,39 @@ body(const std::string& l, const std::string& r)
     return cmp_operator(l, r, names::gt()());
 }
 
+std::string
+ocl::dop::abs_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    std::string r='(' + l + " & 0x7fff)";
+    return r;
+}
+
+std::string
+ocl::dop::rint_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_rint()());
+}
+
+std::string
+ocl::dop::isinf_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    std::string abs_l=abs_f<dvec<bf16_t> >::body(l);
+    std::string s='(' + abs_l + " == 0x7f80)";
+    return s;
+}
+
+std::string
+ocl::dop::isnan_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    std::string abs_l=abs_f<dvec<bf16_t> >::body(l);
+    std::string s='(' + abs_l + " > 0x7f80)";
+    return s;
+}
+
 template <template <class _DVEC> class _OP, typename _L, typename _R>
 std::string
 ocl::
@@ -480,6 +486,30 @@ def_custom_func(be::kernel_functions& fnames,
     return s;
 }
 
+template <template <class _DVEC> class _OP, typename _L>
+std::string
+ocl::
+def_custom_func(be::kernel_functions& fnames,
+                const expr<_OP<dvec<bf16_t> >, _L, void>& e )
+{
+#if 1
+    return def_custom_func<_OP, _L, void>(fnames, e);
+#else
+    static_cast<void>(e);
+    const auto fn1=dop::bf16_base::bf16_to_f32::name();
+    std::string s;
+    if (fnames.insert(fn1) == true) {
+        s = dop::bf16_base::bf16_to_f32::body() + '\n';
+    }
+    const auto fn2=dop::bf16_base::f32_to_bf16::name();
+    if (fnames.insert(fn2) == true) {
+        s += dop::bf16_base::f32_to_bf16::body() + '\n';
+    }
+    return s;
+#endif
+}
+
+
 bool
 ocl::test::dvec_bf16()
 {
@@ -492,6 +522,11 @@ ocl::test::dvec_bf16()
         dvec<bf16_t> p=v*v;
         dvec<bf16_t> q=v/v;
         dvec<bf16_t> m=(s-d)*p/q;
+
+        dvec<bf16_t> a_m=abs(m);
+        dvec<bf16_t> a_n=-m;
+        dvec<bf16_t>::mask_type a_i=isinf(m);
+        dvec<bf16_t>::mask_type a_nan=isnan(m);
 
         dvec<bf16_t>::mask_type c_lt=s < v;
         dvec<bf16_t>::mask_type c_le=s <= v;
