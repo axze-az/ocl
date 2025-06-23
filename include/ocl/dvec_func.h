@@ -191,7 +191,7 @@ namespace ocl {
         namespace names {
             struct f_rsqrt {
                 constexpr
-                std::string_view operator()() const { return "exp"; }
+                std::string_view operator()() const { return "rsqrt"; }
             };
         }
 
