@@ -203,6 +203,29 @@ namespace ocl {
             body(const std::string& l);
         };
 
+#if 0
+        template <class _D>
+        std::string
+        cvt<_D>::template body<bf16_t>(const std::string& l) {
+            std::string r0=std::string(bf16_base::f32_to_bf16::name())
+                '('+ l + ')';
+            std::string r1= cvt<_D>::template body<float>(l);
+            return r1;
+        }
+#endif
+
+        template <>
+        struct cvt<bf16_t> {
+            template <typename _S>
+            static
+            std::string
+            body(const std::string& l) {
+                std::string r0=cvt<float>::template body<_S>(l);
+                std::string r1= std::string(bf16_base::f32_to_bf16::name()) + r0;
+                return r1;
+            }
+        };
+
     }
 
     template <template <class _DVEC> class _OP,
@@ -492,23 +515,8 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, void>& e )
 {
-#if 1
     return def_custom_func<_OP, _L, void>(fnames, e);
-#else
-    static_cast<void>(e);
-    const auto fn1=dop::bf16_base::bf16_to_f32::name();
-    std::string s;
-    if (fnames.insert(fn1) == true) {
-        s = dop::bf16_base::bf16_to_f32::body() + '\n';
-    }
-    const auto fn2=dop::bf16_base::f32_to_bf16::name();
-    if (fnames.insert(fn2) == true) {
-        s += dop::bf16_base::f32_to_bf16::body() + '\n';
-    }
-    return s;
-#endif
 }
-
 
 bool
 ocl::test::dvec_bf16()
@@ -534,6 +542,12 @@ ocl::test::dvec_bf16()
         dvec<bf16_t>::mask_type c_ne=s != v;
         dvec<bf16_t>::mask_type c_ge=s >= v;
         dvec<bf16_t>::mask_type c_gt=s > v;
+
+
+        dvec<float> mf=cvt<dvec<float>>(m);
+        dvec<bf16_t> m2=cvt<dvec<bf16_t>>(mf);
+
+
         r=0;
     }
     catch (const std::exception& ex)  {
