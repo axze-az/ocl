@@ -334,9 +334,11 @@ namespace ocl {
         template <class _T>
         struct pow_f : public binary_func<names::f_pow> {};
 
-        template <class _D>
-        struct cvt {
-            template <typename _S>
+        // worker class for cvt because specialization of member templates
+        // is not possible without specialization of the surrounding
+        // template
+        template <class _D, class _S>
+        struct convert_rte {
             static
             std::string body(const std::string& l) {
 #if 1
@@ -366,6 +368,25 @@ namespace ocl {
                 res += ")";
 #endif
                 return res;
+            }
+        };
+
+        template <class _D>
+        struct convert_rte<_D, _D> {
+            static
+            const std::string&
+            body(const std::string& l) {
+                return l;
+            }
+        };
+
+
+        template <class _D>
+        struct cvt {
+            template <typename _S>
+            static
+            std::string body(const std::string& l) {
+                return convert_rte<_D, _S>::body(l);
             }
         };
 
