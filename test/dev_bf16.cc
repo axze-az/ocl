@@ -83,6 +83,10 @@ namespace ocl {
 
             static
             std::string
+            add_conversions(be::kernel_functions& fnames);
+
+            static
+            std::string
             unary_function(const std::string& l,
                            const std::string_view& op);
 
@@ -215,18 +219,64 @@ namespace ocl {
 #endif
 
         template <>
-        struct cvt<bf16_t> {
-            template <typename _S>
+        struct convert_rte<bf16_t, bf16_t> {
+            static
+            const std::string&
+            body(const std::string& l) {
+                return l;
+            }
+        };
+
+        template <>
+        struct convert_rte<float, bf16_t> {
             static
             std::string
             body(const std::string& l) {
-                std::string r0=cvt<float>::template body<_S>(l);
-                std::string r1= std::string(bf16_base::f32_to_bf16::name()) + r0;
+                std::string r=std::string(bf16_base::bf16_to_f32::name())
+                    + '(' + l + ')';
+                return r;
+            }
+        };
+
+        template <>
+        struct convert_rte<bf16_t, float> {
+            static
+            std::string
+            body(const std::string& l) {
+                std::string r=std::string(bf16_base::f32_to_bf16::name())
+                    + '(' + l + ')';
+                return r;
+            }
+        };
+
+
+        template <typename _S>
+        struct convert_rte<bf16_t, _S> {
+            static
+            std::string
+            body(const std::string& l) {
+                std::string r0=convert_rte<float, _S>::body(l);
+                std::string r1=convert_rte<bf16_t, float>::body(r0);
+                return r1;
+            }
+        };
+
+        template <typename _D>
+        struct convert_rte<_D, bf16_t> {
+            static
+            std::string
+            body(const std::string& l) {
+                std::string r0=convert_rte<float, bf16_t>::body(l);
+                std::string r1=convert_rte<_D, float>::body(r0);
                 return r1;
             }
         };
 
     }
+
+    std::string
+    def_custom_func(be::kernel_functions& fnames,
+                    const dvec<bf16_t>& v);
 
     template <template <class _DVEC> class _OP,
               typename _L, typename _R>
@@ -321,6 +371,22 @@ body()
          "    return r;\n"
          "}\n\n";
     return s.str();
+}
+
+std::string
+ocl::dop::bf16_base::
+add_conversions(be::kernel_functions& fnames)
+{
+    const auto fn1=bf16_base::bf16_to_f32::name();
+    std::string s;
+    if (fnames.insert(fn1) == true) {
+        s = bf16_base::bf16_to_f32::body();
+    }
+    const auto fn2=bf16_base::f32_to_bf16::name();
+    if (fnames.insert(fn2) == true) {
+        s += bf16_base::f32_to_bf16::body();
+    }
+    return s;
 }
 
 std::string
@@ -490,6 +556,15 @@ body(const std::string& l)
     return s;
 }
 
+std::string
+ocl::
+def_custom_func(be::kernel_functions& fnames,
+                const dvec<bf16_t>& v)
+{
+    static_cast<void>(v);
+    return dop::bf16_base::add_conversions(fnames);
+}
+
 template <template <class _DVEC> class _OP, typename _L, typename _R>
 std::string
 ocl::
@@ -497,16 +572,7 @@ def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, _R>& e )
 {
     static_cast<void>(e);
-    const auto fn1=dop::bf16_base::bf16_to_f32::name();
-    std::string s;
-    if (fnames.insert(fn1) == true) {
-        s = dop::bf16_base::bf16_to_f32::body() + '\n';
-    }
-    const auto fn2=dop::bf16_base::f32_to_bf16::name();
-    if (fnames.insert(fn2) == true) {
-        s += dop::bf16_base::f32_to_bf16::body() + '\n';
-    }
-    return s;
+    return dop::bf16_base::add_conversions(fnames);
 }
 
 template <template <class _DVEC> class _OP, typename _L>
@@ -515,7 +581,8 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, void>& e )
 {
-    return def_custom_func<_OP, _L, void>(fnames, e);
+    static_cast<void>(e);
+    return dop::bf16_base::add_conversions(fnames);
 }
 
 bool
