@@ -40,7 +40,6 @@ namespace ocl {
         };
     }
 
-
     namespace impl {
 
         // just in case someone changes the default mask_type
@@ -207,17 +206,6 @@ namespace ocl {
             body(const std::string& l);
         };
 
-#if 0
-        template <class _D>
-        std::string
-        cvt<_D>::template body<bf16_t>(const std::string& l) {
-            std::string r0=std::string(bf16_base::f32_to_bf16::name())
-                '('+ l + ')';
-            std::string r1= cvt<_D>::template body<float>(l);
-            return r1;
-        }
-#endif
-
         template <>
         struct convert_rte<bf16_t, bf16_t> {
             static
@@ -293,7 +281,6 @@ namespace ocl {
     dvec<bf16_t>
     uniform_float_random_vector(rand48& rnd,
                                 bf16_t min_val, bf16_t max_val);
-
 
     namespace test {
         bool
