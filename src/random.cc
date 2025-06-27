@@ -171,7 +171,7 @@ mrand48()
 
 ocl::dvec<float>
 ocl::rand48::
-drand48()
+frand48()
 {
     next();
     const unsigned shift=48-24;
@@ -190,7 +190,7 @@ ocl::dvec<float>
 ocl::rand48::
 nextf()
 {
-    return drand48();
+    return frand48();
 }
 
 ocl::dvec<float>

@@ -109,9 +109,11 @@ namespace ocl {
         mrand48();
         // returns floating point values in interval [0, 1.0)
         dvec<float>
-        drand48();
+        frand48();
+
         void
         seed(const dvec<uint64_t>& gid);
+
         dvec<float>
         nextf();
     };
