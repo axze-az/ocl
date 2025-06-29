@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <chrono>
 
+#define TEST_PEAK_SP_ONLY 0
 
 namespace ocl {
 
@@ -306,17 +307,25 @@ ocl::test::test_gflops(int argc, char** argv)
         }
         if (device > -1) {
             auto bedp=be::data::create(v[device]);
+#if TEST_PEAK_SP_ONLY==0
             test::horner_gflops<float>(bedp);
             test::horner_gflops<double>(bedp);
+#endif
             test::peak_gflops<float>(bedp);
+#if TEST_PEAK_SP_ONLY==0
             test::peak_gflops<double>(bedp);
+#endif
         }  else {
             for (auto& d : v) {
                 auto bedp=be::data::create(d);
+#if TEST_PEAK_SP_ONLY==0
                 test::horner_gflops<float>(bedp);
                 test::horner_gflops<double>(bedp);
+#endif
                 test::peak_gflops<float>(bedp);
+#if TEST_PEAK_SP_ONLY==0
                 test::peak_gflops<double>(bedp);
+#endif
             }
         }
     }
