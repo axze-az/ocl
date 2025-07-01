@@ -157,7 +157,7 @@ horner_gflops(be::data_ptr bedp)
             v_dst=horner(v_src, coeffs);
             auto end = std::chrono::steady_clock::now();
             auto ns_elapsed=(end - start).count();
-            _T r=hadd(v_dst);
+            _T r=hsum(v_dst);
             if (r==0) {
                 std::cerr << "probably something wrong here\n";
             }
@@ -221,7 +221,7 @@ peak_gflops(be::data_ptr bedp)
             v_dst=peak_flops(v_src, COUNT);
             auto end = std::chrono::steady_clock::now();
             auto ns_elapsed=(end - start).count();
-            _T r=hadd(v_dst);
+            _T r=hsum(v_dst);
             if (r==0) {
                 std::cerr << "probably something wrong here\n";
             }

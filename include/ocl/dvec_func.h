@@ -753,12 +753,12 @@ namespace ocl {
 
     namespace impl {
         __ck_body
-        gen_hadd(const std::string_view& tname);
+        gen_hsum(const std::string_view& tname);
     }
 
     template <typename _T>
     _T
-    hadd(const dvec<_T>& v);
+    hsum(const dvec<_T>& v);
 
     namespace impl {
         __ck_body
@@ -959,7 +959,7 @@ ocl::any_of(const dvec<_T>& v)
 
 template <typename _T>
 _T
-ocl::hadd(const dvec<_T>& v)
+ocl::hsum(const dvec<_T>& v)
 {
     auto p=v.backend_data();
     dvec<uint64_t> dcnt(p, 1);
@@ -968,7 +968,7 @@ ocl::hadd(const dvec<_T>& v)
     dvec<_T> vcs(v);
     dvec<_T> vcd(p, hdcnt/2);
     const auto tname=be::type_2_name<_T>::v();
-    auto nb=impl::gen_hadd(tname);
+    auto nb=impl::gen_hsum(tname);
     // Note: in custom kernels the left hand side may be
     // read also from the kernel, but this is a bad idea
     // if input and output indices are not equal
@@ -1010,8 +1010,8 @@ ocl::dot_product(const dvec<_T>& a, const dvec<_T>& b)
     if (hdcnt > 1) {
         dvec<_T> vcs(p, hdcnt/2);
         vcd.swap(vcs);
-        auto nhadd=impl::gen_hadd(tname);
-        auto k1=custom_kernel<_T>(nhadd.name(), nhadd.body(),
+        auto nhsum=impl::gen_hsum(tname);
+        auto k1=custom_kernel<_T>(nhsum.name(), nhsum.body(),
                                   vcd, vcs,
                                   dcnt, local_mem_per_workitem<_T>(1));
         do {

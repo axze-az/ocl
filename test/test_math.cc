@@ -156,26 +156,26 @@ ocl::test::test_functions<_T>::perform()
 {
     bool rc=true;
 
-    // hadd
-    _T r_hadd=hadd(_h_a0);
-    _T d_hadd=hadd(_a0);
+    // hsum
+    _T r_hsum=hsum(_h_a0);
+    _T d_hsum=hsum(_a0);
 
 #if DEBUG_MATH > 0
     std::cout << "size:" << _h_a0.size()
-              << ' '<< r_hadd << ' '  << d_hadd << '\n';
+              << ' '<< r_hsum << ' '  << d_hsum << '\n';
 #endif
-    _T delta_hadd=r_hadd - d_hadd;
-    _T rel_delta_hadd=delta_hadd/((r_hadd+d_hadd)*_T(0.5));
+    _T delta_hsum=r_hsum - d_hsum;
+    _T rel_delta_hsum=delta_hsum/((r_hsum+d_hsum)*_T(0.5));
 
-    _T max_rel_err_hadd=
+    _T max_rel_err_hsum=
         _a0.size() * std::numeric_limits<_T>::epsilon() * _T(1.0);
     using std::abs;
-    if (abs(rel_delta_hadd) > max_rel_err_hadd) {
+    if (abs(rel_delta_hsum) > max_rel_err_hsum) {
         std::cout << std::setprecision(19) << std::scientific;
-        std::cout << "hadd elements: " << _a0.size()
-                  << " max_rel_err: " << max_rel_err_hadd << '\n';
-        std::cout << "delta: " << delta_hadd
-                  << "\nrel_delta: "  << rel_delta_hadd << '\n';
+        std::cout << "hsum elements: " << _a0.size()
+                  << " max_rel_err: " << max_rel_err_hsum << '\n';
+        std::cout << "delta: " << delta_hsum
+                  << "\nrel_delta: "  << rel_delta_hsum << '\n';
         rc = false;
     }
 
@@ -217,7 +217,7 @@ ocl::test::test_add12cond(const dvec<float>& x)
     d_ops::add22cond(hh, ll, h, l, h, l);
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
     vf_type t=hh+ll;
-    float r=hadd(t);
+    float r=hsum(t);
     return r;
 }
 
@@ -235,7 +235,7 @@ ocl::test::test_mul12(const dvec<float>& x)
     // std::cout << __PRETTY_FUNCTION__ << std::endl;
     // std::dvec<float> hh(h), hl(l);
     vf_type t=hh+ll;
-    float r=hadd(t);
+    float r=hsum(t);
     return r;
 }
 

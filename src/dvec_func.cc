@@ -206,10 +206,10 @@ gen_any_of(const std::string_view& tname)
 
 ocl::impl::__ck_body
 ocl::impl::
-gen_hadd(const std::string_view& tname)
+gen_hsum(const std::string_view& tname)
 {
     std::ostringstream s;
-    s << "hadd_" << tname;
+    s << "hsum_" << tname;
     std::string kname=s.str();
     s.str("");
     s <<"void " << kname << "(\n"
