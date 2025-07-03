@@ -1,6 +1,6 @@
 # ocl
 
-A c++-20 template based variable lenght vector library with an OpenCL
+A c++-20 template based variable length vector library with an OpenCL
 backend.
 
 ## Description
