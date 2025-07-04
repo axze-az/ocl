@@ -21,6 +21,7 @@ are large.
 - cmake ist the used build system
 - only linux as host and target system was tested and
 - gcc or clang are the only compilers used to date
+- see also the dependencies of cftal
 
 ### Configuration
 
