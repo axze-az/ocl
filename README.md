@@ -22,6 +22,7 @@ are large.
 - only linux as host and target system was tested and
 - gcc or clang are the only compilers used to date
 - see also the dependencies of cftal
+- the matrix classes require clblast (https://github.com/CNugteren/CLBlast)
 
 ### Configuration
 
