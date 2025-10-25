@@ -189,6 +189,8 @@ find_library(LIBOPENCL OpenCL)
 message("open cl library: ${LIBOPENCL}")
 find_library(LIBM m)
 find_library(LIB_BOOST_SYSTEM boost_system)
+find_library(LIBCLBLAST clblast)
+message("clblast library:" LIBCLBLAST)
 
 add_subdirectory(cftal)
 add_subdirectory(src)
