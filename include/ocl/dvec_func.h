@@ -530,9 +530,35 @@ namespace ocl {
         return expr<dop::as<_D>, expr<_DOP<dvec<_S> >, _L, _R> , void>(s);
     }
 
+#define DEF_MASK_UNARY_FUNC(fname, op_name)                             \
+    /* fname (V) */                                                     \
+    template <class _T>                                                 \
+    inline                                                              \
+    expr<dop:: op_name <typename dvec<_T>::mask_type>,                  \
+         dvec<_T>, void>                                                \
+    fname (const dvec<_T>& t) {                                         \
+        return expr<dop:: op_name <typename dvec<_T>::mask_type>,       \
+                    dvec<_T>, void>(t);                                 \
+    }                                                                   \
+                                                                        \
+    /* fname (expr) */                                                  \
+    template <class _T,                                                 \
+              template <class _T1> class _OP,                           \
+              class _L, class _R>                                       \
+    inline                                                              \
+    expr<dop:: op_name <typename dvec<_T>::mask_type >,                 \
+         expr<_OP<dvec<_T> >, _L, _R>,                                  \
+         void>                                                          \
+    fname (const expr<_OP<dvec<_T> >, _L, _R>& v) {                     \
+        return expr<dop:: op_name <typename dvec<_T>::mask_type>,       \
+                    expr<_OP<dvec<_T> >, _L, _R>,                       \
+                    void>(v);                                           \
+    }
+
+    DEF_MASK_UNARY_FUNC(isinf, isinf_f)
+    DEF_MASK_UNARY_FUNC(isnan, isnan_f)
+    
     DEF_UNARY_FUNC(rint, rint_f)
-    DEF_UNARY_FUNC(isinf, isinf_f)
-    DEF_UNARY_FUNC(isnan, isnan_f)
 
     DEF_UNARY_FUNC(abs, abs_f)
     DEF_UNARY_FUNC(sqrt, sqrt_f)
