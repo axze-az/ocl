@@ -569,27 +569,27 @@ namespace ocl {
     // TODO: more overloads also for (vec, expr), (expr, vec), (expr, expr)
 #define DEFINE_OCLVEC_CMP_OPERATOR(op, op_name )                        \
     template <typename _T>                                              \
-    expr<dop:: op_name<typename dvec<_T>::mask_type >,                \
-         _T, dvec<_T> >                                               \
-    operator op(const _T& a, const dvec<_T>& b) {                     \
-        return expr<dop:: op_name <typename dvec<_T>::mask_type>,     \
-                    _T, dvec<_T> >(a, b);                             \
+    expr<dop:: op_name<typename dvec<_T>::mask_type >,                  \
+         _T, dvec<_T> >                                                 \
+    operator op(const _T& a, const dvec<_T>& b) {                       \
+        return expr<dop:: op_name <typename dvec<_T>::mask_type>,       \
+            _T, dvec<_T> >(a, b);                                       \
     }                                                                   \
                                                                         \
     template <typename _T>                                              \
-    expr<dop:: op_name<typename dvec<_T>::mask_type >,                \
-         dvec<_T>, dvec<_T> >                                       \
-    operator op(const dvec<_T>& a, const dvec<_T>& b) {             \
-        return expr<dop:: op_name <typename dvec<_T>::mask_type>,     \
-                    dvec<_T>, dvec<_T> >(a, b);                     \
+    expr<dop:: op_name<typename dvec<_T>::mask_type >,                  \
+         dvec<_T>, dvec<_T> >                                           \
+    operator op(const dvec<_T>& a, const dvec<_T>& b) {                 \
+        return expr<dop:: op_name <typename dvec<_T>::mask_type>,       \
+                    dvec<_T>, dvec<_T> >(a, b);                         \
     }                                                                   \
                                                                         \
     template <typename _T>                                              \
-    expr<dop:: op_name<typename dvec<_T>::mask_type >,                \
-         dvec<_T>, _T>                                                \
-    operator op(const dvec<_T>& a, const _T& b) {                     \
-        return expr<dop:: op_name <typename dvec<_T>::mask_type>,     \
-                    dvec<_T>, _T>(a, b);                              \
+    expr<dop:: op_name<typename dvec<_T>::mask_type >,                  \
+         dvec<_T>, _T>                                                  \
+    operator op(const dvec<_T>& a, const _T& b) {                       \
+        return expr<dop:: op_name <typename dvec<_T>::mask_type>,       \
+                    dvec<_T>, _T>(a, b);                                \
     }
 
     DEFINE_OCLVEC_CMP_OPERATOR(<, lt)
