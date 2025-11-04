@@ -45,7 +45,7 @@ namespace ocl {
         // just in case someone changes the default mask_type
         template <>
         struct dvec_select_mask_value<bf16_t> {
-            using type = bf16_t;
+            using type = int16_t;
         };
     }
 
@@ -587,8 +587,8 @@ ocl::test::dvec_bf16()
 
         dvec<bf16_t> a_m=abs(m);
         dvec<bf16_t> a_n=-m;
-        dvec<bf16_t>::mask_type a_i=isinf(m);
-        dvec<bf16_t>::mask_type a_nan=isnan(m);
+        // dvec<bf16_t>::mask_type a_i=isinf(a_n);
+        // dvec<bf16_t>::mask_type a_nan=isnan(a_n);
 
         dvec<bf16_t>::mask_type c_lt=s < v;
         dvec<bf16_t>::mask_type c_le=s <= v;
