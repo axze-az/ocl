@@ -29,13 +29,50 @@
 int main()
 {
     int r=3;
+    using namespace cftal;
+    using namespace ocl;
+    using namespace ocl::test;
+	
+    using rtype = float;
     try {
-        using namespace cftal;
-        using namespace ocl;
-        using namespace ocl::test;
+        const size_t N=1024*1024;
+        dvec<rtype> v(rtype(0), N);
+        dvec<rtype> s=v+v;
+        dvec<rtype> d=v-v;
+        dvec<rtype> p=v*v;
+        dvec<rtype> q=v/v;
+        dvec<rtype> m=(s-d)*p/q;
 
-        using rtype = float;
-        constexpr const std::size_t NMAX=16*16384;
+        dvec<rtype> a_m=abs(m);
+        dvec<rtype> a_n=-m;
+        // dvec<rtype>::mask_type a_i=isinf(a_n);
+        // dvec<rtype>::mask_type a_nan=isnan(a_n);
+
+        dvec<rtype>::mask_type c_lt=s < v;
+        dvec<rtype>::mask_type c_le=s <= v;
+        dvec<rtype>::mask_type c_eq=s == v;
+        dvec<rtype>::mask_type c_ne=s != v;
+        dvec<rtype>::mask_type c_ge=s >= v;
+        dvec<rtype>::mask_type c_gt=s > v;
+
+
+        dvec<float> mf=cvt<dvec<float>>(m);
+        dvec<rtype> m2=cvt<dvec<rtype>>(mf);
+        r=0;
+    }
+    catch (const std::exception& ex)  {
+        std::cerr << "caught exception:\n"
+                  << ex.what() << '\n';
+    }
+    catch (...) {
+        std::cerr << "unspecified exception type\n";
+    }
+    if (r) {
+        return r;
+    }
+
+    try {
+	constexpr const std::size_t NMAX=16*16384;
         std::cout << "testing buffers with up to "
                   << NMAX-1 << " elements\n.";
         for (std::size_t i=4; i<NMAX; ++i) {
