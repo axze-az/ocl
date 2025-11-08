@@ -45,7 +45,7 @@ namespace ocl {
         // just in case someone changes the default mask_type
         template <>
         struct dvec_select_mask_value<bf16_t> {
-            using type = int16_t;
+            using type = bf16_t;
         };
     }
 
@@ -423,12 +423,13 @@ cmp_operator(const std::string& l, const std::string& r,
              const std::string_view& op)
 {
     std::ostringstream s;
-    s << bf16_to_f32::name() << '('
+    s << '('
+      << bf16_to_f32::name() << '('
       << l        << ')'
       << op
       << bf16_to_f32::name() << '('
       << r
-      << ')';
+      << ")) ? ~0 : 0";
     return s.str();
 }
 
@@ -530,7 +531,7 @@ ocl::dop::isinf_f<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
     std::string abs_l=abs_f<dvec<bf16_t> >::body(l);
-    std::string s='(' + abs_l + " == 0x7f80)";
+    std::string s='(' + abs_l + " == 0x7f80) ? ~0 : 0";
     return s;
 }
 
@@ -539,7 +540,7 @@ ocl::dop::isnan_f<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
     std::string abs_l=abs_f<dvec<bf16_t> >::body(l);
-    std::string s='(' + abs_l + " > 0x7f80)";
+    std::string s='(' + abs_l + " > 0x7f80) ? ~0 : 0";
     return s;
 }
 
@@ -587,8 +588,8 @@ ocl::test::dvec_bf16()
 
         dvec<bf16_t> a_m=abs(m);
         dvec<bf16_t> a_n=-m;
-        // dvec<bf16_t>::mask_type a_i=isinf(a_n);
-        // dvec<bf16_t>::mask_type a_nan=isnan(a_n);
+        dvec<bf16_t>::mask_type a_i=isinf(a_n);
+        dvec<bf16_t>::mask_type a_nan=isnan(a_n);
 
         dvec<bf16_t>::mask_type c_lt=s < v;
         dvec<bf16_t>::mask_type c_le=s <= v;
