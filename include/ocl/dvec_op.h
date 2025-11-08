@@ -235,6 +235,36 @@ namespace ocl {
             }
         };
 
+        template <typename _T, typename _P, bool _OPERATOR_SYNTAX = false>
+        struct binary_mask_func : private binary_func<_P, _OPERATOR_SYNTAX> {
+        };
+
+        template <typename _T, typename _P, bool _OPERATOR_SYNTAX>
+        struct binary_mask_func<dvec<_T>, _P, _OPERATOR_SYNTAX> :
+            private binary_func<_P, _OPERATOR_SYNTAX> {
+            using base_type = binary_func<_P, _OPERATOR_SYNTAX>;
+            static
+            std::string
+            body(const std::string& l, const std::string& r) {
+                std::string t=base_type::body(l, r);
+                if constexpr (cftal::is_floating_point_v<_T>) {
+                    std::stringstream s;
+                    s << "as_" << be::type_2_name<_T>::v()
+                      << '('
+                      << t;
+                    if (sizeof(_T)==2) {
+                        s << " ? (short)~0u : (short)0u)";
+                    } else if (sizeof(_T)==4) {
+                        s << " ? (int)~0u : (int)0u)";
+                    } else {
+                        s << " ? (long)~0ll : (long)0ull)";
+                    }
+                    t=s.str();
+                }
+                return t;
+            }
+        };
+
         namespace names {
             struct neg {
                 constexpr
@@ -391,17 +421,17 @@ namespace ocl {
         struct shr : public binary_func<names::shr, true> {};
 
         template <class _T>
-        struct lt : public binary_func<names::lt, true> {};
+        struct lt : public binary_mask_func<_T, names::lt, true> {};
         template <class _T>
-        struct le : public binary_func<names::le, true> {};
+        struct le : public binary_mask_func<_T, names::le, true> {};
         template <class _T>
-        struct eq : public binary_func<names::eq, true> {};
+        struct eq : public binary_mask_func<_T, names::eq, true> {};
         template <class _T>
-        struct ne : public binary_func<names::ne, true> {};
+        struct ne : public binary_mask_func<_T, names::ne, true> {};
         template <class _T>
-        struct ge : public binary_func<names::ge, true> {};
+        struct ge : public binary_mask_func<_T, names::ge, true> {};
         template <class _T>
-        struct gt : public binary_func<names::gt, true> {};
+        struct gt : public binary_mask_func<_T, names::gt, true> {};
 
     }
 

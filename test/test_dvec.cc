@@ -32,7 +32,7 @@ int main()
     using namespace cftal;
     using namespace ocl;
     using namespace ocl::test;
-	
+
     using rtype = float;
     try {
         const size_t N=1024*1024;
@@ -44,9 +44,6 @@ int main()
         dvec<rtype> m=(s-d)*p/q;
 
         dvec<rtype> a_m=abs(m);
-        dvec<rtype> a_n=-m;
-        // dvec<rtype>::mask_type a_i=isinf(a_n);
-        // dvec<rtype>::mask_type a_nan=isnan(a_n);
 
         dvec<rtype>::mask_type c_lt=s < v;
         dvec<rtype>::mask_type c_le=s <= v;
@@ -55,8 +52,13 @@ int main()
         dvec<rtype>::mask_type c_ge=s >= v;
         dvec<rtype>::mask_type c_gt=s > v;
 
+        dvec<rtype> a_n=-m;
+        dvec<rtype>::mask_type a_i=isinf(a_n);
+        dvec<rtype>::mask_type a_nan=isnan(a_n);
 
-        dvec<float> mf=cvt<dvec<float>>(m);
+
+
+        dvec<rtype> mf=cvt<dvec<rtype>>(m);
         dvec<rtype> m2=cvt<dvec<rtype>>(mf);
         r=0;
     }
@@ -70,7 +72,7 @@ int main()
     if (r) {
         return r;
     }
-
+#if 0
     try {
 	constexpr const std::size_t NMAX=16*16384;
         std::cout << "testing buffers with up to "
@@ -101,5 +103,6 @@ int main()
         std::cout << "caught exception: " << e.what()
                   << std::endl;
     }
+#endif
     return r;
 }

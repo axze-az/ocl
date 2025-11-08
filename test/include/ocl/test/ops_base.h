@@ -44,6 +44,12 @@ namespace ocl {
             // host results on the device
             dvec<_T> _h_res_d;
             // comparison between _h_res_d and _h_res on device
+            using dev_mv_t = typename dvec<_T>::mask_type::value_type;
+            using host_mv_t = typename vsvec<_T>::mask_type::value_type;
+            static_assert(
+                std::is_same_v<host_mv_t, dev_mv_t>,
+                "host and device mask value type must be equal"
+            );
             typename dvec<_T>::mask_type _cmp_res;
             // comparison between _h_res_d and _h_res on host
             vsvec<typename dvec<_T>::mask_type::value_type> _h_cmp_res;
@@ -108,9 +114,8 @@ ocl::test::ops_base<_T>::check_res(const std::string& msg)
     _h_res_d.copy_from_host(&_h_res[0]);
     // compare on device and make the result buffer compatible with
     // the results of vsvec/vec comparisons
-    _cmp_res = select(((_res == _h_res_d) |
-                       ((_res != _res) & (_h_res_d != _h_res_d))),
-                      -1, 0);
+    _cmp_res =((_res == _h_res_d) |
+              ((_res != _res) & (_h_res_d != _h_res_d)));
     bool res=all_of(_cmp_res);
     if (res==false) {
         _res.copy_to_host(&_h_d_res[0]);
