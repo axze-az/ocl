@@ -236,9 +236,10 @@ namespace ocl {
         };
 
         template <typename _T, typename _P, bool _OPERATOR_SYNTAX = false>
-        struct binary_mask_func : private binary_func<_P, _OPERATOR_SYNTAX> {
+        struct binary_mask_func : public binary_func<_P, _OPERATOR_SYNTAX> {
         };
 
+#if 0
         template <typename _T, typename _P, bool _OPERATOR_SYNTAX>
         struct binary_mask_func<dvec<_T>, _P, _OPERATOR_SYNTAX> :
             private binary_func<_P, _OPERATOR_SYNTAX> {
@@ -264,6 +265,7 @@ namespace ocl {
                 return t;
             }
         };
+#endif
 
         namespace names {
             struct neg {

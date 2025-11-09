@@ -35,7 +35,6 @@ namespace ocl {
             using type = _T;
         };
 
-#if 0
         template <>
         struct dvec_select_mask_value<double> {
             using type = std::int64_t;
@@ -45,7 +44,6 @@ namespace ocl {
         struct dvec_select_mask_value<float> {
             using type = std::int32_t;
         };
-#endif
 
         template <typename _T>
         using dvec_select_mask_value_t =

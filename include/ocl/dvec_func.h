@@ -92,45 +92,11 @@ namespace ocl {
         };
 
         template <class _T>
-        struct isinf_f  {};
-
-        template <>
-        struct isinf_f< dvec<float> >
-            : public unary_func<names::f_isinf, false> {
+        struct isinf_f  : public unary_func<names::f_isinf, false> {
         };
-        template <std::size_t _N>
-        struct isinf_f< dvec<cftal::vec<float, _N> > >
-            : public unary_func<names::f_isinf, false> {
-        };
-
-        template <>
-        struct isinf_f< dvec<double> >
-            : public unary_func<names::f_isinf, false> {
-        };
-        template <std::size_t _N>
-        struct isinf_f< dvec<cftal::vec<double, _N> > >
-            : public unary_func<names::f_isinf, false> {
-        };
-
 
         template <class _T>
-        struct isnan_f  {};
-
-        template <>
-        struct isnan_f< dvec<float> >
-            : public unary_func<names::f_isnan, false> {
-        };
-        template <std::size_t _N>
-        struct isnan_f< dvec<cftal::vec<float, _N> > >
-            : public unary_func<names::f_isnan, false> {
-        };
-
-        template <>
-        struct isnan_f< dvec<double> >
-            : public unary_func<names::f_isnan, false> {
-        };
-        template <std::size_t _N>
-        struct isnan_f< dvec<cftal::vec<double, _N> > >
+        struct isnan_f
             : public unary_func<names::f_isnan, false> {
         };
 

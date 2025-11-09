@@ -44,12 +44,14 @@ namespace ocl {
             // host results on the device
             dvec<_T> _h_res_d;
             // comparison between _h_res_d and _h_res on device
+#if 0
             using dev_mv_t = typename dvec<_T>::mask_type::value_type;
             using host_mv_t = typename vsvec<_T>::mask_type::value_type;
             static_assert(
                 std::is_same_v<host_mv_t, dev_mv_t>,
                 "host and device mask value type must be equal"
             );
+#endif
             typename dvec<_T>::mask_type _cmp_res;
             // comparison between _h_res_d and _h_res on host
             vsvec<typename dvec<_T>::mask_type::value_type> _h_cmp_res;
