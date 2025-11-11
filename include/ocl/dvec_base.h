@@ -150,13 +150,13 @@ namespace ocl {
         // default constructor
         dvec_base();
         // constructor, with size
-        explicit dvec_base(std::size_t s);
+        explicit dvec_base(size_t s);
         // constructor, with size and source
-        dvec_base(std::size_t s, const void* p);
+        dvec_base(size_t s, const void* p);
         // constructor with backend data ptr
-        dvec_base(const be::data_ptr& pbe, std::size_t s);
+        dvec_base(const be::data_ptr& pbe, size_t s);
         // constructor with backend data ptr, size and source
-        dvec_base(const be::data_ptr& pbe, std::size_t s, const void* p);
+        dvec_base(const be::data_ptr& pbe, size_t s, const void* p);
         // copy constructor
         dvec_base(const dvec_base& r);
         // move constructor
@@ -183,7 +183,7 @@ namespace ocl {
             const;
     public:
         // return the size of the underlying opencl buffer in bytes
-        std::size_t buffer_size() const;
+        size_t buffer_size() const;
         // return the underlying opencl buffer
         const be::buffer& buf() const;
         // return the opencl backend information
@@ -204,7 +204,7 @@ ocl::dvec_base::buf()
 }
 
 inline
-std::size_t
+ocl::size_t
 ocl::dvec_base::buffer_size()
     const
 {
