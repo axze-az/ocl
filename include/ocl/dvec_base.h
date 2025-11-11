@@ -182,7 +182,7 @@ namespace ocl {
         void copy_to_host(void* dst, size_t buf_offs, size_t len)
             const;
     public:
-        // return the size of the dvec in bytes
+        // return the size of the underlying opencl buffer in bytes
         std::size_t buffer_size() const;
         // return the underlying opencl buffer
         const be::buffer& buf() const;
