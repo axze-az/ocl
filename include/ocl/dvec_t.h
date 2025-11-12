@@ -507,4 +507,4 @@ custom_kernel(const std::string& name,
 // Local variables:
 // mode: c++
 // end:
-#endif // __OCL_VECTOR_H__
+#endif // __OCL_DVEC_H__
