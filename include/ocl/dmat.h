@@ -26,6 +26,7 @@ namespace ocl {
 
     template <typename _T>
     class dmat : public dvec_base {
+	size_t _rows;
     public:
 	dmat(size_t rows, size_t cols);
 	dmat(const dmat& r);
@@ -41,8 +42,16 @@ namespace ocl {
 	    column_major
 	};
 	const layout mem_layout() const;
-	void change_mem_layout(layout n);
+	dmat& change_mem_layout(layout n);
+    private:
+	size_t _rows;
+	size_t _cols;
+	layout _layout;
     };
+
+    template <typename _T>
+    dmat<_T>
+    transpose(const dmat<_T>& a);
 
     template <typename _T>
     dmat<_T>
