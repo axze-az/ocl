@@ -54,4 +54,4 @@ namespace ocl {
 // Local variables:
 // mode: c++
 // end:
-#endif // __OCL_VECTOR_H__
+#endif // __OCL_DMAT_H__
