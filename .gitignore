@@ -4,3 +4,5 @@ build*
 .kdev4*
 distcc*
 *~
+compile_commands.json
+
