@@ -23,9 +23,6 @@
 #include <ocl/be/data.h>
 #include <ocl/be/type_2_name.h>
 #include <ocl/be/argument_buffer.h>
-#include <iostream>
-#include <sstream>
-#include <thread>
 #include <string_view>
 
 namespace ocl {

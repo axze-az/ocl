@@ -16,6 +16,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 //
 #include "ocl/expr_custom.h"
+#include <sstream>
+#include <thread>
 
 ocl::impl::__cf_body::
 __cf_body(const std::string& n, const std::string& b)
