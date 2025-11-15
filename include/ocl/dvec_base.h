@@ -20,10 +20,6 @@
 
 #include <ocl/config.h>
 #include <ocl/be/data.h>
-#include <memory>
-#include <atomic>
-#include <iostream>
-#include <iomanip>
 
 #define DEBUG_DVEC_BASE 0
 
