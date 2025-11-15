@@ -26,27 +26,27 @@ namespace ocl {
 
     template <typename _T>
     class dmat : public dvec_base {
-	size_t _rows;
+        size_t _rows;
     public:
-	dmat(size_t rows, size_t cols);
-	dmat(const dmat& r);
-	dmat(dmat&& r);
-	dmat& operator=(const dmat& r);
-	dmat& operator=(dmat&& r);
-	~dmat();
+        dmat(size_t rows, size_t cols);
+        dmat(const dmat& r);
+        dmat(dmat&& r);
+        dmat& operator=(const dmat& r);
+        dmat& operator=(dmat&& r);
+        ~dmat();
 
-	const size_t& rows() const;
-	const size_t& cols() const;
-	enum class layout {
-	    row_major,
-	    column_major
-	};
-	const layout mem_layout() const;
-	dmat& change_mem_layout(layout n);
+        const size_t& rows() const;
+        const size_t& cols() const;
+        enum class layout {
+            row_major,
+            column_major
+        };
+        const layout mem_layout() const;
+        dmat& change_mem_layout(layout n);
     private:
-	size_t _rows;
-	size_t _cols;
-	layout _layout;
+        size_t _rows;
+        size_t _cols;
+        layout _layout;
     };
 
     template <typename _T>
@@ -56,8 +56,8 @@ namespace ocl {
     template <typename _T>
     dmat<_T>
     operator+(const dmat<_T>& a, const dmat<_T>& b);
-    
-    
+
+
 }
 
 // Local variables:
