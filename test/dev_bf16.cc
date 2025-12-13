@@ -282,6 +282,10 @@ namespace ocl {
     uniform_float_random_vector(rand48& rnd,
                                 bf16_t min_val, bf16_t max_val);
 
+    dvec<bf16_t>
+    uniform_float_random_vector(rand& rnd,
+                                bf16_t min_val, bf16_t max_val);
+
     namespace test {
         bool
         dvec_bf16();
@@ -573,6 +577,29 @@ def_custom_func(be::kernel_functions& fnames,
     return dop::bf16_base::add_conversions(fnames);
 }
 
+ocl::dvec<ocl::bf16_t>
+ocl::
+uniform_float_random_vector(rand& rnd, bf16_t min_val, bf16_t max_val)
+{
+    const auto f_min_val=static_cast<float>(min_val);
+    const auto f_max_val=static_cast<float>(max_val);
+    dvec<float> t=uniform_float_random_vector(rnd, f_min_val, f_max_val);
+    dvec<bf16_t> r=cvt<dvec<bf16_t>>(t);
+    return r;
+}
+
+ocl::dvec<ocl::bf16_t>
+ocl::
+uniform_float_random_vector(rand48& rnd, bf16_t min_val, bf16_t max_val)
+{
+    const auto f_min_val=static_cast<float>(min_val);
+    const auto f_max_val=static_cast<float>(max_val);
+    dvec<float> t=uniform_float_random_vector(rnd, f_min_val, f_max_val);
+    dvec<bf16_t> r=cvt<dvec<bf16_t>>(t);
+    return r;
+}
+
+
 bool
 ocl::test::dvec_bf16()
 {
@@ -615,7 +642,7 @@ ocl::test::dvec_bf16()
     if (r) {
         return r;
     }
-#if 0
+#if 1
     r = 3;
     try {
         using namespace cftal;
