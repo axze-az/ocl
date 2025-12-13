@@ -45,7 +45,7 @@ namespace ocl {
         // just in case someone changes the default mask_type
         template <>
         struct dvec_select_mask_value<bf16_t> {
-            using type = bf16_t;
+            using type = int16_t;
         };
     }
 
@@ -615,7 +615,7 @@ ocl::test::dvec_bf16()
     if (r) {
         return r;
     }
-#if 0
+#if 1
     r = 3;
     try {
         using namespace cftal;
