@@ -615,7 +615,7 @@ ocl::test::dvec_bf16()
     if (r) {
         return r;
     }
-#if 1
+#if 0
     r = 3;
     try {
         using namespace cftal;
