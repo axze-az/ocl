@@ -49,13 +49,13 @@ namespace ocl {
     };
 
     template <class _OP, class _L, class _R>
-    expr<_OP, _L, _R>
+    constexpr expr<_OP, _L, _R>
     make_expr(const _L& l, const _R& r) {
         return expr<_OP, _L, _R>(l, r);
     }
 
     template <class _OP, class _L>
-    expr<_OP, _L, void>
+    constexpr expr<_OP, _L, void>
     make_expr(const _L& l) {
         return expr<_OP, _L, void>(l);
     }

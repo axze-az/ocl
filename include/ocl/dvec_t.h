@@ -471,7 +471,7 @@ ocl::
 custom_func(const std::string& name,  const std::string& body,
             _AX&&... ax)
 {
-    return make_expr<dop::custom_f<dvec<_T> > >(
+    return ocl::make_expr<dop::custom_f<dvec<_T> > >(
         impl::cf_body(name, body),
         impl::custom_args<dvec<_T>>(
             std::forward<_AX&&>(ax) ...));
@@ -485,7 +485,7 @@ custom_kernel_with_size(const std::string& name,
                         std::size_t s,
                         _AX&&... ax)
 {
-    return make_expr<dop::custom_k<dvec<_T> > >(
+    return ocl::make_expr<dop::custom_k<dvec<_T> > >(
         impl::ck_body(name, body, s),
         impl::custom_args<dvec<_T>>(
             std::forward<_AX&&>(ax) ...));
@@ -498,7 +498,7 @@ custom_kernel(const std::string& name,
               const std::string& body,
               _AX&&... ax)
 {
-    return make_expr<dop::custom_k<dvec<_T> > >(
+    return ocl::make_expr<dop::custom_k<dvec<_T> > >(
         impl::ck_body(name, body),
         impl::custom_args<dvec<_T>>(
             std::forward<_AX&&>(ax) ...));

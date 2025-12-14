@@ -123,7 +123,7 @@ namespace ocl {
         auto
         custom_args(_A0&& a0, _AX&& ... ax)
         {
-            return make_expr<dop::custom_arg<_OP> >(
+            return ocl::make_expr<dop::custom_arg<_OP> >(
                 custom_args<_OP>(std::forward<_A0&&>(a0)),
                 custom_args<_OP>(std::forward<_AX&&>(ax) ...));
         }
