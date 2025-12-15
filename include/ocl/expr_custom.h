@@ -298,7 +298,8 @@ def_custom_func(be::kernel_functions& fnames,
     if (fnames.insert(fn) == true) {
         s = e._l.body() + '\n';
     }
-    return s;
+    std::string r=def_custom_func(fnames, e._r);
+    return s + r;
 }
 
 template <typename _OP, typename _R>
