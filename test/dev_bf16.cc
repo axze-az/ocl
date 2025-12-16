@@ -26,15 +26,19 @@ namespace cftal {
     inline
     std::size_t
     eval_size(bf16_t s) {
-	return 1;
+        return 1;
     }
+
+    std::string_view
+    def_custom_func(ocl::be::kernel_functions& fnames,
+                    const bf16_t& v);
 }
 
 namespace ocl {
 
     using cftal::bf16_t;
     using cftal::operator ""_bf16;
-    
+
     namespace be {
 
         template <>
@@ -67,6 +71,10 @@ namespace ocl {
             struct emit_type_def {
                 static
                 std::string_view
+                name();
+
+                static
+                std::string_view
                 body();
             };
 
@@ -76,7 +84,7 @@ namespace ocl {
                 name();
 
                 static
-                std::string
+                std::string_view
                 body();
             };
 
@@ -86,11 +94,11 @@ namespace ocl {
                 name();
 
                 static
-                std::string
+                std::string_view
                 body();
             };
 
-	    struct _neg {
+            struct _neg {
                 static
                 std::string_view
                 name();
@@ -99,12 +107,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
-	    
-	    struct _abs {
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
+
+            struct _abs {
                 static
                 std::string_view
                 name();
@@ -113,12 +121,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
 
-	    struct _isinf {
+            struct _isinf {
                 static
                 std::string_view
                 name();
@@ -127,12 +135,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
 
-	    struct _isnan {
+            struct _isnan {
                 static
                 std::string_view
                 name();
@@ -141,12 +149,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
 
-	    struct _or {
+            struct _or {
                 static
                 std::string_view
                 name();
@@ -155,12 +163,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
 
-	    struct _and {
+            struct _and {
                 static
                 std::string_view
                 name();
@@ -169,12 +177,12 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
 
-	    struct _xor {
+            struct _xor {
                 static
                 std::string_view
                 name();
@@ -183,11 +191,11 @@ namespace ocl {
                 std::string_view
                 body();
 
-		static
-		std::string
-		add_func(be::kernel_functions& fnames);
-	    };
-	    
+                static
+                std::string
+                add_func(be::kernel_functions& fnames);
+            };
+
             static
             std::string
             add_conversions(be::kernel_functions& fnames);
@@ -293,7 +301,7 @@ namespace ocl {
             body(const std::string& l, const std::string& r);
         };
 
-	template <>
+        template <>
         struct bit_and<dvec<bf16_t> > : public bf16_base {
             static
             std::string
@@ -306,9 +314,9 @@ namespace ocl {
             std::string
             body(const std::string& l, const std::string& r);
         };
-	
 
-	template <>
+
+        template <>
         struct abs_f<dvec<bf16_t> > : public bf16_base {
             static
             std::string
@@ -407,7 +415,7 @@ namespace ocl {
     std::string
     def_custom_func(be::kernel_functions& fnames,
                     const expr<_OP<dvec<bf16_t> >, _L, void>& e );
-    
+
     template <typename _L, typename _R>
     std::string
     def_custom_func(be::kernel_functions& fnames,
@@ -437,12 +445,12 @@ namespace ocl {
     std::string
     def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::isinf_f<dvec<bf16_t> >, _L, void>& e );
-    
+
     template <typename _L>
     std::string
     def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::isnan_f<dvec<bf16_t> >, _L, void>& e );
-    
+
     bool
     all_of(const dvec<bf16_t>& v);
 
@@ -451,7 +459,7 @@ namespace ocl {
 
     bool
     any_of(const dvec<bf16_t>& v);
-    
+
 
     dvec<bf16_t>
     uniform_float_random_vector(rand48& rnd,
@@ -469,14 +477,21 @@ namespace ocl {
 
 std::string_view
 ocl::dop::bf16_base::emit_type_def::
+name()
+{
+    return "__BF16_T_DEFINED__";
+}
+
+std::string_view
+ocl::dop::bf16_base::emit_type_def::
 body()
 {
     return
-	"#if !defined (__BF16_T_DEFINED__)\n"
+        "#if !defined (__BF16_T_DEFINED__)\n"
         "#define __BF16_T_DEFINED__ 1\n"
         "struct bf16_s {\n"
         "    short _v;\n"
-	"};\n"
+        "};\n"
         "typedef struct bf16_s bf16_t;\n"
         "#endif\n\n";
 }
@@ -488,21 +503,19 @@ name()
     return "__bf16_to_f32";
 }
 
-std::string
+std::string_view
 ocl::dop::bf16_base::bf16_to_f32::
 body()
 {
-    std::ostringstream s;
-    s << emit_type_def::body()
-      << "inline\n"
-         "float " << name() << "(bf16_t s)\n"
-         "{\n"
-         "    unsigned int us=s._v;\n"
-         "    us <<=16;\n"
-         "    float r= as_float(us);\n"
-         "    return r;\n"
-         "}\n\n";
-    return s.str();
+    return
+        "inline\n"
+        "float __bf16_to_f32(bf16_t s)\n"
+        "{\n"
+        "    unsigned int us=s._v;\n"
+        "    us <<=16;\n"
+        "    float r= as_float(us);\n"
+        "    return r;\n"
+        "}\n\n";
 }
 
 std::string_view
@@ -512,36 +525,34 @@ name()
     return "__f32_to_bf16";
 }
 
-std::string
+std::string_view
 ocl::dop::bf16_base::f32_to_bf16::
 body()
 {
-    std::ostringstream s;
-    s << emit_type_def::body()
-      << "inline\n"
-         "bf16_t " << name() << "(float ff)\n"
-         "{\n"
-         "    int f=as_int(ff);\n"
-         "    int af=f & 0x7fffffff;\n"
-         "    int sf=f & 0x80000000;\n"
-         "    int r_nan = af;\n"
-         "    const int rnd_bias = 0x7fff;\n"
-         "    const int rnd_bias_p1 = 0x8000;\n"
-         "    // force round nearest even if bit 16 is set\n"
-         "    int r_def= (af & 0x00010000) ? af + rnd_bias_p1 : af + rnd_bias;\n"
-         "    // subnormal result:\n"
-         "    int r_sn = 0;\n"
-         "    // select subnormal normal\n"
-         "    int r_def_sn = (af < 0x00800000) ? r_sn : r_def;\n"
-         "    // select nan or subnormal normal\n"
-         "    int r = (af > 0x7f800000) ? r_nan : r_def_sn;\n"
-         "    r |= sf;\n"
-         "    r >>= 16;\n"
-         "    bf16_t rr;\n"
-         "    rr._v=r;\n"
-         "    return rr;\n"
-         "}\n\n";
-    return s.str();
+    return
+        "inline\n"
+        "bf16_t __f32_to_bf16(float ff)\n"
+        "{\n"
+        "    int f=as_int(ff);\n"
+        "    int af=f & 0x7fffffff;\n"
+        "    int sf=f & 0x80000000;\n"
+        "    int r_nan = af;\n"
+        "    const int rnd_bias = 0x7fff;\n"
+        "    const int rnd_bias_p1 = 0x8000;\n"
+        "    // force round nearest even if bit 16 is set\n"
+        "    int r_def= (af & 0x00010000) ? af + rnd_bias_p1 : af + rnd_bias;\n"
+        "    // subnormal result:\n"
+        "    int r_sn = 0;\n"
+        "    // select subnormal normal\n"
+        "    int r_def_sn = (af < 0x00800000) ? r_sn : r_def;\n"
+        "    // select nan or subnormal normal\n"
+        "    int r = (af > 0x7f800000) ? r_nan : r_def_sn;\n"
+        "    r |= sf;\n"
+        "    r >>= 16;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string_view
@@ -556,23 +567,27 @@ ocl::dop::bf16_base::_neg::
 body()
 {
     return
-	"inline\n"
-	"bf16_t __bf16_neg(bf16_t a) {\n"
-	"    short r= a._v ^ 0x8000;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n";
+        "inline\n"
+        "bf16_t __bf16_neg(bf16_t a) {\n"
+        "    short r= a._v ^ 0x8000;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n";
 }
 
 std::string
 ocl::dop::bf16_base::_neg::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -588,24 +603,28 @@ std::string_view
 ocl::dop::bf16_base::_abs::
 body()
 {
-    return 
-	"inline\n"
-	"bf16_t __bf16_abs(bf16_t a) {\n"
-	"    short r= a._v & 0x7fff;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+    return
+        "inline\n"
+        "bf16_t __bf16_abs(bf16_t a) {\n"
+        "    short r= a._v & 0x7fff;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_abs::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -621,25 +640,29 @@ std::string_view
 ocl::dop::bf16_base::_isinf::
 body()
 {
-    return 
-	"inline\n"
-	"bf16_t __bf16_isinf(bf16_t a) {\n"
-	"    short aa= a._v & 0x7fff;\n"
-	"    short r= aa == 0x7f80 ? ~0 : 0;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+    return
+        "inline\n"
+        "bf16_t __bf16_isinf(bf16_t a) {\n"
+        "    short aa= a._v & 0x7fff;\n"
+        "    short r= aa == 0x7f80 ? ~0 : 0;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_isinf::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -655,29 +678,32 @@ std::string_view
 ocl::dop::bf16_base::_isnan::
 body()
 {
-    return 
-	"inline\n"
-	"bf16_t __bf16_isnan(bf16_t a) {\n"
-	"    short aa= a._v & 0x7fff;\n"
-	"    short r= aa > 0x7f80 ? ~0 : 0;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+    return
+        "inline\n"
+        "bf16_t __bf16_isnan(bf16_t a) {\n"
+        "    short aa= a._v & 0x7fff;\n"
+        "    short r= aa > 0x7f80 ? ~0 : 0;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_isnan::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
-
 
 std::string_view
 ocl::dop::bf16_base::_or::
@@ -691,23 +717,27 @@ ocl::dop::bf16_base::_or::
 body()
 {
     return
-	"inline\n"
-	"bf16_t __bf16_or(bf16_t a, bf16_t b) {\n"
-	"    short r= a._v | b._v;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+        "inline\n"
+        "bf16_t __bf16_or(bf16_t a, bf16_t b) {\n"
+        "    short r= a._v | b._v;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_or::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -724,23 +754,27 @@ ocl::dop::bf16_base::_and::
 body()
 {
     return
-	"inline\n"
-	"bf16_t __bf16_and(bf16_t a, bf16_t b) {\n"
-	"    short r= a._v & b._v;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+        "inline\n"
+        "bf16_t __bf16_and(bf16_t a, bf16_t b) {\n"
+        "    short r= a._v & b._v;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_and::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -757,23 +791,27 @@ ocl::dop::bf16_base::_xor::
 body()
 {
     return
-	"inline\n"
-	"bf16_t __bf16_xor(bf16_t a, bf16_t b) {\n"
-	"    short r= a._v ^ b._v;\n"
-	"    bf16_t rr;\n"
-	"    rr._v=r;\n"
-	"    return rr;\n"
-	"}\n\n";
+        "inline\n"
+        "bf16_t __bf16_xor(bf16_t a, bf16_t b) {\n"
+        "    short r= a._v ^ b._v;\n"
+        "    bf16_t rr;\n"
+        "    rr._v=r;\n"
+        "    return rr;\n"
+        "}\n\n";
 }
 
 std::string
 ocl::dop::bf16_base::_xor::
 add_func(be::kernel_functions& fnames)
 {
-    const auto fn1=name();
+    const auto fn0=emit_type_def::name();
     std::string s;
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
+    }
+    const auto fn1=name();
     if (fnames.insert(fn1) == true) {
-        s = body();
+        s += body();
     }
     return s;
 }
@@ -783,12 +821,16 @@ std::string
 ocl::dop::bf16_base::
 add_conversions(be::kernel_functions& fnames)
 {
-    const auto fn1=bf16_base::bf16_to_f32::name();
+    const auto fn0=emit_type_def::name();
     std::string s;
-    if (fnames.insert(fn1) == true) {
-        s = bf16_base::bf16_to_f32::body();
+    if (fnames.insert(fn0) == true) {
+        s = emit_type_def::body();;
     }
-    const auto fn2=bf16_base::f32_to_bf16::name();
+    const auto fn1=bf16_to_f32::name();
+    if (fnames.insert(fn1) == true) {
+        s += bf16_base::bf16_to_f32::body();
+    }
+    const auto fn2=f32_to_bf16::name();
     if (fnames.insert(fn2) == true) {
         s += bf16_base::f32_to_bf16::body();
     }
@@ -992,6 +1034,20 @@ body(const std::string& l)
     return r;
 }
 
+std::string_view
+cftal::
+def_custom_func(ocl::be::kernel_functions& fnames,
+                const bf16_t& v)
+{
+    static_cast<void>(v);
+    const auto fn1=ocl::dop::bf16_base::emit_type_def::name();
+    std::string_view s;
+    if (fnames.insert(fn1) == true) {
+        s = ocl::dop::bf16_base::emit_type_def::body();;
+    }
+    return s;
+}
+
 std::string
 ocl::
 def_custom_func(be::kernel_functions& fnames,
@@ -1007,9 +1063,10 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, _R>& e )
 {
-    return dop::bf16_base::add_conversions(fnames) +
-	def_custom_func(fnames, e._l) +
-	def_custom_func(fnames, e._r);
+    std::string r=def_custom_func(fnames, e._l);
+    r += def_custom_func(fnames, e._r);
+    r += dop::bf16_base::add_conversions(fnames);
+    return r;
 }
 
 template <template <class _DVEC> class _OP, typename _L>
@@ -1018,8 +1075,9 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, void>& e )
 {
-    return dop::bf16_base::add_conversions(fnames) +
-	def_custom_func(fnames, e._l);
+    std::string r=def_custom_func(fnames, e._l);
+    r += dop::bf16_base::add_conversions(fnames);
+    return r;
 }
 
 template <typename _L, typename _R>
@@ -1028,10 +1086,10 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_or<dvec<bf16_t> >, _L, _R>& e )
 {
-    static_cast<void>(e);
-    return dop::bit_or<dvec<bf16_t> >::_or::add_func(fnames) +
-	def_custom_func(fnames, e._l) +
-	def_custom_func(fnames, e._r);
+    std::string r=def_custom_func(fnames, e._l);
+    r += def_custom_func(fnames, e._r);
+    r += dop::bit_or<dvec<bf16_t> >::_or::add_func(fnames);
+    return r;
 }
 
 template <typename _L, typename _R>
@@ -1040,9 +1098,10 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_and<dvec<bf16_t> >, _L, _R>& e )
 {
-    return dop::bit_and<dvec<bf16_t> >::_and::add_func(fnames) +
-	def_custom_func(fnames, e._l) +
-	def_custom_func(fnames, e._r);
+    std::string r=def_custom_func(fnames, e._l);
+    r += def_custom_func(fnames, e._r);
+    r += dop::bit_and<dvec<bf16_t> >::_and::add_func(fnames);
+    return r;
 }
 
 template <typename _L, typename _R>
@@ -1051,9 +1110,10 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_xor<dvec<bf16_t> >, _L, _R>& e )
 {
-    return dop::bit_xor<dvec<bf16_t> >::_xor::add_func(fnames) +
-	def_custom_func(fnames, e._l) +
-	def_custom_func(fnames, e._r);
+    std::string r=def_custom_func(fnames, e._l);
+    r += def_custom_func(fnames, e._r);
+    r += dop::bit_xor<dvec<bf16_t> >::_xor::add_func(fnames);
+    return r;
 }
 
 template <typename _L>
@@ -1062,8 +1122,9 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::neg<dvec<bf16_t> >, _L, void>& e )
 {
-    return dop::neg<dvec<bf16_t> >::_neg::add_func(fnames) +
-	def_custom_func(fnames, e._l);
+    std::string r=dop::neg<dvec<bf16_t> >::_neg::add_func(fnames);
+    r += def_custom_func(fnames, e._l);
+    return r;
 }
 
 template <typename _L>
@@ -1072,8 +1133,9 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::abs_f<dvec<bf16_t> >, _L, void>& e )
 {
-    return dop::abs_f<dvec<bf16_t> >::_abs::add_func(fnames) +
-	def_custom_func(fnames, e._l);
+    std::string r=dop::abs_f<dvec<bf16_t> >::_abs::add_func(fnames);
+    r += def_custom_func(fnames, e._l);
+    return r;
 }
 
 template <typename _L>
@@ -1082,8 +1144,9 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::isinf_f<dvec<bf16_t> >, _L, void>& e )
 {
-    return dop::isinf_f<dvec<bf16_t> >::_isinf::add_func(fnames) +
-	def_custom_func(fnames, e._l);
+    std::string r=dop::isinf_f<dvec<bf16_t> >::_isinf::add_func(fnames);
+    r += def_custom_func(fnames, e._l);
+    return r;
 }
 
 template <typename _L>
@@ -1092,10 +1155,10 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::isnan_f<dvec<bf16_t> >, _L, void>& e )
 {
-    return dop::isnan_f<dvec<bf16_t> >::_isnan::add_func(fnames) +
-	def_custom_func(fnames, e._l);
+    std::string r=dop::isnan_f<dvec<bf16_t> >::_isnan::add_func(fnames);
+    r += def_custom_func(fnames, e._l);
+    return r;
 }
-
 
 bool
 ocl::
@@ -1172,7 +1235,6 @@ ocl::test::dvec_bf16()
 
         dvec<float> mf=cvt<dvec<float>>(m);
         dvec<bf16_t> m2=cvt<dvec<bf16_t>>(mf);
-
 
         r=0;
     }
