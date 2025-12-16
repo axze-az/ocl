@@ -262,7 +262,8 @@ namespace ocl {
 
 template <typename _T>
 std::string
-ocl::def_custom_func(be::kernel_functions& fnames, const _T& l)
+ocl::
+def_custom_func(be::kernel_functions& fnames, const _T& l)
 {
     static_cast<void>(fnames);
     static_cast<void>(l);
@@ -271,8 +272,9 @@ ocl::def_custom_func(be::kernel_functions& fnames, const _T& l)
 
 template <typename _OP, typename _L, typename _R>
 std::string
-ocl::def_custom_func(be::kernel_functions& fnames,
-                     const expr<_OP, _L, _R>& e)
+ocl::
+def_custom_func(be::kernel_functions& fnames,
+		const expr<_OP, _L, _R>& e)
 {
     std::string l=def_custom_func(fnames, e._l);
     std::string r=def_custom_func(fnames, e._r);
@@ -281,8 +283,9 @@ ocl::def_custom_func(be::kernel_functions& fnames,
 
 template <typename _OP, typename _L>
 std::string
-ocl::def_custom_func(be::kernel_functions& fnames,
-                     const expr<_OP, _L, void>& e)
+ocl::
+def_custom_func(be::kernel_functions& fnames,
+		const expr<_OP, _L, void>& e)
 {
     return def_custom_func(fnames, e._l);
 }

@@ -860,12 +860,11 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::sqrt_f<dvec<float>>, _L, void>& e )
 {
-    static_cast<void>(e);
+    std::string s=def_custom_func(fnames, e._l);
     using d_t=dop::names::f_sqrt_fix<float>;
     const std::string fn=d_t::func_name();
-    std::string s;
     if (fnames.insert(fn) == true) {
-        s = d_t::func_body() + '\n';
+        s += d_t::func_body() + '\n';
     }
     return s;
 }
@@ -878,12 +877,11 @@ def_custom_func(
     be::kernel_functions& fnames,
     const expr<dop::sqrt_f<dvec<cftal::vec<float, _N>>>, _L, void>& e )
 {
-    static_cast<void>(e);
+    std::string s=def_custom_func(fnames, e._l);
     using d_t=dop::names::f_sqrt_fix<cftal::vec<float, _N> >;
     const std::string fn=d_t::func_name();
-    std::string s;
     if (fnames.insert(fn) == true) {
-        s = d_t::func_body() + '\n';
+        s += d_t::func_body() + '\n';
     }
     return s;
 }
