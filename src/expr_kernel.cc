@@ -189,17 +189,8 @@ insert_headers(std::ostream& s,
       << "\n#define F32_FMA "
       << f32_fma
       << "\n\n";
-
-    s <<
-	"#if !defined (__BF16_T_DEFINED__)\n"
-        "#define __BF16_T_DEFINED__ 1\n"
-        "struct bf16_s {\n"
-        "    short _v;\n"
-	"};\n"
-        "typedef struct bf16_s bf16_t;\n"
-        "#endif\n\n";
     
-     // gen_byte_swaps(s);
+    // gen_byte_swaps(s);
     if (lmem_size==0) {
         s << "#define __arg_local __global\n\n";
     } else {
