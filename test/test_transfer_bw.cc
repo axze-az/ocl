@@ -79,7 +79,7 @@ transfer_bw(be::data_ptr bedp)
         }
 	to_device = data_size/to_device;
 	from_device = data_size/from_device;
-	// to_device + from_device contain now bytes per ns
+	// to_device and from_device contain now bytes per ns
 	// GiB/ns -> divide by (1024*1024*1024)
 	// GiB/s -> multiply by 1e9
 	const double factor= 1e9/(double(1024)*double(1024)*double(1024));
