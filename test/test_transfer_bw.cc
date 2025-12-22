@@ -38,7 +38,7 @@ void
 ocl::test::
 transfer_bw(be::data_ptr bedp)
 {
-    constexpr const size_t BUF_SIZE=1024*1024*128;
+    constexpr const size_t BUF_SIZE=1024*1024*256;
     constexpr const size_t ELEM_CNT=BUF_SIZE/sizeof(float);
     std::cout << "testing\n"  << bedp->dcq().d().name() << '\n'
               << "transfer bandwidth using "
