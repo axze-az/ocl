@@ -111,8 +111,6 @@ void
 ocl::dvec_base::copy_on_device(const dvec_base& r)
 {
     size_t s =r.buffer_size();
-    // TODO: check for Mesa devices and use copy via
-    // kernel, otherwise use enqueue_copy_buffer
     if (__unlikely(s==0))
         return;
     auto& dcq=_bed->dcq();
