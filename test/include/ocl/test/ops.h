@@ -1,3 +1,6 @@
+//
+// Copyright (C) 2010-2026 Axel Zeuner
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
@@ -12,9 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 //
-#if !defined (__OCL_TEST_OPS_H__)
-#define __OCL_TEST_OPS_H__ 1
-
 #include <ocl/config.h>
 #include <ocl/test/ops_base.h>
 
