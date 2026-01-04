@@ -1063,7 +1063,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, _R>& e )
 {
-    std::string r=def_custom_func(fnames, e._l);
+    std::string r(def_custom_func(fnames, e._l));
     r += def_custom_func(fnames, e._r);
     r += dop::bf16_base::add_conversions(fnames);
     return r;
@@ -1075,7 +1075,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<_OP<dvec<bf16_t> >, _L, void>& e )
 {
-    std::string r=def_custom_func(fnames, e._l);
+    std::string r(def_custom_func(fnames, e._l));
     r += dop::bf16_base::add_conversions(fnames);
     return r;
 }
@@ -1086,7 +1086,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_or<dvec<bf16_t> >, _L, _R>& e )
 {
-    std::string r=def_custom_func(fnames, e._l);
+    std::string r(def_custom_func(fnames, e._l));
     r += def_custom_func(fnames, e._r);
     r += dop::bit_or<dvec<bf16_t> >::_or::add_func(fnames);
     return r;
@@ -1098,7 +1098,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_and<dvec<bf16_t> >, _L, _R>& e )
 {
-    std::string r=def_custom_func(fnames, e._l);
+    std::string r(def_custom_func(fnames, e._l));
     r += def_custom_func(fnames, e._r);
     r += dop::bit_and<dvec<bf16_t> >::_and::add_func(fnames);
     return r;
@@ -1110,7 +1110,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::bit_xor<dvec<bf16_t> >, _L, _R>& e )
 {
-    std::string r=def_custom_func(fnames, e._l);
+    std::string r(def_custom_func(fnames, e._l));
     r += def_custom_func(fnames, e._r);
     r += dop::bit_xor<dvec<bf16_t> >::_xor::add_func(fnames);
     return r;
@@ -1122,7 +1122,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::neg<dvec<bf16_t> >, _L, void>& e )
 {
-    std::string r=dop::neg<dvec<bf16_t> >::_neg::add_func(fnames);
+    std::string r(dop::neg<dvec<bf16_t> >::_neg::add_func(fnames));
     r += def_custom_func(fnames, e._l);
     return r;
 }
@@ -1133,7 +1133,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::abs_f<dvec<bf16_t> >, _L, void>& e )
 {
-    std::string r=dop::abs_f<dvec<bf16_t> >::_abs::add_func(fnames);
+    std::string r(dop::abs_f<dvec<bf16_t> >::_abs::add_func(fnames));
     r += def_custom_func(fnames, e._l);
     return r;
 }
@@ -1144,7 +1144,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::isinf_f<dvec<bf16_t> >, _L, void>& e )
 {
-    std::string r=dop::isinf_f<dvec<bf16_t> >::_isinf::add_func(fnames);
+    std::string r(dop::isinf_f<dvec<bf16_t> >::_isinf::add_func(fnames));
     r += def_custom_func(fnames, e._l);
     return r;
 }
@@ -1155,7 +1155,7 @@ ocl::
 def_custom_func(be::kernel_functions& fnames,
                 const expr<dop::isnan_f<dvec<bf16_t> >, _L, void>& e )
 {
-    std::string r=dop::isnan_f<dvec<bf16_t> >::_isnan::add_func(fnames);
+    std::string r(dop::isnan_f<dvec<bf16_t> >::_isnan::add_func(fnames));
     r += def_custom_func(fnames, e._l);
     return r;
 }
