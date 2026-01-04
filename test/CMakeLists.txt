@@ -36,6 +36,7 @@ function(test_prog arg1)
     add_executable(${arg1} ${arg1}.cc ${TEST_HDRS})
     target_add_test_libs(${arg1})
     target_link_libraries(${arg1} ocl-test)
+    target_link_libraries(${arg1} cftal-so)
     add_test(NAME ${arg1} COMMAND ${arg1})
 endfunction()
 
