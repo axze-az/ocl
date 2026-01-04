@@ -72,7 +72,7 @@ int main()
     if (r) {
         return r;
     }
-#if 0
+#if 1
     try {
 	constexpr const std::size_t NMAX=16*16384;
         std::cout << "testing buffers with up to "
