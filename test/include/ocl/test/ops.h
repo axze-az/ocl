@@ -77,18 +77,16 @@ ocl::test::ops<_T>::perform()
     _res = abs(_a0);
     _h_res = abs(_h_a0);
     rc &= check_res("abs");
-    if constexpr (std::is_same_v<_T, cftal::bf16_t> == false) {
-	if constexpr (cftal::is_floating_point_v<_T>) {
-	    // sqrt
-	    _res = sqrt(_a0);
-	    _h_res = sqrt(_h_a0);
-	    rc &= check_res("sqrt");
-	    // link against cftal.so is missing yet
-	    _res = rsqrt(_a0);
-	    _h_res = rsqrt(_h_a0);
-	    const _T eps=std::numeric_limits<_T>::epsilon()*_T(4);
-	    rc &= check_res("rsqrt", eps);
-	}
+    if constexpr (cftal::is_floating_point_v<_T>) {
+	// sqrt
+	_res = sqrt(_a0);
+	_h_res = sqrt(_h_a0);
+	rc &= check_res("sqrt");
+	// link against cftal.so is missing yet
+	_res = rsqrt(_a0);
+	_h_res = rsqrt(_h_a0);
+	const _T eps=std::numeric_limits<_T>::epsilon()*_T(4);
+	rc &= check_res("rsqrt", eps);
     }
     return rc;
 }
