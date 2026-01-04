@@ -136,10 +136,12 @@ ocl::test::ops_base<_T>::check_res(const std::string& msg)
             _T _f0=_h_a0[i];
             _T _f1=_h_a1[i];
             _T _rd= (_hr - _dr)/(_T(0.5)*(_hr + _dr));
-            _T max_rd=0x1.0p-24*8;
-            std::cout << "vector entry " << i << ' '
-                      << _f0 << ' ' << _f1 << ' ' << _hr << ' ' << _dr
-                      << ' ' << _rd << ' ' << max_rd << '\n';
+            _T max_rd=_T(0);
+            std::cout << "vector entry " << i
+                      << " arg0: " << _f0 << " arg0: " << _f1
+                      << "\nhost-res: " << _hr << " dev-res: " << _dr
+                      << "\nrdelta: "  << _rd
+                      << " maxrdelta:" << max_rd << '\n';
         }
         // dump(_h_a0, "_a0");
         // dump(_h_a1, "_a1");
@@ -167,9 +169,13 @@ ocl::test::ops_base<_T>::check_res(const std::string& msg)
             _T _dr=_h_d_res[i];
             _T _f0=_h_a0[i];
             _T _f1=_h_a1[i];
-            std::cout << "vector entry " << i << ' '
-                      << _f0 << ' ' << _f1 << ' ' << _hr << ' ' << _dr
-                      << ' ' << _hr - _dr << '\n';
+            _T _rd= (_hr - _dr)/(_T(0.5)*(_hr + _dr));
+            _T max_rd=_T(0);
+            std::cout << "vector entry " << i
+                      << " arg0: " << _f0 << " arg0: " << _f1
+                      << "\nhost-res: " << _hr << " dev-res: " << _dr
+                      << "\nrdelta: "  << _rd
+                      << " maxrdelta:" << max_rd << '\n';
         }
         // dump(_h_a0, "_a0");
         // dump(_h_a1, "_a1");
@@ -224,9 +230,11 @@ check_res(const std::string& msg, const _T& max_rel_tol)
             _T _f1=_h_a1[i];
             _T _rd= (_hr - _dr)/(_T(0.5)*(_hr + _dr));
             _T max_rd=max_rel_tol;
-            std::cout << "vector entry " << i << ' '
-                      << _f0 << ' ' << _f1 << ' ' << _hr << ' ' << _dr
-                      << ' ' << _rd << ' ' << max_rd << '\n';
+            std::cout << "vector entry " << i
+                      << " arg0: " << _f0 << " arg1: " << _f1
+                      << "\nhost-res: " << _hr << " dev-res: " << _dr
+                      << "\nrdelta: "  << _rd
+                      << " maxrdelta:" << max_rd << '\n';
         }
         // dump(_h_a0, "_a0");
         // dump(_h_a1, "_a1");
