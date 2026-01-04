@@ -200,10 +200,8 @@ check_res(const std::string& msg, const _T& max_rel_tol)
     // compare on device and make the result buffer compatible with
     // the results of vsvec/vec comparisons
     dvec<_T> t=abs((_res - _h_res_d)/(_T(0.5)*(_res + _h_res_d)));
-    _cmp_res = select((((_res != _res) & (_h_res_d != _h_res_d)) |
-                       (_res == _h_res_d)|
-                       (t < max_rel_tol)),
-                      -1, 0);
+    _cmp_res =((_res != _res) & (_h_res_d != _h_res_d)) |
+	(_res == _h_res_d)|(t < max_rel_tol);
 #if 0
     // compare on device and make the result buffer compatible with
     // the results of vsvec/vec comparisons
