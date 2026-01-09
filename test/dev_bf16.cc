@@ -203,7 +203,8 @@ namespace ocl {
             static
             std::string
             unary_function(const std::string& l,
-                           const std::string_view& op);
+                           const std::string_view& op,
+			   bool op_is_operator);
 
             static
             std::string
@@ -344,6 +345,20 @@ namespace ocl {
             body(const std::string& l);
         };
 
+        template <>
+        struct sqrt_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct rsqrt_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+	
         template <>
         struct convert_rte<bf16_t, bf16_t> {
             static
@@ -839,13 +854,22 @@ add_conversions(be::kernel_functions& fnames)
 
 std::string
 ocl::dop::bf16_base::
-unary_function(const std::string& l, const std::string_view& op)
+unary_function(const std::string& l,
+	       const std::string_view& op,
+	       bool op_is_operator)
 {
     std::ostringstream s;
-    s << f32_to_bf16::name() << '('
-      << op << bf16_to_f32::name() << '('
-      << l
-      << "))";
+    if (op_is_operator) {
+	s << f32_to_bf16::name() << '('
+	  << op << bf16_to_f32::name() << '('
+	  << l
+	  << "))";
+    } else {
+	s << f32_to_bf16::name() << '('
+	  << op << '(' << bf16_to_f32::name() << '('
+	  << l
+	  << ")))";
+    }
     return s.str();
 }
 
@@ -1013,7 +1037,7 @@ std::string
 ocl::dop::rint_f<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
-    return unary_function(l, names::f_rint()());
+    return unary_function(l, names::f_rint()(), false);
 }
 
 std::string
@@ -1032,6 +1056,20 @@ body(const std::string& l)
     std::string r{_isnan::name()};
     r+='(' + l + ')';
     return r;
+}
+
+std::string
+ocl::dop::sqrt_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_sqrt()(), false);
+}
+
+std::string
+ocl::dop::rsqrt_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_rsqrt()(), false);
 }
 
 std::string_view
