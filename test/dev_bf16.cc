@@ -358,6 +358,62 @@ namespace ocl {
             std::string
             body(const std::string& l);
         };
+
+        template <>
+        struct exp_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct expm1_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct exp2_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct exp10_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct log_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct log1p_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct log2_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };	
+
+        template <>
+        struct log10_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };	
 	
         template <>
         struct convert_rte<bf16_t, bf16_t> {
@@ -1070,6 +1126,62 @@ ocl::dop::rsqrt_f<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
     return unary_function(l, names::f_rsqrt()(), false);
+}
+
+std::string
+ocl::dop::exp_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_exp()(), false);
+}
+
+std::string
+ocl::dop::expm1_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_expm1()(), false);
+}
+
+std::string
+ocl::dop::exp2_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_exp2()(), false);
+}
+
+std::string
+ocl::dop::exp10_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_exp10()(), false);
+}
+
+std::string
+ocl::dop::log_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_log()(), false);
+}
+
+std::string
+ocl::dop::log1p_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_log1p()(), false);
+}
+
+std::string
+ocl::dop::log2_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_log2()(), false);
+}
+
+std::string
+ocl::dop::log10_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_log10()(), false);
 }
 
 std::string_view
