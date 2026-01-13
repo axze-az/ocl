@@ -416,6 +416,27 @@ namespace ocl {
         };	
 	
         template <>
+        struct sinh_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct cosh_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
+        struct tanh_f<dvec<bf16_t> > : private bf16_base {
+            static
+            std::string
+            body(const std::string& l);
+        };
+
+        template <>
         struct convert_rte<bf16_t, bf16_t> {
             static
             const std::string&
@@ -1182,6 +1203,27 @@ ocl::dop::log10_f<ocl::dvec<ocl::bf16_t> >::
 body(const std::string& l)
 {
     return unary_function(l, names::f_log10()(), false);
+}
+
+std::string
+ocl::dop::sinh_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_sinh()(), false);
+}
+
+std::string
+ocl::dop::cosh_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_cosh()(), false);
+}
+
+std::string
+ocl::dop::tanh_f<ocl::dvec<ocl::bf16_t> >::
+body(const std::string& l)
+{
+    return unary_function(l, names::f_tanh()(), false);
 }
 
 std::string_view
