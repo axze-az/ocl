@@ -45,9 +45,6 @@ namespace ocl {
             static
             constexpr
             std::string_view v() {
-                // use ushort here instead of the bf16_t typedef because
-                // otherwise even the vector copy and assignment functions
-                // require the bf16_t typedef in the kernel sources
                 return "bf16_t";
             }
         };
