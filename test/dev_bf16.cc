@@ -1439,7 +1439,6 @@ ocl::test::dvec_bf16()
     if (r) {
         return r;
     }
-#if 1
     r = 3;
     try {
         using namespace cftal;
@@ -1475,11 +1474,8 @@ ocl::test::dvec_bf16()
         std::cout << "caught exception: " << e.what()
                   << std::endl;
     }
-#endif
     return r;
 }
-
-
 
 int main()
 {
