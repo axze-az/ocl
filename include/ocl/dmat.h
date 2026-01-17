@@ -26,7 +26,6 @@ namespace ocl {
 
     template <typename _T>
     class dmat : public dvec_base {
-        size_t _rows;
     public:
         dmat(size_t rows, size_t cols);
         dmat(const dmat& r);
@@ -57,7 +56,22 @@ namespace ocl {
     dmat<_T>
     operator+(const dmat<_T>& a, const dmat<_T>& b);
 
+    template <typename _T>
+    dmat<_T>
+    mul(const dmat<_T>& a, const dmat<_T>& b);
 
+    template <typename _T>
+    dmat<_T>
+    fma(const dmat<_T>& a, const dmat<_T>& b, const dmat<_T>& c);
+
+    template <typename _T>
+    dmat<_T>
+    fms(const dmat<_T>& a, const dmat<_T>& b, const dmat<_T>& c);
+
+    template <typename _T>
+    dmat<_T>
+    nfma(const dmat<_T>& a, const dmat<_T>& b, const dmat<_T>& c);
+    
 }
 
 // Local variables:
