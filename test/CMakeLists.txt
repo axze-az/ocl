@@ -14,7 +14,7 @@ set (TEST_HDRS
 )
 
 function(target_add_test_libs arg1)
-    target_link_libraries(${arg1} ${LIB_BOOST_SYSTEM})
+#   target_link_libraries(${arg1} ${LIB_BOOST_SYSTEM})
     target_link_libraries(${arg1} ocl-so)
     target_link_libraries(${arg1} Threads::Threads)
 endfunction()
@@ -26,7 +26,7 @@ set_target_properties(ocl-test PROPERTIES
   SOVERSION "${OCL_VERSION_MAJ}"
   VERSION "${OCL_VERSION_MAJ}.${OCL_VERSION_MIN}")
 target_link_libraries(ocl-test ocl-so)
-target_link_libraries(ocl-test ${LIB_BOOST_SYSTEM})
+#target_link_libraries(ocl-test ${LIB_BOOST_SYSTEM})
 target_link_libraries(ocl-test stdc++fs)
 
 target_add_test_libs(ocl-test)
