@@ -23,6 +23,11 @@
 
 #define DEBUG_DVEC_BASE 0
 
+#if DEBUG_DVEC_BASE != 0
+#include <iostream>
+#include <iomanip>
+#endif
+
 namespace ocl {
 
     namespace impl {
@@ -30,7 +35,7 @@ namespace ocl {
 #if DEBUG_DVEC_BASE>0
         template <typename _I>
         struct _counter_state {
-            enum es {
+            enum class es {
                 construct,
                 copy_construct,
                 move_construct,
@@ -40,18 +45,19 @@ namespace ocl {
                 objects,
                 LAST
             };
-            _I _v[LAST];
+            _I _v[static_cast<int>(es::LAST)];
             _counter_state() : _v{} {}
             void
             inc(std::initializer_list<es> l) {
                 for (auto b=l.begin(), e=l.end(); b!=e; ++b) {
-                    auto i=*b;
+                    auto i=static_cast<size_t>(*b);
                     ++_v[i];
                 }
             }
             void
             dec(es i) {
-                --_v[i];
+		auto si=static_cast<size_t>(i);
+                --_v[si];
             }
         };
 
@@ -60,19 +66,19 @@ namespace ocl {
         operator<<(std::ostream& s, const _counter_state<_I>& i) {
             using es=typename _counter_state<_I>::es;
             s << "construct:      " << std::setw(4)
-              << i._v[es::construct] << '\n'
+              << i._v[size_t(es::construct)] << '\n'
               << "copy construct: " << std::setw(4)
-              << i._v[es::copy_construct] << '\n'
+              << i._v[size_t(es::copy_construct)] << '\n'
               << "move construct: " << std::setw(4)
-              << i._v[es::move_construct] << '\n'
+              << i._v[size_t(es::move_construct)] << '\n'
               << "copy assign:    " << std::setw(4)
-              << i._v[es::copy_assign] << '\n'
+	      << i._v[size_t(es::copy_assign)] << '\n'
               << "move assign:    " << std::setw(4)
-              << i._v[es::move_assign] << '\n'
+	      << i._v[size_t(es::move_assign)] << '\n'
               << "destruct:       " << std::setw(4)
-              << i._v[es::destruct] << '\n'
+	      << i._v[size_t(es::destruct)] << '\n'
               << "objects:        " << std::setw(4)
-              << i._v[es::objects] << '\n';
+	      << i._v[size_t(es::objects)] << '\n';
             return s;
         }
 
@@ -84,35 +90,36 @@ namespace ocl {
             std::unique_ptr<st_t> _instance;
         public:
             _counter() {
-                _instance->inc({st_t::construct, st_t::objects});
+                _instance->inc({st_t::es::construct, st_t::es::objects});
             }
             _counter(const _counter& ) {
-                _instance->inc({st_t::construct,
-                                st_t::copy_construct,
-                                st_t::objects});
+                _instance->inc({st_t::es::construct,
+			st_t::es::copy_construct,
+			st_t::es::objects});
             }
             _counter(_counter&& ) {
-                _instance->inc({st_t::construct,
-                                st_t::move_construct,
-                                st_t::objects});
+                _instance->inc({st_t::es::construct,
+                                st_t::es::move_construct,
+                                st_t::es::objects});
             }
             _counter& operator=(const _counter& ) {
-                _instance->inc({st_t::copy_assign});
+                _instance->inc({st_t::es::copy_assign});
                 return *this;
             }
             _counter& operator=(_counter&& ) {
-                _instance->inc({st_t::move_assign});
+                _instance->inc({st_t::es::move_assign});
                 return *this;
             }
             ~_counter() {
-                _instance->inc({st_t::destruct});
-                _instance->dec(st_t::objects);
+                _instance->inc({st_t::es::destruct});
+                _instance->dec(st_t::es::objects);
             }
             static
             _counter_state<int64_t> state() {
                 _counter_state<int64_t> d;
                 const st_t& s=*_instance;
-                for (size_t i=0; i< st_t::LAST; ++i)
+		constexpr auto e=static_cast<size_t>(st_t::es::LAST);
+                for (size_t i=0; i< e; ++i)
                     d._v[i] = s._v[i];
                 return d;
             }
