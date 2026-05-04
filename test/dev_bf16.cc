@@ -1423,7 +1423,6 @@ ocl::test::dvec_bf16()
 
         dvec<float> mf=cvt<dvec<float>>(m);
         dvec<bf16_t> m2=cvt<dvec<bf16_t>>(mf);
-
         r=0;
     }
     catch (const std::exception& ex)  {
@@ -1460,6 +1459,7 @@ ocl::test::dvec_bf16()
             }
         }
         std::cout << "\ntest passed\n";
+	r=0;
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
