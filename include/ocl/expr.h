@@ -100,14 +100,22 @@ namespace ocl {
     decl_non_buffer_args(const _T& p, unsigned& arg_num);
 
     namespace impl {
+        // non template helper function for decl_non_buffer_args taking
+        // the name of the type as first argument
         std::string
         decl_non_buffer_args_t(const std::string_view& tname,
                                size_t alignment,
                                unsigned& arg_num);
+
+        // non template helper function for decl_non_buffer_args taking
+        // the name of the type as first argument
         std::string
         decl_non_buffer_args_t(const char* tname,
                                size_t alignment,
                                unsigned& arg_num);
+
+        // non template helper function for decl_non_buffer_args taking
+        // the name of the type as first argument
         std::string
         decl_non_buffer_args_t(const std::string& tname,
                                size_t alignment,
@@ -120,16 +128,27 @@ namespace ocl {
     decl_non_buffer_args(const impl::array_ptr<_T, _N>& r, unsigned& arg_num);
 
     namespace impl {
+        // non template helper function for decl_non_buffer_args overloaded
+        // for const impl::array_ptr<_T, _N> taking the name of the type
+        // as first argument and the number of elements as second argument
         std::string
         decl_non_buffer_args_array_ptr(const std::string_view& tname,
                                        size_t n,
                                        size_t alignment,
                                        unsigned& arg_num);
+
+        // non template helper function for decl_non_buffer_args overloaded
+        // for const impl::array_ptr<_T, _N> taking the name of the type
+        // as first argument and the number of elements as second argument
         std::string
         decl_non_buffer_args_array_ptr(const char* tname,
                                        size_t n,
                                        size_t alignment,
                                        unsigned& arg_num);
+
+        // non template helper function for decl_non_buffer_args overloaded
+        // for const impl::array_ptr<_T, _N> taking the name of the type
+        // as first argument and the number of elements as second argument
         std::string
         decl_non_buffer_args_array_ptr(const std::string& tname,
                                        size_t n,
@@ -137,7 +156,7 @@ namespace ocl {
                                        unsigned& arg_num);
     }
 
-    // ignored_arg are really ignored
+    // ignored_arg is really ignored
     template <typename _T>
     std::string
     decl_non_buffer_args(const impl::ignored_arg<_T>& r, unsigned& arg_num);
@@ -162,6 +181,7 @@ namespace ocl {
     concat_args(const _T& r, var_counters& c);
 
     namespace impl {
+        // non template helper function for concat_args
         std::string
         concat_args_t(var_counters& c);
     }
@@ -197,14 +217,23 @@ namespace ocl {
     eval_args(const _T& r, unsigned& arg_num, bool ro);
 
     namespace impl {
+
+        // non template helper function for eval_args taking
+        // the name of the type as first argument
         std::string
         eval_args_t(const std::string_view& tname,
                     unsigned& arg_num,
                     bool ro);
+
+        // non template helper function for eval_args taking
+        // the name of the type as first argument
         std::string
         eval_args_t(const char* tname,
                     unsigned& arg_num,
                     bool ro);
+
+        // non template helper function for eval_args taking
+        // the name of the type as first argument
         std::string
         eval_args_t(const std::string& tname,
                     unsigned& arg_num,
@@ -222,14 +251,23 @@ namespace ocl {
     eval_args(const impl::array_ptr<_T, _N>& t,unsigned& arg_num, bool ro);
 
     namespace impl {
+
+        // non template helper function for eval_args overladed for array_ptr
+        // taking the name of the type as first argument
         std::string
         eval_args_array_ptr(const std::string_view& tname,
                             unsigned& arg_num,
                             bool ro);
+
+        // non template helper function for eval_args overladed for array_ptr
+        // taking the name of the type as first argument
         std::string
         eval_args_array_ptr(const char* tname,
                             unsigned& arg_num,
                             bool ro);
+
+        // non template helper function for eval_args overladed for array_ptr
+        // taking the name of the type as first argument
         std::string
         eval_args_array_ptr(const std::string& tname,
                             unsigned& arg_num,
