@@ -67,6 +67,7 @@ namespace ocl {
             using _T::_T;
         };
 
+        // template for embedding references to arrays into expressions
         template <typename _T, size_t _N>
         struct array_ptr {
             const _T* _p;
@@ -167,6 +168,8 @@ namespace ocl {
     std::string
     decl_buffer_args(const _T& p, unsigned& arg_num, bool read_only);
 
+    // helper structure containing the argument count, the buffer count
+    // and the count of scalar count.
     struct var_counters {
         unsigned _var_num;
         unsigned _buf_num;
@@ -176,6 +179,7 @@ namespace ocl {
             : _var_num(buf_offs), _buf_num(buf_offs), _scalar_num(0) {};
     };
 
+    // concatenate arguments
     template <typename _T>
     std::string
     concat_args(const _T& r, var_counters& c);
@@ -274,56 +278,71 @@ namespace ocl {
                             bool ro);
     }
 
-    // eval_vars
+    // evaluate variables
     template <class _T>
     std::string
     eval_vars(const _T& r, unsigned& arg_num, bool read);
 
     namespace impl {
+        // non template helper function for eval_vars
+        // taking the name of the type as first argument
         std::string
         eval_vars_t(const std::string_view& tname,
                     unsigned& arg_num,
                     bool ro);
+
+        // non template helper function for eval_vars
+        // taking the name of the type as first argument
         std::string
         eval_vars_t(const char* tname,
                     unsigned& arg_num,
                     bool ro);
 
+        // non template helper function for eval_vars
+        // taking the name of the type as first argument
         std::string
         eval_vars_t(const std::string& tname,
                     unsigned& arg_num,
                     bool ro);
     }
 
-    // eval_vars
+    // evaluate variables overloaded for array_ptr i.e. references to
+    // arrays
     template <class _T, size_t _N>
     std::string
     eval_vars(const impl::array_ptr<_T, _N>& r,
               unsigned& arg_num, bool read);
 
     namespace impl {
+        // non template helper function for eval_vars overloaded for
+        // array_ptr taking the name of the type as first argument
         std::string
         eval_vars_array_ptr(const std::string_view& tname,
                             unsigned& arg_num,
                             bool ro);
 
-
+        // non template helper function for eval_vars overloaded for
+        // array_ptr taking the name of the type as first argument
         std::string
         eval_vars_array_ptr(const char* tname,
                             unsigned& arg_num,
                             bool ro);
 
+        // non template helper function for eval_vars overloaded for
+        // array_ptr taking the name of the type as first argument
         std::string
         eval_vars_array_ptr(const std::string& tname,
                             unsigned& arg_num,
                             bool ro);
     }
 
-    // eval_ops
+    // evaluate operations on expression
     template <class _T>
     std::string eval_ops(const _T& r, unsigned& arg_num);
 
     namespace impl {
+
+        // non template helper function for eval_ops
         std::string
         eval_ops_t(unsigned& arg_num);
     }
