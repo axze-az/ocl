@@ -59,5 +59,6 @@ test_prog(dev_xxx_of)
 test_prog(dev_lookup)
 test_prog(dev_misc)
 test_prog(dev_bf16)
+test_prog(dev_f16)
 
 add_executable(stringify stringify.cc)
