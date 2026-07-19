@@ -30,31 +30,41 @@ namespace ocl {
 
     namespace impl {
 
+	// helper template for determing the type of a mask operation
+	// on dvec<_T> object. The defined type should be the type of
+	// a comparison operation of an opencl comparison on
+	// _T2/_T4/.. types 
         template <typename _T>
         struct dvec_select_mask_value {
             using type = _T;
         };
 
+	// specialization of masks for double
         template <>
         struct dvec_select_mask_value<double> {
             using type = std::int64_t;
         };
 
+	// specialization of masks for float
         template <>
         struct dvec_select_mask_value<float> {
             using type = std::int32_t;
         };
 
+	// abbreviation for dvec_select_mask_value<_T>::type
         template <typename _T>
         using dvec_select_mask_value_t =
             typename dvec_select_mask_value<_T>::type;
 
+	// complile time integer log2, _N must be an power of to
         template <size_t _N>
         constexpr inline size_t const_log2() {
             static_assert(_N != 0 && (_N & (_N-1))==0,
                          "Value is not a valid power of 2");
             return 1 + const_log2<_N/2>();
         }
+
+	// complile time integer log2<1>
         template <>
         constexpr inline size_t const_log2<1>() {
             return 0;
