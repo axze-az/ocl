@@ -347,7 +347,8 @@ namespace ocl {
         eval_ops_t(unsigned& arg_num);
     }
 
-    // eval_results, unimplemented
+    // eval_results, unimplemented because results must be stored in a
+    // buffer
     template <class _T>
     std::string eval_results(_T& r, unsigned& res_num);
 
