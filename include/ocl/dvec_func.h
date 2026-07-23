@@ -69,6 +69,14 @@ namespace ocl {
             : public unary_func<names::f_fabs, false> {
         };
 
+        template <>
+        struct abs_f< dvec<f16_t> >
+            : public unary_func<names::f_fabs, false> {
+        };
+        template <std::size_t _N>
+        struct abs_f< dvec<cftal::vec<f16_t, _N> > >
+            : public unary_func<names::f_fabs, false> {
+        };
 
         template <class _T>
         struct rint_f  {};
@@ -523,7 +531,7 @@ namespace ocl {
 
     DEF_MASK_UNARY_FUNC(isinf, isinf_f)
     DEF_MASK_UNARY_FUNC(isnan, isnan_f)
-    
+
     DEF_UNARY_FUNC(rint, rint_f)
 
     DEF_UNARY_FUNC(abs, abs_f)

@@ -24,8 +24,11 @@
 #include <string_view>
 #include <typeinfo>
 #include <ocl/be/types.h>
+#include <cftal/f16_t.h>
 
 namespace ocl {
+
+    using cftal::f16_t;
 
     namespace be {
 
@@ -122,6 +125,8 @@ namespace ocl {
         TYPE_2_NAME(cl_half8, half8);
         TYPE_2_NAME(cl_half16, half16);
 #endif
+
+        TYPE_2_NAME(cftal::f16_t, half);
 
         std::string
         type_2_name_vec_t(const char* tname, size_t n);

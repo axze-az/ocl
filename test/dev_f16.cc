@@ -28,9 +28,11 @@ namespace cftal {
         return 1;
     }
 
+#if 0
     std::string_view
     def_custom_func(ocl::be::kernel_functions& fnames,
                     const f16_t& v);
+#endif
 }
 
 namespace ocl {
@@ -38,6 +40,7 @@ namespace ocl {
     using cftal::f16_t;
     using cftal::operator ""_f16;
 
+#if 0
     namespace be {
 
         template <>
@@ -49,6 +52,7 @@ namespace ocl {
             }
         };
     }
+
 
     namespace impl {
 
@@ -200,7 +204,7 @@ namespace ocl {
             std::string
             unary_function(const std::string& l,
                            const std::string_view& op,
-			   bool op_is_operator);
+                           bool op_is_operator);
 
             static
             std::string
@@ -402,15 +406,15 @@ namespace ocl {
             static
             std::string
             body(const std::string& l);
-        };	
+        };
 
         template <>
         struct log10_f<dvec<f16_t> > : private f16_base {
             static
             std::string
             body(const std::string& l);
-        };	
-	
+        };
+
         template <>
         struct sinh_f<dvec<f16_t> > : private f16_base {
             static
@@ -539,6 +543,8 @@ namespace ocl {
     def_custom_func(be::kernel_functions& fnames,
                     const expr<dop::isnan_f<dvec<f16_t> >, _L, void>& e );
 
+#endif
+
     bool
     all_of(const dvec<f16_t>& v);
 
@@ -563,6 +569,7 @@ namespace ocl {
     }
 }
 
+#if 0
 std::string_view
 ocl::dop::f16_base::emit_type_def::
 name()
@@ -928,20 +935,20 @@ add_conversions(be::kernel_functions& fnames)
 std::string
 ocl::dop::f16_base::
 unary_function(const std::string& l,
-	       const std::string_view& op,
-	       bool op_is_operator)
+               const std::string_view& op,
+               bool op_is_operator)
 {
     std::ostringstream s;
     if (op_is_operator) {
-	s << f32_to_f16::name() << '('
-	  << op << f16_to_f32::name() << '('
-	  << l
-	  << "))";
+        s << f32_to_f16::name() << '('
+          << op << f16_to_f32::name() << '('
+          << l
+          << "))";
     } else {
-	s << f32_to_f16::name() << '('
-	  << op << '(' << f16_to_f32::name() << '('
-	  << l
-	  << ")))";
+        s << f32_to_f16::name() << '('
+          << op << '(' << f16_to_f32::name() << '('
+          << l
+          << ")))";
     }
     return s.str();
 }
@@ -1348,6 +1355,8 @@ def_custom_func(be::kernel_functions& fnames,
     return r;
 }
 
+#endif
+
 bool
 ocl::
 all_of(const dvec<f16_t>& v)
@@ -1459,7 +1468,7 @@ ocl::test::dvec_f16()
             }
         }
         std::cout << "\ntest passed\n";
-	r=0;
+        r=0;
     }
     catch (const ocl::be::error& e) {
         std::cout << "caught exception: " << e.what()
