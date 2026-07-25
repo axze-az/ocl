@@ -33,6 +33,8 @@ namespace ocl {
     namespace impl {
 
 #if DEBUG_DVEC_BASE>0
+	// template class containing number about objects, object
+	// states and object events
         template <typename _I>
         struct _counter_state {
             enum class es {
@@ -45,8 +47,11 @@ namespace ocl {
                 objects,
                 LAST
             };
+	    // date members
             _I _v[static_cast<int>(es::LAST)];
+	    // default constructor
             _counter_state() : _v{} {}
+	    // increment a list of entries
             void
             inc(std::initializer_list<es> l) {
                 for (auto b=l.begin(), e=l.end(); b!=e; ++b) {
@@ -54,6 +59,7 @@ namespace ocl {
                     ++_v[i];
                 }
             }
+	    // decrement an entry
             void
             dec(es i) {
 		auto si=static_cast<size_t>(i);
@@ -61,6 +67,7 @@ namespace ocl {
             }
         };
 
+	// output operator for _counter_state
         template <typename _I>
         std::ostream&
         operator<<(std::ostream& s, const _counter_state<_I>& i) {
@@ -82,38 +89,48 @@ namespace ocl {
             return s;
         }
 
-
+	// template class managing a single shared _counter_state
         template <typename _TAG>
         struct _counter {
             using st_t = _counter_state<std::atomic<int64_t> >;
             static
             std::unique_ptr<st_t> _instance;
         public:
+	    // constructor. increments number of constructions and objects
             _counter() {
                 _instance->inc({st_t::es::construct, st_t::es::objects});
             }
+	    // copy constructor. increments number of constructions,
+	    // of copy constructions and objects
             _counter(const _counter& ) {
                 _instance->inc({st_t::es::construct,
 			st_t::es::copy_construct,
 			st_t::es::objects});
             }
+	    // move constructr.  increments number of constructions,
+	    // of move constructions and objects
             _counter(_counter&& ) {
                 _instance->inc({st_t::es::construct,
                                 st_t::es::move_construct,
                                 st_t::es::objects});
             }
+	    // assignment operator. increments number of copy assignments
             _counter& operator=(const _counter& ) {
                 _instance->inc({st_t::es::copy_assign});
                 return *this;
             }
+	    // move assignment operator. increments number of move assignments
             _counter& operator=(_counter&& ) {
                 _instance->inc({st_t::es::move_assign});
                 return *this;
             }
+	    // move assignment operator. increments number of
+	    // destructions and decements number of objects
             ~_counter() {
                 _instance->inc({st_t::es::destruct});
                 _instance->dec(st_t::es::objects);
             }
+	    // return the _counter_state of the single instance
             static
             _counter_state<int64_t> state() {
                 _counter_state<int64_t> d;
@@ -125,12 +142,15 @@ namespace ocl {
             }
         };
 
+	// _instance poiner of _counter<_TAG>
         template <typename _TAG>
         std::unique_ptr<typename _counter<_TAG>::st_t>
         _counter<_TAG>::_instance=std::make_unique<_counter<_TAG>::st_t>();
 #else
+	// non debug _counter implementation
         template <typename _TAG>
         struct _counter {
+	    // return an error message 
             static
             const char* state() {
                 return "object statistics are unavailable\n";
