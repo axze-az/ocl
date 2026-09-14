@@ -22,6 +22,7 @@
 #include <ocl/dvec.h>
 #include <ocl/random.h>
 #include <cftal/vsvec.h>
+#include <iomanip>
 #include <random>
 
 #define USE_DEVICE_COMPARE 1
