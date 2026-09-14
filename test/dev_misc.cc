@@ -21,6 +21,7 @@
 #include <cftal/math/func_traits_f64_s32.h>
 #include <cftal/math/elem_func_core_f64.h>
 #include <cftal/d_real.h>
+#include <iomanip>
 
 namespace ocl {
 
