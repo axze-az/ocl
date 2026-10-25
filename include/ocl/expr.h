@@ -34,7 +34,8 @@ namespace ocl {
         using type = const _T;
     };
 
-    // the expression template
+    // the expression template, containing a operation type,
+    // left operand and right operand.
     template <class _OP, class _L, class _R>
     struct expr {
         typename expr_traits<_L>::type _l;
@@ -42,18 +43,21 @@ namespace ocl {
         constexpr expr(const _L& l, const _R& r);
     };
 
+    // expr class specialization for expressions with only one operannd
     template <class _OP, class _L>
     struct expr<_OP, _L, void> {
         typename expr_traits<_L>::type _l;
         constexpr expr(const _L& l) : _l{l} {};
     };
 
+    // helper function for creating expressions with two arguments
     template <class _OP, class _L, class _R>
     constexpr expr<_OP, _L, _R>
     make_expr(const _L& l, const _R& r) {
         return expr<_OP, _L, _R>(l, r);
     }
 
+    // helper function for creating expressions with one argument
     template <class _OP, class _L>
     constexpr expr<_OP, _L, void>
     make_expr(const _L& l) {
@@ -82,12 +86,15 @@ namespace ocl {
         using type = impl::array_ptr<_T, _N>;
     };
 
+    // an object containing spaces.
     struct spaces : public std::string {
         spaces(unsigned int n) : std::string(n, ' ') {}
     };
+
     // return back end data:
     template <class _T>
     be::data_ptr backend_data(const _T& t);
+
     // evaluate the size of an expression
     template <class _T>
     constexpr
